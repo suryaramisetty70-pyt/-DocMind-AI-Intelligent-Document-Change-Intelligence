@@ -5,12 +5,27 @@ Multi-dimensional document similarity analysis
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Tuple
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 from difflib import SequenceMatcher
 from collections import Counter
 import re
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    np = None
+    NUMPY_AVAILABLE = False
+
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity as sk_cosine
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    TfidfVectorizer = None
+    sk_cosine = None
+    SKLEARN_AVAILABLE = False
+
+cosine_similarity = sk_cosine
 
 
 @dataclass
@@ -62,12 +77,15 @@ class LexicalSimilarity:
         overlap = len(intersection) / min(len(words1), len(words2)) if (words1 and words2) else 0.0
         
         # TF-IDF cosine similarity
-        try:
-            vectorizer = TfidfVectorizer()
-            tfidf = vectorizer.fit_transform([text1, text2])
-            cosine = float(cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0])
-        except:
-            cosine = 0.0
+        if SKLEARN_AVAILABLE and TfidfVectorizer and cosine_similarity:
+            try:
+                vectorizer = TfidfVectorizer()
+                tfidf = vectorizer.fit_transform([text1, text2])
+                cosine = float(cosine_similarity(tfidf[0:1], tfidf[1:2])[0][0])
+            except:
+                cosine = jaccard  # Fallback to jaccard
+        else:
+            cosine = jaccard  # Fallback
         
         return {
             "jaccard": jaccard,

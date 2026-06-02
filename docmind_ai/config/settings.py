@@ -6,8 +6,16 @@ Configuration Management
 import os
 from pathlib import Path
 from typing import Optional
-from pydantic import BaseModel
-from pydantic_settings import BaseSettings
+
+try:
+    from pydantic import BaseModel
+    from pydantic_settings import BaseSettings
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    class BaseModel:
+        pass
+    BaseSettings = object
+    PYDANTIC_AVAILABLE = False
 
 # Base paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -94,24 +102,18 @@ class MonitoringConfig(BaseModel):
     TRACE_ENABLED: bool = False
 
 
-class Config(BaseSettings):
-    """Main configuration class"""
-    # Environment
-    ENV: str = "development"
-    DEBUG: bool = True
-    
-    # Sub-configurations
-    database: DatabaseConfig = DatabaseConfig()
-    ocr: OCRConfig = OCRConfig()
-    ai: AIConfig = AIConfig()
-    document: DocumentConfig = DocumentConfig()
-    security: SecurityConfig = SecurityConfig()
-    storage: StorageConfig = StorageConfig()
-    monitoring: MonitoringConfig = MonitoringConfig()
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+class Config:
+    """Main configuration class - simplified version"""
+    def __init__(self):
+        self.ENV = "development"
+        self.DEBUG = True
+        self.database = DatabaseConfig()
+        self.ocr = OCRConfig()
+        self.ai = AIConfig()
+        self.document = DocumentConfig()
+        self.security = SecurityConfig()
+        self.storage = StorageConfig()
+        self.monitoring = MonitoringConfig()
 
 
 # Global config instance

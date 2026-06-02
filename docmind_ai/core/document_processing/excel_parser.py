@@ -5,9 +5,22 @@ Handles XLS and XLSX document parsing with multi-sheet support
 
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-import openpyxl
-from openpyxl import load_workbook
-import pandas as pd
+
+try:
+    import openpyxl
+    from openpyxl import load_workbook
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    openpyxl = None
+    load_workbook = None
+    OPENPYXL_AVAILABLE = False
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    pd = None
+    PANDAS_AVAILABLE = False
 
 from .base_parser import (
     BaseDocumentParser,

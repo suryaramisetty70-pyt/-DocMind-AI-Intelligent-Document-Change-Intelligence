@@ -3,14 +3,26 @@ DocMind AI - OCR Engine
 Optical Character Recognition with EasyOCR and Tesseract support
 """
 
-import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Union
-import cv2
 from dataclasses import dataclass, field
 from enum import Enum
 import io
 import base64
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    np = None
+    NUMPY_AVAILABLE = False
+
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    CV2_AVAILABLE = False
 
 
 @dataclass
@@ -50,89 +62,101 @@ class ImagePreprocessor:
     """Preprocess images for better OCR accuracy"""
     
     @staticmethod
-    def preprocess(image: np.ndarray, method: str = "adaptive") -> np.ndarray:
+    def preprocess(image, method: str = "adaptive"):
         """Apply preprocessing to improve OCR results"""
-        if len(image.shape) == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = image.copy()
+        if image is None:
+            return None
         
-        if method == "adaptive":
-            # Adaptive thresholding for better contrast
-            processed = cv2.adaptiveThreshold(
-                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv2.THRESH_BINARY, 11, 2
-            )
-        elif method == "otsu":
-            # Otsu's thresholding
-            _, processed = cv2.threshold(
-                gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )
-        elif method == "binarize":
-            # Simple binarization
-            _, processed = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-        else:
-            processed = gray
+        if not CV2_AVAILABLE or not cv2:
+            return image
         
-        return processed
+        try:
+            if len(image.shape) == 3:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image.copy()
+            
+            if method == "adaptive":
+                processed = cv2.adaptiveThreshold(
+                    gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    cv2.THRESH_BINARY, 11, 2
+                )
+            elif method == "otsu":
+                _, processed = cv2.threshold(
+                    gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+                )
+            elif method == "binarize":
+                _, processed = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+            else:
+                processed = gray
+            
+            return processed
+        except Exception:
+            return image
     
     @staticmethod
-    def denoise(image: np.ndarray) -> np.ndarray:
+    def denoise(image):
         """Remove noise from image"""
-        return cv2.fastNlMeansDenoising(image, None, 10, 7, 21)
+        if not CV2_AVAILABLE or image is None:
+            return image
+        try:
+            return cv2.fastNlMeansDenoising(image, None, 10, 7, 21)
+        except Exception:
+            return image
     
     @staticmethod
-    def deskew(image: np.ndarray) -> np.ndarray:
+    def deskew(image):
         """Deskew the image"""
-        coords = np.column_stack(np.where(image > 0))
-        if len(coords) == 0:
+        if not CV2_AVAILABLE or image is None:
             return image
-        
-        angle = cv2.minAreaRect(coords)[-1]
-        
-        if angle < -45:
-            angle = -(90 + angle)
-        else:
-            angle = -angle
-        
-        if abs(angle) < 0.5:
+        try:
+            coords = np.column_stack(np.where(image > 0))
+            if len(coords) == 0:
+                return image
+            angle = cv2.minAreaRect(coords)[-1]
+            if angle < -45:
+                angle = -(90 + angle)
+            else:
+                angle = -angle
+            if abs(angle) < 0.5:
+                return image
+            (h, w) = image.shape[:2]
+            center = (w // 2, h // 2)
+            M = cv2.getRotationMatrix2D(center, angle, 1.0)
+            rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+            return rotated
+        except Exception:
             return image
-        
-        (h, w) = image.shape[:2]
-        center = (w // 2, h // 2)
-        M = cv2.getRotationMatrix2D(center, angle, 1.0)
-        rotated = cv2.warpAffine(
-            image, M, (w, h),
-            flags=cv2.INTER_CUBIC,
-            borderMode=cv2.BORDER_REPLICATE
-        )
-        
-        return rotated
     
     @staticmethod
-    def remove_borders(image: np.ndarray) -> np.ndarray:
+    def remove_borders(image):
         """Remove dark borders from scanned documents"""
-        h, w = image.shape[:2]
-        
-        # Crop edges
-        crop_h = int(h * 0.02)
-        crop_w = int(w * 0.02)
-        
-        return image[crop_h:h-crop_h, crop_w:w-crop_w]
+        if image is None:
+            return image
+        try:
+            h, w = image.shape[:2]
+            crop_h = int(h * 0.02)
+            crop_w = int(w * 0.02)
+            return image[crop_h:h-crop_h, crop_w:w-crop_w]
+        except Exception:
+            return image
     
     @staticmethod
-    def increase_contrast(image: np.ndarray) -> np.ndarray:
+    def increase_contrast(image):
         """Increase image contrast"""
-        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB) if len(image.shape) == 3 else None
-        
-        if lab is not None:
-            l, a, b = cv2.split(lab)
-            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-            l = clahe.apply(l)
-            lab = cv2.merge([l, a, b])
-            return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-        
-        return image
+        if not CV2_AVAILABLE or image is None:
+            return image
+        try:
+            lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB) if len(image.shape) == 3 else None
+            if lab is not None:
+                l, a, b = cv2.split(lab)
+                clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+                l = clahe.apply(l)
+                lab = cv2.merge([l, a, b])
+                return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+            return image
+        except Exception:
+            return image
 
 
 class EasyOCREngine:
@@ -156,7 +180,7 @@ class EasyOCREngine:
             except ImportError:
                 raise ImportError("EasyOCR not installed. Run: pip install easyocr")
     
-    def read_text(self, image: Union[np.ndarray, Path, str]) -> List[OCRResult]:
+    def read_text(self, image: Union[Any, Path, str]) -> List[OCRResult]:
         """Extract text from image"""
         self._initialize()
         
@@ -204,7 +228,7 @@ class TesseractEngine:
         self.language = language
         self._config = "--oem 3 --psm 6"
     
-    def read_text(self, image: Union[np.ndarray, Path, str]) -> List[OCRResult]:
+    def read_text(self, image: Union[Any, Path, str]) -> List[OCRResult]:
         """Extract text from image using Tesseract"""
         try:
             import pytesseract
@@ -240,7 +264,7 @@ class TesseractEngine:
         
         return ocr_results
     
-    def get_detailed_data(self, image: np.ndarray) -> Dict[str, Any]:
+    def get_detailed_data(self, image: Any) -> Dict[str, Any]:
         """Get detailed OCR data including boxes and confidence"""
         import pytesseract
         
@@ -256,7 +280,7 @@ class LayoutAnalyzer:
         self.stamp_detector = StampDetector()
         self.table_detector = TableDetector()
     
-    def analyze(self, image: np.ndarray) -> DocumentLayout:
+    def analyze(self, image: Any) -> DocumentLayout:
         """Analyze document layout"""
         layout = DocumentLayout()
         
@@ -280,7 +304,7 @@ class LayoutAnalyzer:
         
         return layout
     
-    def _detect_text_regions(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def _detect_text_regions(self, image: Any) -> List[Dict[str, Any]]:
         """Detect text regions in the document"""
         regions = []
         
@@ -310,7 +334,7 @@ class LayoutAnalyzer:
         
         return regions
     
-    def _detect_table_regions(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def _detect_table_regions(self, image: Any) -> List[Dict[str, Any]]:
         """Detect table regions using line detection"""
         regions = []
         
@@ -346,7 +370,7 @@ class LayoutAnalyzer:
         
         return regions
     
-    def _detect_image_regions(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def _detect_image_regions(self, image: Any) -> List[Dict[str, Any]]:
         """Detect image regions"""
         regions = []
         
@@ -375,7 +399,7 @@ class LayoutAnalyzer:
         
         return regions
     
-    def _detect_handwriting(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def _detect_handwriting(self, image: Any) -> List[Dict[str, Any]]:
         """Detect handwriting regions (simplified detection)"""
         regions = []
         
@@ -388,7 +412,7 @@ class LayoutAnalyzer:
 class SignatureDetector:
     """Detect signatures in documents"""
     
-    def detect(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def detect(self, image: Any) -> List[Dict[str, Any]]:
         """Detect signature regions"""
         signatures = []
         
@@ -424,7 +448,7 @@ class SignatureDetector:
 class StampDetector:
     """Detect stamps in documents"""
     
-    def detect(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def detect(self, image: Any) -> List[Dict[str, Any]]:
         """Detect stamp regions"""
         stamps = []
         
@@ -472,7 +496,7 @@ class StampDetector:
 class TableDetector:
     """Detect and extract tables from documents"""
     
-    def detect(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def detect(self, image: Any) -> List[Dict[str, Any]]:
         """Detect table regions"""
         tables = []
         
@@ -503,7 +527,7 @@ class TableDetector:
         
         return tables
     
-    def _detect_lines(self, image: np.ndarray, horizontal: bool) -> np.ndarray:
+    def _detect_lines(self, image: Any, horizontal: bool) -> Any:
         """Detect horizontal or vertical lines"""
         if horizontal:
             structure = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
@@ -530,7 +554,7 @@ class OCRPipeline:
         else:
             self.engine = TesseractEngine(languages[0] if languages else "eng")
     
-    def process_document(self, image: np.ndarray, preprocess: bool = True) -> OCRAnalysis:
+    def process_document(self, image: Any, preprocess: bool = True) -> OCRAnalysis:
         """Process document with full OCR pipeline"""
         import time
         start_time = time.time()
@@ -608,7 +632,7 @@ class OCRPipeline:
 class HandwritingDetector:
     """Detect and analyze handwritten content"""
     
-    def detect(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def detect(self, image: Any) -> List[Dict[str, Any]]:
         """Detect handwriting regions"""
         handwriting = []
         
@@ -617,7 +641,7 @@ class HandwritingDetector:
         
         return handwriting
     
-    def classify_region(self, region: np.ndarray) -> str:
+    def classify_region(self, region: Any) -> str:
         """Classify if a region contains handwriting"""
         # Placeholder for ML-based classification
         return "handwritten" if np.std(region) > 50 else "printed"
@@ -626,7 +650,7 @@ class HandwritingDetector:
 class LogoDetector:
     """Detect company logos in documents"""
     
-    def detect(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    def detect(self, image: Any) -> List[Dict[str, Any]]:
         """Detect logo regions"""
         logos = []
         

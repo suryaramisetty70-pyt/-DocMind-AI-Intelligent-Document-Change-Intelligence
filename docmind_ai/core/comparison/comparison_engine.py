@@ -561,7 +561,7 @@ class ChangeAggregator:
             modified_content=' '.join(c.modified_content for c in changes if c.modified_content),
             similarity_score=sum(c.similarity_score for c in changes) / len(changes),
             semantic_significance=max(c.semantic_significance for c in changes),
-            severity=max(c.severity for c in changes, key=lambda x: x.value),
+            severity=max((c.severity for c in changes), key=lambda x: x.value),
             category=first.category,
             metadata={"merged_count": len(changes), "original_changes": [c.to_dict() for c in changes]}
         )

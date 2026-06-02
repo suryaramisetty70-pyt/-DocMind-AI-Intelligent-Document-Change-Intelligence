@@ -5,9 +5,21 @@ Handles PDF document parsing with support for text and scanned PDFs
 
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-import pdfplumber
-from PIL import Image
 import io
+
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    pdfplumber = None
+    PDFPLUMBER_AVAILABLE = False
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    Image = None
+    PIL_AVAILABLE = False
 
 from .base_parser import (
     BaseDocumentParser,
@@ -54,41 +66,55 @@ class PDFParser(BaseDocumentParser):
         """Extract text from PDF"""
         text_parts = []
         
-        try:
-            with pdfplumber.open(file_path) as pdf:
-                metadata = pdf.metadata or {}
-                
-                for page_num, page in enumerate(pdf.pages, 1):
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_parts.append(f"<!-- Page {page_num} -->\n{page_text}")
+        if not PDFPLUMBER_AVAILABLE:
+            # Try PyPDF2 as fallback
+            try:
+                import PyPDF2
+                with open(file_path, 'rb') as f:
+                    reader = PyPDF2.PdfReader(f)
+                    for page in reader.pages:
+                        text = page.extract_text()
+                        if text:
+                            text_parts.append(text)
+            except ImportError:
+                return "PDF parsing not available. Install pdfplumber or PyPDF2."
+            except Exception:
+                return "Failed to parse PDF."
+        else:
+            try:
+                with pdfplumber.open(file_path) as pdf:
+                    metadata = pdf.metadata or {}
+                    
+                    for page_num, page in enumerate(pdf.pages, 1):
+                        page_text = page.extract_text()
+                        if page_text:
+                            text_parts.append(f"<!-- Page {page_num} -->\n{page_text}")
+            except Exception:
+                # Fallback to PyPDF2
+                try:
+                    import PyPDF2
+                    with open(file_path, 'rb') as f:
+                        reader = PyPDF2.PdfReader(f)
+                        for page in reader.pages:
+                            text = page.extract_text()
+                            if text:
+                                text_parts.append(text)
+                except Exception:
+                    pass
         
-        except Exception as e:
-            # If pdfplumber fails, try PyPDF2
-            import PyPDF2
-            with open(file_path, 'rb') as f:
-                reader = PyPDF2.PdfReader(f)
-                for page in reader.pages:
-                    text = page.extract_text()
-                    if text:
-                        text_parts.append(text)
-        
-        return "\n\n".join(text_parts)
+        return "\n\n".join(text_parts) if text_parts else ""
     
     def _extract_elements(self, file_path: Path) -> List[DocumentElement]:
         """Extract structured elements from PDF"""
         elements = []
         
+        if not PDFPLUMBER_AVAILABLE:
+            return elements
+        
         try:
             with pdfplumber.open(file_path) as pdf:
                 for page_num, page in enumerate(pdf.pages, 1):
-                    chars = page.chars
                     words = page.extract_words()
-                    
-                    # Extract text blocks
-                    lines = page.extract_lines()
-                    curves = page.curves
-                    rects = page.rects
                     
                     for word in words:
                         element = DocumentElement(
@@ -111,7 +137,7 @@ class PDFParser(BaseDocumentParser):
                                 page_number=page_num
                             )
                             elements.append(element)
-        except Exception as e:
+        except Exception:
             pass
         
         return elements
@@ -119,6 +145,9 @@ class PDFParser(BaseDocumentParser):
     def _extract_tables(self, file_path: Path) -> List[Dict[str, Any]]:
         """Extract tables from PDF"""
         tables = []
+        
+        if not PDFPLUMBER_AVAILABLE:
+            return tables
         
         try:
             with pdfplumber.open(file_path) as pdf:
@@ -132,7 +161,7 @@ class PDFParser(BaseDocumentParser):
                             "rows": len(table) if table else 0,
                             "columns": len(table[0]) if table else 0
                         })
-        except Exception as e:
+        except Exception:
             pass
         
         return tables

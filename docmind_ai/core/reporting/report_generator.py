@@ -11,6 +11,19 @@ import json
 from datetime import datetime
 import io
 
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
+    Border = None
+    Side = None
+    OPENPYXL_AVAILABLE = False
+
 
 class ReportFormat(Enum):
     """Supported report formats"""
