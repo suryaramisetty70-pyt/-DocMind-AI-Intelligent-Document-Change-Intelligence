@@ -35,7 +35,7 @@ html, body { color: #fff; background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2
 if "comparison_results" not in st.session_state:
     st.session_state.comparison_results = None
 
-API_BASE_URL = "http://127.0.0.1:8001"
+API_BASE_URL = "http://127.0.0.1:8002"
 
 def call_api(endpoint, files=None):
     url = f"{API_BASE_URL}{endpoint}"
