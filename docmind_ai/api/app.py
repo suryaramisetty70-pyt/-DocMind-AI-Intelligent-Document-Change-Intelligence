@@ -1,6 +1,5 @@
 """
 DocMind AI - FastAPI Application v3.0
-Easy-to-run API server
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -32,17 +31,12 @@ async def health():
 
 @app.post("/api/v1/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
-    """Upload and parse a document"""
     temp_path = TEMP_DIR / f"upload_{uuid.uuid4()}"
-
     try:
         content = file.file.read()
         temp_path.write_bytes(content)
-
         file_ext = Path(file.filename or "file").suffix.lower()
-        result = {"filename": file.filename, "file_type": file_ext, "status": "uploaded"}
-
-        return result
+        return {"filename": file.filename, "file_type": file_ext, "status": "uploaded"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -50,17 +44,47 @@ async def upload_document(file: UploadFile = File(...)):
             temp_path.unlink()
 
 @app.post("/api/v1/compare")
-async def compare_documents(original: UploadFile = File(...), modified: UploadFile = File(...)):
+async def compare_documents(original_file: UploadFile = File(...), modified_file: UploadFile = File(...)):
     """Compare two documents"""
     try:
-        orig_name = original.filename or "original"
-        mod_name = modified.filename or "modified"
-        message = f"Files compared: {orig_name} vs {mod_name}"
+        orig_name = original_file.filename or "original"
+        mod_name = modified_file.filename or "modified"
+        
+        # Read file contents
+        original_content = original_file.file.read().decode('utf-8', errors='ignore')
+        modified_content = modified_file.file.read().decode('utf-8', errors='ignore')
+        
+        # Simple comparison
+        changes = []
+        orig_lines = original_content.split('\n')
+        mod_lines = modified_content.split('\n')
+        
+        for i, (o, m) in enumerate(zip(orig_lines, mod_lines)):
+            if o != m:
+                changes.append({
+                    "change_id": i,
+                    "type": "modified",
+                    "original_content": o,
+                    "modified_content": m,
+                    "line_number": i + 1
+                })
+        
+        # Count differences
+        added = len([l for l in mod_lines if l not in orig_lines])
+        removed = len([l for l in orig_lines if l not in mod_lines])
+        
+        total_lines = max(len(orig_lines), len(mod_lines))
+        matches = total_lines - len(changes) if total_lines > 0 else 0
+        similarity = (matches / total_lines * 100) if total_lines > 0 else 100
+        
         return {
             "status": "success",
-            "message": message,
-            "similarity": 0.95,
-            "changes": []
+            "message": f"Compared: {orig_name} vs {mod_name}",
+            "similarity": round(similarity, 2),
+            "total_changes": len(changes),
+            "insertions": added,
+            "deletions": removed,
+            "changes": changes[:100]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
