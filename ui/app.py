@@ -47,7 +47,7 @@ st.markdown("""
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1.5rem;
         border-radius: 10px;
-        color: white;
+        color: #1a1a1a;
         text-align: center;
     }
     .stMetric {
@@ -56,7 +56,7 @@ st.markdown("""
         border-radius: 8px;
     }
     .highlight-box {
-        background-color: #fff3cd;
+        background-color: #fff3cd; color: #1a1a1a;
         border-left: 4px solid #ffc107;
         padding: 1rem;
         margin: 1rem 0;
@@ -67,7 +67,7 @@ st.markdown("""
         padding: 1rem;
     }
     .risk-medium {
-        background-color: #fff3cd;
+        background-color: #fff3cd; color: #1a1a1a;
         border-left: 4px solid #ffc107;
         padding: 1rem;
     }
@@ -783,3 +783,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+<style>
+/* Fix table text visibility */
+.stDataFrame td, .stDataFrame th {
+    color: #1a1a1a !important;
+    background-color: #ffffff !important;
+}
+/* Fix expander text */
+.streamlit-expanderHeader {
+    color: #1a1a1a !important;
+}
+/* Fix dataframe rows */
+.dataframe td {
+    color: #1a1a1a !important;
+}
+</style>
