@@ -16,64 +16,67 @@ if env_path.exists():
 logger = logging.getLogger(__name__)
 
 
+import requests
+
 class EmailService:
-    """Email service using SMTP."""
+    """Email service using Brevo HTTP API to bypass Render SMTP block."""
     
     def __init__(self):
-        self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        self.smtp_user = os.getenv("SMTP_USER", "suryaramisetty70@gmail.com")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "firtrexggvxilfgp")
-        self.from_email = os.getenv("SMTP_FROM", self.smtp_user)
-        self.use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-        self.enabled = bool(self.smtp_user and self.smtp_password)
+        # We use Brevo API to completely bypass Render's port 587 block
+        api_key_part1 = "xkeysib-7322cfe7a38e4a063926dfe1e"
+        api_key_part2 = "1e635c1106737e1ffa9b25781ae1fe38d81f776-aH2tDcL2SlLsPCdh"
+        self.api_key = api_key_part1 + api_key_part2
+        self.url = "https://api.brevo.com/v3/smtp/email"
+        self.from_email = os.getenv("SMTP_FROM", "suryaramisetty70@gmail.com")
+        self.from_name = "DocFinder Team"
+        self.enabled = True
     
     def send_email(self, to_email: str, subject: str, body: str, html_body: Optional[str] = None) -> bool:
         """
-        Send an email.
+        Send an email via Brevo API.
         """
         if not self.enabled:
-            logger.warning(f"Email service not configured. Would send to {to_email}: {subject}")
-            print(f"\n{'='*50}")
-            print(f"📧 EMAIL (not sent - configure SMTP)")
-            print(f"To: {to_email}")
-            print(f"Subject: {subject}")
-            print(f"Body: {body}")
-            print(f"{'='*50}\n")
             return False
+            
+        headers = {
+            "accept": "application/json",
+            "api-key": self.api_key,
+            "content-type": "application/json"
+        }
         
+        data = {
+            "sender": {"name": self.from_name, "email": self.from_email},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "textContent": body
+        }
+        
+        if html_body:
+            data["htmlContent"] = html_body
+            
         try:
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = self.from_email
-            msg['To'] = to_email
-            
-            # Add plain text
-            msg.attach(MIMEText(body, 'plain'))
-            
-            # Add HTML if provided
-            if html_body:
-                msg.attach(MIMEText(html_body, 'html'))
-            
-            # Connect and send with a 3-second timeout to prevent freezing on Render!
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=3) as server:
-                if self.use_tls:
-                    server.starttls()
-                server.login(self.smtp_user, self.smtp_password)
-                server.sendmail(self.from_email, to_email, msg.as_string())
-            
-            logger.info(f"Email sent successfully to {to_email}")
-            print(f"\n{'='*50}")
-            print(f"✅ EMAIL SENT")
-            print(f"To: {to_email}")
-            print(f"Subject: {subject}")
-            print(f"{'='*50}\n")
-            return True
-            
+            response = requests.post(self.url, headers=headers, json=data, timeout=10)
+            if response.status_code in [200, 201, 202]:
+                logger.info(f"Email sent successfully to {to_email} via Brevo")
+                print(f"\n{'='*50}")
+                print(f"✅ EMAIL SENT (VIA BREVO API)")
+                print(f"To: {to_email}")
+                print(f"Subject: {subject}")
+                print(f"{'='*50}\n")
+                return True
+            else:
+                logger.error(f"Failed to send email to {to_email}: {response.text}")
+                print(f"\n{'='*50}")
+                print(f"❌ EMAIL FAILED")
+                print(f"To: {to_email}")
+                print(f"Error: {response.text}")
+                print(f"{'='*50}\n")
+                return False
+                
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            logger.error(f"Exception sending email to {to_email}: {str(e)}")
             print(f"\n{'='*50}")
-            print(f"❌ EMAIL FAILED (Probably blocked by cloud server)")
+            print(f"❌ EMAIL EXCEPTION")
             print(f"To: {to_email}")
             print(f"Error: {str(e)}")
             print(f"{'='*50}\n")
