@@ -21,9 +21,13 @@ matplotlib
 # Reports
 reportlab
 
-# Frontend
-httpx
+# Security
+bcrypt
+
+# Network
 requests
+python-dotenv
+httpx
 
 # Utils
 python-dotenv
