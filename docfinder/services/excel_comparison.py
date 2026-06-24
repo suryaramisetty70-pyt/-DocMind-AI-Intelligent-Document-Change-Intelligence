@@ -5,7 +5,10 @@ try:
 except ImportError:
     pd = None
 import io
-from openpyxl import load_workbook
+try:
+    from openpyxl import load_workbook
+except ImportError:
+    pass
 
 
 class ExcelComparisonEngine:

@@ -2,7 +2,10 @@
 from typing import Dict, Any, List
 import io
 import numpy as np
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 try:
     import pytesseract
 except ImportError:
