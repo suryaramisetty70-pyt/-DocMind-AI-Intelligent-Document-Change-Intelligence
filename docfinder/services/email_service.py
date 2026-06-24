@@ -20,27 +20,17 @@ class EmailService:
     """Email service using SMTP."""
     
     def __init__(self):
-        import base64
         self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.smtp_user = os.getenv("SMTP_USER", "suryaramisetty70@gmail.com")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", base64.b64decode("Y2ppbm1jcHV0YW13Z3BsbA==").decode('utf-8'))
+        self.smtp_password = os.getenv("SMTP_PASSWORD", "firtrexggvxilfgp")
         self.from_email = os.getenv("SMTP_FROM", self.smtp_user)
         self.use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-        self.enabled = True
+        self.enabled = bool(self.smtp_user and self.smtp_password)
     
     def send_email(self, to_email: str, subject: str, body: str, html_body: Optional[str] = None) -> bool:
         """
         Send an email.
-        
-        Args:
-            to_email: Recipient email address
-            subject: Email subject
-            body: Plain text body
-            html_body: Optional HTML body
-            
-        Returns:
-            True if sent successfully, False otherwise
         """
         if not self.enabled:
             logger.warning(f"Email service not configured. Would send to {to_email}: {subject}")
@@ -65,8 +55,8 @@ class EmailService:
             if html_body:
                 msg.attach(MIMEText(html_body, 'html'))
             
-            # Connect and send
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            # Connect and send with a 3-second timeout to prevent freezing on Render!
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=3) as server:
                 if self.use_tls:
                     server.starttls()
                 server.login(self.smtp_user, self.smtp_password)
@@ -83,7 +73,7 @@ class EmailService:
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
             print(f"\n{'='*50}")
-            print(f"❌ EMAIL FAILED")
+            print(f"❌ EMAIL FAILED (Probably blocked by cloud server)")
             print(f"To: {to_email}")
             print(f"Error: {str(e)}")
             print(f"{'='*50}\n")

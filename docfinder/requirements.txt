@@ -4,7 +4,6 @@
 fastapi
 uvicorn[standard]
 python-multipart
-python-jose[cryptography]
 
 # Database
 sqlalchemy>=2.0.25
@@ -21,8 +20,9 @@ matplotlib
 # Reports
 reportlab
 
-# Security
-bcrypt
+# Security & Auth
+passlib[bcrypt]
+PyJWT
 
 # Network
 requests
