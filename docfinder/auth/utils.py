@@ -3,13 +3,10 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 import jwt
-from passlib.context import CryptContext
-
 # ═══════════════════════════════════════════════════════════
 # PASSWORD HASHING CONFIG
 # ═══════════════════════════════════════════════════════════
-# Uses bcrypt algorithm for secure password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 # ═══════════════════════════════════════════════════════════
 # JWT CONFIGURATION
@@ -24,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a plain password against its hash.
+    Verify a plain password against its hash using pure bcrypt.
     
     Args:
         plain_password: The password user entered (e.g., "secret123")
@@ -33,11 +30,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except ValueError:
+        return False
 
 def get_password_hash(password: str) -> str:
     """
-    Hash a password using bcrypt.
+    Hash a password using pure bcrypt.
     
     Args:
         password: The plain text password
@@ -45,7 +45,7 @@ def get_password_hash(password: str) -> str:
     Returns:
         Hashed password string
     """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 # ═══════════════════════════════════════════════════════════
 # JWT TOKEN FUNCTIONS
