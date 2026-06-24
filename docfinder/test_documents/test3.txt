@@ -1,0 +1,17 @@
+Invoice Document - Version 1
+==============================
+
+Invoice Number: INV-2024-001
+Date: June 23, 2024
+Customer: John Doe
+
+Items:
+1. Product A - $100.00
+2. Product B - $200.00
+3. Product C - $150.00
+
+Subtotal: $450.00
+Tax (10%): $45.00
+Grand Total: $495.00
+
+Payment Terms: Net 30

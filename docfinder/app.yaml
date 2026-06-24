@@ -1,0 +1,40 @@
+# render.yaml - DocFinder Deployment Configuration
+# For deploying to Render.com (24/7 hosting)
+
+services:
+  # Backend API Service
+  - type: web
+    name: docfinder-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    healthCheckInterval: 30
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        value: suryaramisetty70@gmail.com
+      - key: SMTP_PASSWORD
+        value: firtrexggvxilfgp
+      - key: SMTP_FROM
+        value: suryaramisetty70@gmail.com
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+disks:
+  - name: docfinder-data
+    mountPath: /data
+    sizeGB: 1

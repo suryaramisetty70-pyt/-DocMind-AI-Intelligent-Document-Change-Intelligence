@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.log
+*.tar.gz
+venv/
+nohup.out
+*.db
+.env
+__pycache__/
+*.pyc
+.DS_Store

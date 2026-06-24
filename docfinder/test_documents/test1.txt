@@ -1,0 +1,14 @@
+DocFinder Test Document 1
+========================
+
+This is the first test document for comparing documents.
+
+Features tested:
+- Text comparison
+- Similarity detection
+- Change highlighting
+
+The quick brown fox jumps over the lazy dog.
+Pack my box with five dozen liquor jugs.
+
+Thank you for using DocFinder!

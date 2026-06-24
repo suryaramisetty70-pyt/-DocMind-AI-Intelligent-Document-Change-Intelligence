@@ -1,0 +1,5 @@
+SKU,Product,Category,Price,Stock
+SKU001,Laptop,Electronics,999.99,50
+SKU002,Mouse,Electronics,29.99,200
+SKU003,Keyboard,Electronics,79.99,150
+SKU004,Monitor,Electronics,299.99,75

@@ -1,0 +1,18 @@
+Invoice Document - Version 2
+==============================
+
+Invoice Number: INV-2024-002
+Date: June 24, 2024
+Customer: Jane Smith
+
+Items:
+1. Product A - $100.00
+2. Product B - $250.00 (Price updated)
+3. Product D - $175.00 (New item added)
+
+Subtotal: $525.00
+Tax (10%): $52.50
+Grand Total: $577.50
+
+Payment Terms: Net 15 (Updated)
+Notes: Rush order

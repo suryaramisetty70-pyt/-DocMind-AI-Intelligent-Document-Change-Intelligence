@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: docfinder-ai
+    env: docker
+    plan: free
+    dockerCommand: ./start.sh

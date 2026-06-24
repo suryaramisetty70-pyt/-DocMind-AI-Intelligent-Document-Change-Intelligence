@@ -1,0 +1,34 @@
+# DocFinder Requirements
+
+# Backend
+fastapi
+uvicorn[standard]
+python-multipart
+python-jose[cryptography]
+
+# Database
+sqlalchemy>=2.0.25
+aiosqlite
+
+# Document Processing
+PyPDF2
+pdfplumber
+
+# Visualization
+plotly
+matplotlib
+
+# Reports
+reportlab
+
+# Frontend
+httpx
+requests
+
+# Utils
+python-dotenv
+bcrypt
+
+# AI APIs
+groq
+google-generativeai

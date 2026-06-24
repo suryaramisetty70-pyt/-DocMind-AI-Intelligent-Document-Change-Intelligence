@@ -1,0 +1,15 @@
+DocFinder Test Document 2
+========================
+
+This is the second test document for comparing documents.
+
+Features tested:
+- Text comparison
+- Similarity detection
+- Change highlighting
+- NEW: Advanced detection
+
+The quick brown fox jumps over the lazy dog.
+Pack my box with five dozen liquor jugs.
+
+Thank you for using DocFinder Pro!

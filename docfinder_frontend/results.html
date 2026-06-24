@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results · DiffLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .score-card{background:var(--grad-dark);border-radius:24px;padding:2.5rem;color:#fff;display:grid;grid-template-columns:auto 1fr auto;gap:2.5rem;align-items:center;margin-bottom:1.5rem;position:relative;overflow:hidden}
+        .score-card::before{content:"";position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:var(--grad-accent);filter:blur(100px);opacity:.3;border-radius:50%}
+        .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;position:relative;z-index:1}
+        .stat{padding:1rem;border-radius:12px;background:rgba(255,255,255,.06);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
+        .stat .n{font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+        .stat .l{font-size:.75rem;opacity:.7;margin-top:.25rem}
+        .diff-wrap{display:grid;grid-template-columns:1fr 380px;gap:1.5rem}
+        .diff-view{background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden}
+        .diff-head{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fafbfc}
+        .diff-head h3{font-weight:700;font-size:1rem}
+        .diff-tabs{display:flex;gap:.25rem}
+        .diff-tab{padding:.4rem .8rem;border-radius:8px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer}
+        .diff-tab.active{background:var(--primary);color:#fff}
+        .diff-body{padding:0;font-family:'JetBrains Mono',monospace;font-size:.85rem;line-height:1.7;max-height:520px;overflow:auto}
+        .side-panel{display:flex;flex-direction:column;gap:1rem}
+        .legend{padding:1.25rem;background:#fff;border-radius:14px;border:1px solid var(--border)}
+        .legend h4{font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+        .leg-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+        .leg-item:last-child{border:none}
+        .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.5rem;vertical-align:middle}
+        .ai-card{padding:1.5rem;background:var(--grad-dark);color:#fff;border-radius:16px;position:relative;overflow:hidden}
+        .ai-card::before{content:"";position:absolute;top:-30%;right:-30%;width:200px;height:200px;background:var(--grad-accent);filter:blur(60px);opacity:.4;border-radius:50%}
+        .ai-card h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:.75rem;position:relative}
+        .ai-card p{font-size:.9rem;line-height:1.65;opacity:.9;position:relative}
+        .export{padding:1.25rem;background:#fff;border-radius:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem}
+        @media(max-width:1100px){.diff-wrap{grid-template-columns:1fr}.score-card{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                DiffLab
+            </div>
+            
+            <div class="s-section">Workspace</div>
+            <a href="dashboard.html" class="s-link">⚡ New Comparison</a>
+            <a href="results.html" class="s-link active">📊 Results</a>
+            <a href="history.html" class="s-link">🕓 History</a>
+            <a href="#" class="s-link">⭐ Saved</a>
+            
+            <div class="s-user">
+                <div class="avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
+                    <div style="font-size:.8rem;opacity:.7">Free plan</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>Comparison Results</h1>
+                    <p id="fileNames">Comparing documents...</p>
+                </div>
+                <a href="dashboard.html"><button class="btn btn-primary">+ New Comparison</button></a>
+            </div>
+            
+            <div class="score-card animate-in">
+                <div class="score-ring">
+                    <svg width="160" height="160">
+                        <defs>
+                            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#10b981"/>
+                                <stop offset="100%" style="stop-color:#3b82f6"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12"/>
+                        <circle cx="80" cy="80" r="70" fill="none" stroke="url(#g)" stroke-width="12" 
+                                stroke-dasharray="440" stroke-dashoffset="88" stroke-linecap="round"
+                                style="transform:rotate(-90deg);transform-origin:center" id="scoreCircle"/>
+                    </svg>
+                    <div class="score-num" id="scoreNum">80%</div>
+                </div>
+                <div class="score-info">
+                    <h1 id="scoreLabel">Highly similar</h1>
+                    <p id="timeAgo">Compared just now</p>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat">
+                        <div class="n" style="color:var(--success)" id="additions">+24</div>
+                        <div class="l">Additions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="n" style="color:var(--error)" id="deletions">-12</div>
+                        <div class="l">Deletions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="n" style="color:var(--warning)" id="modifications">~8</div>
+                        <div class="l">Modified</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="diff-wrap">
+                <div class="diff-view animate-in delay-1">
+                    <div class="diff-head">
+                        <h3>Unified Diff</h3>
+                        <div class="diff-tabs">
+                            <button class="diff-tab active">Unified</button>
+                            <button class="diff-tab">Split</button>
+                            <button class="diff-tab">Inline</button>
+                        </div>
+                    </div>
+                    <div class="diff-body" id="diffBody">
+                        <!-- Diff lines will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="side-panel">
+                    <div class="legend animate-in delay-2">
+                        <h4>Summary</h4>
+                        <div class="leg-item">
+                            <span><span class="dot" style="background:#10b981"></span>Additions</span>
+                            <strong style="color:#10b981" id="legAdd">24</strong>
+                        </div>
+                        <div class="leg-item">
+                            <span><span class="dot" style="background:#ef4444"></span>Deletions</span>
+                            <strong style="color:#ef4444" id="legDel">12</strong>
+                        </div>
+                        <div class="leg-item">
+                            <span><span class="dot" style="background:#f59e0b"></span>Modifications</span>
+                            <strong style="color:#f59e0b" id="legMod">8</strong>
+                        </div>
+                        <div class="leg-item">
+                            <span><span class="dot" style="background:#94a3b8"></span>Unchanged</span>
+                            <strong id="legSame">186</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-card animate-in delay-3">
+                        <h4>✨ AI Analysis</h4>
+                        <p id="aiAnalysis">Analyzing...</p>
+                    </div>
+                    
+                    <div class="export animate-in delay-4">
+                        <button class="btn btn-dark" onclick="exportPDF()">⬇️ Export as PDF</button>
+                        <button class="btn btn-ghost" onclick="exportJSON()">⬇️ Export as JSON</button>
+                        <button class="btn btn-ghost" onclick="shareLink()">🔗 Share link</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Use relative URLs - proxy server handles API routing
+        const API_URL = '';
+        
+        // Check auth
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'login.html';
+        
+        const user = localStorage.getItem('user');
+        document.getElementById('userName').textContent = user || 'User';
+        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
+        
+        // Load results
+        const result = JSON.parse(localStorage.getItem('lastResult') || '{}');
+        const texts = JSON.parse(localStorage.getItem('lastTexts') || '{}');
+        
+        if (result.results) {
+            const r = result.results;
+            const score = Math.round((r.similarity_score || 0) * 100);
+            
+            // Update score display
+            document.getElementById('scoreNum').textContent = score + '%';
+            document.getElementById('scoreCircle').style.strokeDashoffset = 440 - (440 * score / 100);
+            
+            // Score label
+            let label = 'Different';
+            if (score >= 80) label = 'Highly similar';
+            else if (score >= 60) label = 'Moderately similar';
+            else if (score >= 40) label = 'Somewhat similar';
+            document.getElementById('scoreLabel').textContent = label;
+            
+            // Stats
+            const adds = r.total_additions || 0;
+            const dels = r.total_deletions || 0;
+            const mods = r.total_modifications || 0;
+            
+            document.getElementById('additions').textContent = '+' + adds;
+            document.getElementById('deletions').textContent = '-' + dels;
+            document.getElementById('modifications').textContent = '~' + mods;
+            document.getElementById('legAdd').textContent = adds;
+            document.getElementById('legDel').textContent = dels;
+            document.getElementById('legMod').textContent = mods;
+            
+            // Generate diff
+            generateDiff(texts.text1 || '', texts.text2 || '', r);
+            
+            // AI analysis
+            if (r.ai_analysis && r.ai_analysis.key_differences) {
+                document.getElementById('aiAnalysis').textContent = r.ai_analysis.key_differences;
+            } else {
+                document.getElementById('aiAnalysis').textContent = 'Key differences detected between the documents.';
+            }
+        } else {
+            document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No results found. Please run a comparison first.</p>';
+        }
+        
+        function generateDiff(original, modified, result) {
+            const lines1 = (original || '').split('\n');
+            const lines2 = (modified || '').split('\n');
+            
+            const adds = result.additions || [];
+            const dels = result.deletions || [];
+            const addSet = new Set(adds.map(a => typeof a === 'string' ? a : a.word));
+            const delSet = new Set(dels.map(d => typeof d === 'string' ? d : d.word));
+            
+            let html = '';
+            let lineNum = 1;
+            
+            // Simple diff display
+            const allLines = [...new Set([...lines1, ...lines2])];
+            
+            allLines.forEach(line => {
+                const isAdd = addSet.has(line);
+                const isDel = delSet.has(line);
+                
+                if (isAdd) {
+                    html += `<div class="line add"><span class="ln">${lineNum++}</span><span class="c">${escapeHtml(line)}</span></div>`;
+                } else if (isDel) {
+                    html += `<div class="line del"><span class="ln">-</span><span class="c">${escapeHtml(line)}</span></div>`;
+                } else {
+                    html += `<div class="line"><span class="ln">${lineNum++}</span><span class="c">${escapeHtml(line)}</span></div>`;
+                }
+            });
+            
+            if (!html) {
+                html = '<p style="padding:2rem;text-align:center;color:var(--muted)">No differences found.</p>';
+            }
+            
+            document.getElementById('diffBody').innerHTML = html;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function exportPDF() {
+            showToast('PDF export coming soon!', 'success');
+        }
+        
+        function exportJSON() {
+            const data = localStorage.getItem('lastResult');
+            const blob = new Blob([data || '{}'], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'comparison-result.json';
+            a.click();
+            showToast('Exported!', 'success');
+        }
+        
+        function shareLink() {
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Link copied!', 'success');
+        }
+        
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast') || document.createElement('div');
+            toast.id = 'toast';
+            toast.className = `toast show ${type}`;
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;bottom:2rem;right:2rem;padding:1rem 1.5rem;border-radius:12px;color:#fff;font-weight:500;z-index:200';
+            toast.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

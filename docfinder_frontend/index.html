@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiffLab - Smart Document Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .hero{position:relative;min-height:88vh;display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;padding:4rem 6vw;align-items:center;overflow:hidden}
+        .hero::before{content:"";position:absolute;top:-20%;right:-10%;width:600px;height:600px;background:var(--grad-accent);filter:blur(120px);opacity:.18;border-radius:50%;z-index:0}
+        .eyebrow{display:inline-flex;gap:.5rem;align-items:center;padding:.4rem .9rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.8rem;font-weight:600;margin-bottom:1.5rem}
+        .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.2);animation:pulse-ring 1.5s infinite}
+        .hero h1{font-size:clamp(2.5rem,5vw,4.2rem);line-height:1.05;font-weight:900;letter-spacing:-.03em;margin-bottom:1.25rem;position:relative;z-index:1}
+        .hero h1 .grad{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .hero p{font-size:1.15rem;color:var(--muted);max-width:520px;margin-bottom:2rem;position:relative;z-index:1}
+        .hero-cta{display:flex;gap:1rem;position:relative;z-index:1}
+        #canvas3d{width:100%;height:520px;position:relative;z-index:1}
+        .features{padding:5rem 6vw;background:#fff}
+        .section-head{text-align:center;margin-bottom:3rem}
+        .section-head h2{font-size:2.5rem;font-weight:800;letter-spacing:-.02em}
+        .section-head p{color:var(--muted);margin-top:.75rem}
+        .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;perspective:1200px}
+        .f-card{padding:2rem;border-radius:20px;background:#fff;border:1px solid var(--border);transition:all .4s cubic-bezier(.4,0,.2,1);cursor:pointer;position:relative;overflow:hidden}
+        .f-card:hover{transform:translateY(-12px);box-shadow:var(--shadow-glow)}
+        .f-icon{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;margin-bottom:1.25rem;color:#fff}
+        .f-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.5rem}
+        .f-card p{font-size:.9rem;color:var(--muted);line-height:1.6}
+        @media(max-width:900px){.hero{grid-template-columns:1fr;padding:3rem 5vw}#canvas3d{height:340px}}
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="brand">
+            <div class="brand-mark">D</div>
+            DiffLab
+        </div>
+        <div style="display:flex;gap:1rem;align-items:center">
+            <a href="login.html"><button class="btn btn-ghost">Sign in</button></a>
+            <a href="register.html"><button class="btn btn-primary">Get started →</button></a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div>
+            <div class="eyebrow">✨ AI-Powered · v2.0</div>
+            <h1>Compare anything.<br><span class="grad">See every change.</span></h1>
+            <p>DiffLab analyzes text, PDFs, spreadsheets and CSVs side-by-side — surfacing every addition, deletion, and modification with AI-grade clarity.</p>
+            <div class="hero-cta">
+                <a href="register.html"><button class="btn btn-primary">Start comparing free</button></a>
+                <a href="#features"><button class="btn btn-ghost">See how it works</button></a>
+            </div>
+        </div>
+        <canvas id="canvas3d"></canvas>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-head">
+            <h2>Built for every format</h2>
+            <p>One workspace. Four powerful comparison engines.</p>
+        </div>
+        <div class="feature-grid">
+            <div class="f-card card-3d">
+                <div class="f-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">📝</div>
+                <h3>Text Comparison</h3>
+                <p>Line-by-line semantic diffing with word-level precision and syntax awareness.</p>
+            </div>
+            <div class="f-card card-3d">
+                <div class="f-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">📄</div>
+                <h3>PDF Documents</h3>
+                <p>Extract and compare PDFs preserving layout context, tables, and embedded text.</p>
+            </div>
+            <div class="f-card card-3d">
+                <div class="f-icon" style="background:linear-gradient(135deg,#10b981,#047857)">📊</div>
+                <h3>Excel Sheets</h3>
+                <p>Cell-level diffs across worksheets — formulas, values, and formatting tracked.</p>
+            </div>
+            <div class="f-card card-3d">
+                <div class="f-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309)">📈</div>
+                <h3>CSV Data</h3>
+                <p>Row-aware comparison with schema detection and intelligent key matching.</p>
+            </div>
+        </div>
+    </section>
+
+    <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+    <script type="module">
+        import * as THREE from 'three';
+        const el=document.getElementById('canvas3d');
+        const scene=new THREE.Scene();
+        const camera=new THREE.PerspectiveCamera(50,el.clientWidth/el.clientHeight,.1,100);camera.position.z=6;
+        const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
+        renderer.setSize(el.clientWidth,el.clientHeight);renderer.setPixelRatio(devicePixelRatio);el.appendChild(renderer.domElement);
+
+        const docs=[];
+        const colors=[0x3b82f6,0xec4899,0x10b981,0xf59e0b];
+        for(let i=0;i<4;i++){
+          const g=new THREE.BoxGeometry(1.6,2.2,.08);
+          const m=new THREE.MeshStandardMaterial({color:colors[i],roughness:.3,metalness:.4,emissive:colors[i],emissiveIntensity:.15});
+          const mesh=new THREE.Mesh(g,m);
+          mesh.position.set(Math.cos(i/4*Math.PI*2)*1.8,Math.sin(i/4*Math.PI*2)*.6,Math.sin(i)*.5);
+          mesh.userData={base:mesh.position.clone(),phase:i};
+          scene.add(mesh);docs.push(mesh);
+        }
+        scene.add(new THREE.AmbientLight(0xffffff,.6));
+        const d=new THREE.DirectionalLight(0xffffff,1.2);d.position.set(3,5,4);scene.add(d);
+        const p=new THREE.PointLight(0xec4899,2,10);p.position.set(-3,-2,3);scene.add(p);
+
+        let mx=0,my=0;
+        addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*.5;my=(e.clientY/innerHeight-.5)*.5});
+        function loop(t){
+          t*=.001;
+          docs.forEach((d,i)=>{
+            d.rotation.y=t*.5+i;d.rotation.x=Math.sin(t+i)*.3;
+            d.position.y=d.userData.base.y+Math.sin(t*1.5+i)*.3;
+          });
+          scene.rotation.y+=(mx-scene.rotation.y)*.05;
+          scene.rotation.x+=(my-scene.rotation.x)*.05;
+          renderer.render(scene,camera);requestAnimationFrame(loop);
+        }
+        loop(0);
+        addEventListener('resize',()=>{camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight)});
+    </script>
+</body>
+</html>
