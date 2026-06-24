@@ -27,9 +27,7 @@ class EmailService:
         self.smtp_password = os.getenv("SMTP_PASSWORD", base64.b64decode("Y2ppbm1jcHV0YW13Z3BsbA==").decode('utf-8'))
         self.from_email = os.getenv("SMTP_FROM", self.smtp_user)
         self.use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-        # Render free tier blocks outbound SMTP port 587, causing a timeout.
-        # Force disable to prevent the backend from hanging.
-        self.enabled = False
+        self.enabled = True
     
     def send_email(self, to_email: str, subject: str, body: str, html_body: Optional[str] = None) -> bool:
         """
