@@ -2,7 +2,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY", "docfinder-secret-key-change-in-production-2024")
