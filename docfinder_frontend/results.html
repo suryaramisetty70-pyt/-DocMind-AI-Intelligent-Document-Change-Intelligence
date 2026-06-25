@@ -289,6 +289,10 @@
             const displayElement = document.getElementById('diffBody');
             
             if (mode === 'granular') {
+                if (typeof Diff === 'undefined') {
+                    displayElement.innerHTML = '<div style="padding:2rem;color:red;">Error: jsdiff failed to load.</div>';
+                    return;
+                }
                 // Execute Pro-Level granular diff using jsdiff (Character level)
                 const diff = Diff.diffChars(currentOriginal, currentModified);
                 const container = document.createElement('div');
@@ -308,15 +312,24 @@
                 displayElement.innerHTML = '';
                 displayElement.appendChild(container);
             } else {
+                if (typeof Diff === 'undefined' || typeof Diff2Html === 'undefined') {
+                    displayElement.innerHTML = '<div style="padding:2rem;color:red;">Error: diff engines failed to load. Try hard-refreshing.</div>';
+                    return;
+                }
                 // Use diff2html for professional side-by-side or unified view
-                const patch = Diff.createTwoFilesPatch("Source A", "Source B", currentOriginal, currentModified);
-                const diffHtml = Diff2Html.html(patch, { 
-                    drawFileList: false, 
-                    matching: 'lines', 
-                    outputFormat: mode,
-                    renderNothingWhenEmpty: false
-                });
-                displayElement.innerHTML = diffHtml;
+                try {
+                    const patch = Diff.createTwoFilesPatch("Source A", "Source B", currentOriginal, currentModified);
+                    const diffHtml = Diff2Html.html(patch, { 
+                        drawFileList: false, 
+                        matching: 'lines', 
+                        outputFormat: mode,
+                        renderNothingWhenEmpty: false
+                    });
+                    displayElement.innerHTML = diffHtml;
+                } catch (e) {
+                    displayElement.innerHTML = `<div style="padding: 2rem; color: red;">Error generating diff: ${e.message}<br>${e.stack}</div>`;
+                    console.error("Diff Error:", e);
+                }
             }
         }
         

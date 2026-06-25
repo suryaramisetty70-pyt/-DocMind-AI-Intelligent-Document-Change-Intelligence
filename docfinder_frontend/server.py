@@ -60,7 +60,7 @@ class DocFinderHandler(http.server.SimpleHTTPRequestHandler):
                 method=method
             )
             
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with urllib.request.urlopen(req, timeout=180) as response:
                 self.send_response(response.status)
                 for key, value in response.headers.items():
                     if key.lower() not in ['transfer-encoding', 'connection', 'content-length']:
