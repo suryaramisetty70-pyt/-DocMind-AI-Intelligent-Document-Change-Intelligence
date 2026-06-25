@@ -96,7 +96,17 @@ class DocFinderHandler(http.server.SimpleHTTPRequestHandler):
         # Serve index.html for root
         if self.path == '/':
             self.path = '/index.html'
-        return super().do_GET()
+            
+        # Call super, but we need to inject cache headers
+        super().do_GET()
+        
+    def end_headers(self):
+        # Inject cache busting for HTML files
+        if self.path.endswith('.html') or self.path.endswith('.js') or self.path.endswith('.css'):
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+        super().end_headers()
     
     def do_POST(self):
         if self.path.startswith('/api/'):
@@ -136,7 +146,7 @@ if __name__ == "__main__":
 ╚══════════════════════════════════════════════════════════╝
     """)
     
-    with socketserver.TCPServer(("", PORT), DocFinderHandler) as httpd:
+    with socketserver.ThreadingTCPServer(("", PORT), DocFinderHandler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
