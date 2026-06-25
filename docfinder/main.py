@@ -24,6 +24,7 @@ from auth.utils import verify_password, get_password_hash, create_access_token, 
 from services.text_comparison import TextComparisonEngine
 from services.pdf_comparison import PDFComparisonEngine
 from services.excel_comparison import ExcelComparisonEngine
+from services.image_comparison import ImageComparisonEngine
 from services.ai_engine import AIEngine
 from services.report_generator import ReportGenerator
 from services.email_service import email_service
@@ -497,6 +498,52 @@ async def compare_csv(
             file2_type="csv",
             comparison_type="csv",
             similarity_score=result.get("similarity_score", 0),
+            status="completed",
+            results=result
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+        
+        return {"comparison_id": comparison.id, "results": result}
+    
+    finally:
+        os.remove(file1_path)
+        os.remove(file2_path)
+
+
+@app.post("/api/compare/image")
+async def compare_image(
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Compare two Image files."""
+    file1_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file1.filename}")
+    file2_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file2.filename}")
+    
+    with open(file1_path, "wb") as f:
+        shutil.copyfileobj(file1.file, f)
+    with open(file2_path, "wb") as f:
+        shutil.copyfileobj(file2.file, f)
+    
+    try:
+        with open(file1_path, "rb") as f:
+            img1_content = f.read()
+        with open(file2_path, "rb") as f:
+            img2_content = f.read()
+        
+        result = ImageComparisonEngine.compare_images(img1_content, img2_content)
+        
+        comparison = Comparison(
+            user_id=current_user.id if current_user else 0,
+            file1_name=file1.filename,
+            file2_name=file2.filename,
+            file1_type="image",
+            file2_type="image",
+            comparison_type="image",
+            similarity_score=result.get("overall_similarity", 0),
             status="completed",
             results=result
         )

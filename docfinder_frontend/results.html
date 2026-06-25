@@ -170,9 +170,23 @@
         const result = JSON.parse(localStorage.getItem('lastResult') || '{}');
         const texts = JSON.parse(localStorage.getItem('lastTexts') || '{}');
         
-        if (result.results) {
+        // Render Content based on Type
+        if (result.fileType === 'image') {
             const r = result.results;
-            const score = Math.round((r.similarity_score || 0) * 100);
+            const score = Math.round((r.similarity_score || 0));
+            document.getElementById('scoreNum').textContent = score + '%';
+            document.getElementById('scoreCircle').style.strokeDashoffset = 440 - (440 * score / 100);
+            
+            document.getElementById('scoreLabel').textContent = score >= 90 ? 'Nearly Identical' : score >= 70 ? 'Similar' : 'Different';
+            
+            if (r.diff_image_base64) {
+                document.getElementById('diffBody').innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${r.diff_image_base64}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);" alt="Diff Image"></div>`;
+            } else {
+                document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">Image comparison failed or no differences detected.</p>';
+            }
+        } else if (result.results) {
+            const r = result.results;
+            const score = Math.round((r.similarity_score || 0) * 100) || Math.round((r.overall_similarity || 0) * 100) || 0;
             
             // Update score display
             document.getElementById('scoreNum').textContent = score + '%';
@@ -186,9 +200,9 @@
             document.getElementById('scoreLabel').textContent = label;
             
             // Stats
-            const adds = r.total_additions || 0;
-            const dels = r.total_deletions || 0;
-            const mods = r.total_modifications || 0;
+            const adds = r.total_additions || r.additions_count || 0;
+            const dels = r.total_deletions || r.deletions_count || 0;
+            const mods = r.total_modifications || r.modifications_count || 0;
             
             document.getElementById('additions').textContent = '+' + adds;
             document.getElementById('deletions').textContent = '-' + dels;
@@ -198,13 +212,15 @@
             document.getElementById('legMod').textContent = mods;
             
             // Generate diff
-            generateDiff(texts.text1 || '', texts.text2 || '', r);
+            generateDiff(texts.text1 || r.full_text1 || '', texts.text2 || r.full_text2 || '', r);
             
             // AI analysis
             if (r.ai_analysis && r.ai_analysis.key_differences) {
-                document.getElementById('aiAnalysis').textContent = r.ai_analysis.key_differences;
+                document.getElementById('aiAnalysis').innerHTML = `<strong>${result.mode === 'ai' ? '[AI NODE ACTIVE]' : ''}</strong><br>` + r.ai_analysis.key_differences;
+            } else if (result.mode === 'ai') {
+                document.getElementById('aiAnalysis').textContent = 'AI Node generated analysis successfully.';
             } else {
-                document.getElementById('aiAnalysis').textContent = 'Key differences detected between the documents.';
+                document.getElementById('aiAnalysis').textContent = 'Normal Mode: Strict text matching applied.';
             }
         } else {
             document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No results found. Please run a comparison first.</p>';

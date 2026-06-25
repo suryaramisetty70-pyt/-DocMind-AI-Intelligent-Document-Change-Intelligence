@@ -18,7 +18,31 @@
         .opts input[type="checkbox"]{width:auto}
         textarea.drop{width:100%;min-height:280px;resize:vertical;border:2px dashed var(--border);border-radius:16px;padding:1.5rem;font:inherit;font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6;background:#fff}
         textarea.drop:focus{outline:none;border-color:var(--accent);border-style:solid}
-        .ai-toggle{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(59,130,246,.08);border-radius:99px;color:var(--accent);font-weight:600;font-size:.85rem}
+        .ai-toggle{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(59,130,246,.08);border-radius:99px;color:var(--accent);font-weight:600;font-size:.85rem;cursor:pointer}
+        
+        /* File input overlay */
+        .file-upload-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .file-upload-overlay:hover {
+            border-color: var(--accent);
+            background: #eff6ff;
+        }
+        .card { position: relative; }
+        .hidden { display: none !important; }
+        .mode-toggles { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .mode-btn { padding: 0.5rem 1.5rem; border-radius: 99px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+        .mode-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
     </style>
 </head>
 <body>
@@ -32,12 +56,9 @@
             <div class="s-section">Workspace</div>
             <a href="dashboard.html" class="s-link active">⚡ New Comparison</a>
             <a href="history.html" class="s-link">🕓 History</a>
-            <a href="#" class="s-link">⭐ Saved</a>
-            <a href="#" class="s-link">📁 Projects</a>
             
             <div class="s-section">Account</div>
             <a href="#" class="s-link">⚙️ Settings</a>
-            <a href="#" class="s-link">💬 Support</a>
             
             <div class="s-user">
                 <div class="avatar" id="userAvatar">A</div>
@@ -54,7 +75,11 @@
                     <h1>New comparison</h1>
                     <p>Choose a format and upload your documents.</p>
                 </div>
-                <button class="btn btn-ghost">+ Import from URL</button>
+            </div>
+
+            <div class="mode-toggles">
+                <button class="mode-btn active" id="normalNodeBtn" onclick="setMode('normal')">⚡ Normal Node</button>
+                <button class="mode-btn" id="aiNodeBtn" onclick="setMode('ai')">✨ AI Node</button>
             </div>
             
             <div class="type-tabs" id="tabs">
@@ -62,42 +87,59 @@
                 <button class="type-tab" data-type="pdf">📄 PDF</button>
                 <button class="type-tab" data-type="excel">📊 Excel</button>
                 <button class="type-tab" data-type="csv">📈 CSV</button>
+                <button class="type-tab" data-type="image">🖼️ Image</button>
             </div>
             
             <div class="compare-grid">
+                <!-- Source A -->
                 <div class="card animate-in">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
                         <h3 style="font-weight:700">Source A</h3>
                         <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.7rem;font-weight:700">ORIGINAL</span>
                     </div>
                     <textarea class="drop" id="text1" placeholder="Paste your original text here..."></textarea>
+                    
+                    <div class="file-upload-overlay hidden" id="fileOverlay1" onclick="document.getElementById('file1').click()">
+                        <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
+                        <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
+                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc1">Supports PDF, Excel, CSV, Images</span>
+                    </div>
+                    <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
+                    
                     <div id="file1Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                        <p id="file1Name"></p>
-                        <button onclick="clearFile(1)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove</button>
+                        <p id="file1Name" style="font-weight:600;margin-bottom:0.5rem"></p>
+                        <button onclick="clearFile(1)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
                     </div>
                 </div>
+                
+                <!-- Source B -->
                 <div class="card animate-in delay-1">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
                         <h3 style="font-weight:700">Source B</h3>
                         <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(236,72,153,.1);color:#ec4899;font-size:.7rem;font-weight:700">MODIFIED</span>
                     </div>
                     <textarea class="drop" id="text2" placeholder="Paste your modified text here..."></textarea>
+                    
+                    <div class="file-upload-overlay hidden" id="fileOverlay2" onclick="document.getElementById('file2').click()">
+                        <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
+                        <span style="font-weight:600;color:var(--text)">Click to upload Source B</span>
+                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF, Excel, CSV, Images</span>
+                    </div>
+                    <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
+                    
                     <div id="file2Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                        <p id="file2Name"></p>
-                        <button onclick="clearFile(2)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove</button>
+                        <p id="file2Name" style="font-weight:600;margin-bottom:0.5rem"></p>
+                        <button onclick="clearFile(2)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
                     </div>
                 </div>
             </div>
             
             <div class="action-bar animate-in delay-2">
-                <div class="opts">
+                <div class="opts" id="textOpts">
                     <label><input type="checkbox" id="ignoreWs" checked> Ignore whitespace</label>
                     <label><input type="checkbox" id="caseSens" checked> Case sensitive</label>
-                    <div class="ai-toggle" id="aiToggle" onclick="toggleAI()">
-                        <span>✨</span> AI analysis
-                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="compareTexts()">⚡ Compare now</button>
+                <button class="btn btn-primary" onclick="compareFiles()">⚡ Compare now</button>
             </div>
         </main>
     </div>
@@ -110,61 +152,98 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // Use relative URLs - proxy server handles API routing
         const API_URL = '';
         let currentType = 'text';
-        let aiEnabled = true;
+        let currentMode = 'normal'; // 'normal' or 'ai'
         
+        let selectedFile1 = null;
+        let selectedFile2 = null;
+
         // Check auth
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
+        if (!token) window.location.href = 'login.html';
         
-        if (!token) {
-            window.location.href = 'login.html';
-        }
-        
-        // Set user info
         document.getElementById('userName').textContent = user || 'User';
         document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
         
-        // Tab switching
+        // Mode logic
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('normalNodeBtn').className = `mode-btn ${mode === 'normal' ? 'active' : ''}`;
+            document.getElementById('aiNodeBtn').className = `mode-btn ${mode === 'ai' ? 'active' : ''}`;
+        }
+
+        // Tab logic
         document.querySelectorAll('.type-tab').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 currentType = tab.dataset.type;
+                updateUIForType();
             };
         });
-        
-        function toggleAI() {
-            aiEnabled = !aiEnabled;
-            const toggle = document.getElementById('aiToggle');
-            toggle.style.background = aiEnabled ? 'rgba(59,130,246,.08)' : 'var(--bg)';
-            toggle.style.color = aiEnabled ? 'var(--accent)' : 'var(--muted)';
-        }
-        
-        function clearFile(n) {
-            document.getElementById(`text${n}`).value = '';
-            document.getElementById(`file${n}Preview`).style.display = 'none';
-        }
-        
-        async function compareTexts() {
-            const text1 = document.getElementById('text1').value;
-            const text2 = document.getElementById('text2').value;
+
+        function updateUIForType() {
+            const isText = currentType === 'text';
             
-            if (!text1 || !text2) {
-                showToast('Please enter both texts', 'error');
-                return;
+            // Toggle textareas vs file overlays
+            document.getElementById('text1').style.display = isText ? 'block' : 'none';
+            document.getElementById('text2').style.display = isText ? 'block' : 'none';
+            document.getElementById('textOpts').style.display = isText ? 'flex' : 'none';
+            
+            if (isText) {
+                document.getElementById('fileOverlay1').classList.add('hidden');
+                document.getElementById('fileOverlay2').classList.add('hidden');
+            } else {
+                document.getElementById('fileOverlay1').classList.remove('hidden');
+                document.getElementById('fileOverlay2').classList.remove('hidden');
+                
+                // Clear existing files
+                clearFile(1);
+                clearFile(2);
+                
+                let accepts = "";
+                if (currentType === 'pdf') accepts = ".pdf";
+                if (currentType === 'excel') accepts = ".xlsx,.xls";
+                if (currentType === 'csv') accepts = ".csv";
+                if (currentType === 'image') accepts = "image/*";
+                
+                document.getElementById('file1').accept = accepts;
+                document.getElementById('file2').accept = accepts;
+                document.getElementById('fileDesc1').textContent = `Upload ${currentType.toUpperCase()} file`;
+                document.getElementById('fileDesc2').textContent = `Upload ${currentType.toUpperCase()} file`;
             }
-            
-            const loading = document.getElementById('loading');
-            const loadingText = document.getElementById('loadingText');
-            
-            loading.style.display = 'flex';
-            loadingText.textContent = 'Analyzing with AI...';
-            
-            try {
-                // Use form data as backend expects
+        }
+
+        function handleFile(input, n) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (n === 1) selectedFile1 = file;
+                if (n === 2) selectedFile2 = file;
+                
+                document.getElementById(`fileOverlay${n}`).classList.add('hidden');
+                document.getElementById(`file${n}Preview`).style.display = 'block';
+                document.getElementById(`file${n}Name`).textContent = file.name;
+            }
+        }
+
+        function clearFile(n) {
+            document.getElementById(`file${n}`).value = '';
+            document.getElementById(`file${n}Preview`).style.display = 'none';
+            if (!document.getElementById(`text${n}`).style.display || document.getElementById(`text${n}`).style.display === 'none') {
+                 document.getElementById(`fileOverlay${n}`).classList.remove('hidden');
+            }
+            if (n === 1) selectedFile1 = null;
+            if (n === 2) selectedFile2 = null;
+        }
+        
+        async function compareFiles() {
+            if (currentType === 'text') {
+                const text1 = document.getElementById('text1').value;
+                const text2 = document.getElementById('text2').value;
+                if (!text1 || !text2) return showToast('Please enter both texts', 'error');
+                
                 const formData = new FormData();
                 formData.append('text1', text1);
                 formData.append('text2', text2);
@@ -172,21 +251,43 @@
                 formData.append('to_lowercase', String(!document.getElementById('caseSens').checked));
                 formData.append('sort_lines', 'false');
                 formData.append('remove_extra_spaces', String(document.getElementById('ignoreWs').checked));
+                formData.append('use_ai', String(currentMode === 'ai'));
                 
-                const res = await fetch(`${API_URL}/api/compare/text`, {
+                await doFetch(`${API_URL}/api/compare/text`, formData);
+            } else {
+                if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
+                
+                const formData = new FormData();
+                formData.append('file1', selectedFile1);
+                formData.append('file2', selectedFile2);
+                formData.append('use_ai', String(currentMode === 'ai'));
+                
+                await doFetch(`${API_URL}/api/compare/${currentType}`, formData);
+            }
+        }
+        
+        async function doFetch(url, formData) {
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loadingText');
+            
+            loading.style.display = 'flex';
+            loadingText.textContent = currentMode === 'ai' ? 'Analyzing with AI...' : 'Comparing exact matches...';
+            
+            try {
+                const res = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
                 
                 const data = await res.json();
                 
                 if (res.ok) {
-                    // Store results and redirect
+                    // Record mode so results page knows how to render
+                    data.mode = currentMode;
+                    data.fileType = currentType;
+                    
                     localStorage.setItem('lastResult', JSON.stringify(data));
-                    localStorage.setItem('lastTexts', JSON.stringify({text1, text2}));
                     window.location.href = 'results.html';
                 } else {
                     showToast(data.detail || 'Comparison failed', 'error');
