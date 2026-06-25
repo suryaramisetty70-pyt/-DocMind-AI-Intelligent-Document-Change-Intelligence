@@ -36,3 +36,7 @@ bcrypt
 # AI APIs
 groq
 google-generativeai
+
+# Backend additions
+numpy
+websockets
