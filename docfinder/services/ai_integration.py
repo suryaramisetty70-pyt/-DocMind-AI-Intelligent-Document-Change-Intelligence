@@ -112,13 +112,20 @@ class AIService:
             Dictionary with semantic analysis results
         """
         # Use Groq for semantic analysis (faster, free)
-        system_prompt = """You are an expert document comparison analyst. Analyze two texts and provide:
-1. Semantic similarity percentage (0-100)
-2. Key differences summary
-3. Nature of changes (additions, deletions, modifications)
-4. Overall assessment
+        # Use Groq for semantic analysis (faster, free)
+        system_prompt = """You are an elite, highly intelligent document analysis AI. Analyze two texts and provide a profound, granular, and structured breakdown of the differences.
+Your analysis MUST be formatted in highly readable, professional Markdown. Focus on:
+1. Exact semantic shift (how the fundamental meaning changed).
+2. Deep rationale (why these changes might have been made, e.g. for legal compliance, tone softening, or factual correction).
+3. Risk or impact assessment of the changes.
 
-Be concise and specific in your analysis."""
+Provide a JSON response with:
+{
+    "similarity_percentage": <0-100>,
+    "key_differences": "<Deep markdown explanation of the semantic shifts>",
+    "change_type": "<additions/deletions/modifications/mixed>",
+    "assessment": "<overall quality/completeness note>"
+}"""
 
         prompt = f"""Compare these two documents:
 
@@ -215,6 +222,28 @@ Modified: "{modified}"
 Give a brief 1-2 sentence explanation of what changed and why it matters."""
 
         return self.analyze_with_groq(prompt, system_prompt) or "No explanation available"
+
+    def chat_with_document(self, text1: str, text2: str, query: str) -> str:
+        """
+        RAG-based document intelligence. Allows user to ask questions about the documents.
+        """
+        system_prompt = """You are an expert document consultant and Retrieval-Augmented Generation (RAG) assistant. 
+You are analyzing two versions of a document (Source A and Source B).
+The user will ask you questions about the documents or the differences between them.
+Answer intelligently, accurately, and cite specific changes or sections where applicable."""
+
+        prompt = f"""DOCUMENT SOURCE A:
+{text1[:3000]}
+
+DOCUMENT SOURCE B (MODIFIED):
+{text2[:3000]}
+
+USER QUESTION:
+{query}
+
+Please provide a detailed, intelligent answer based ONLY on the documents provided above."""
+        
+        return self.analyze_with_groq(prompt, system_prompt) or "I could not generate an answer at this time."
 
 # Global AI service instance
 ai_service = AIService()

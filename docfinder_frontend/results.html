@@ -38,9 +38,27 @@
         .pro-diff-container { padding: 1.5rem; white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.8; color: #334155; }
         .diff-added { background-color: rgba(16, 185, 129, 0.2); color: #047857; font-weight: 700; border-radius: 4px; padding: 2px 0; }
         .diff-removed { background-color: rgba(239, 68, 68, 0.2); color: #b91c1c; text-decoration: line-through; border-radius: 4px; padding: 2px 0; }
+        
+        /* Override diff2html fonts */
+        .d2h-wrapper { font-family: 'JetBrains Mono', monospace; }
+        .d2h-code-line { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        
+        /* Chat UI */
+        .chat-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+        .chat-box h4 { font-size: .85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 0; }
+        .chat-history { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; line-height: 1.5; }
+        .chat-msg { padding: 0.75rem; border-radius: 8px; }
+        .chat-msg.user { background: rgba(59, 130, 246, 0.1); color: var(--accent); align-self: flex-end; max-width: 90%; }
+        .chat-msg.bot { background: #f8fafc; color: var(--text); align-self: flex-start; max-width: 90%; }
+        .chat-input { display: flex; gap: 0.5rem; }
+        .chat-input input { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; }
+        .chat-input button { padding: 0.5rem 1rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
     </style>
     <!-- jsdiff CDN for character-level granular difference finding -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
+    <!-- Diff2Html CDN for Side-by-Side Viewer -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
 </head>
 <body>
     <div class="app">
@@ -113,11 +131,11 @@
             <div class="diff-wrap">
                 <div class="diff-view animate-in delay-1">
                     <div class="diff-head">
-                        <h3>Unified Diff</h3>
+                        <h3>Difference Viewer</h3>
                         <div class="diff-tabs">
-                            <button class="diff-tab active">Unified</button>
-                            <button class="diff-tab">Split</button>
-                            <button class="diff-tab">Inline</button>
+                            <button class="diff-tab active" id="tabUnified" onclick="switchView('line-by-line')">Unified</button>
+                            <button class="diff-tab" id="tabSplit" onclick="switchView('side-by-side')">Side-by-Side</button>
+                            <button class="diff-tab" id="tabGranular" onclick="switchView('granular')">Granular (Inch-by-Inch)</button>
                         </div>
                     </div>
                     <div class="diff-body" id="diffBody">
@@ -149,6 +167,17 @@
                     <div class="ai-card animate-in delay-3">
                         <h4>✨ AI Analysis</h4>
                         <p id="aiAnalysis">Analyzing...</p>
+                    </div>
+                    
+                    <div class="chat-box animate-in delay-3">
+                        <h4>💬 Ask Document AI</h4>
+                        <div class="chat-history" id="chatHistory">
+                            <div class="chat-msg bot">Hello! I am your RAG assistant. Ask me anything about these documents or their differences!</div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Why did the user change...?" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                            <button onclick="sendChatMessage()">Send</button>
+                        </div>
                     </div>
                     
                     <div class="export animate-in delay-4">
@@ -233,33 +262,62 @@
             document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No results found. Please run a comparison first.</p>';
         }
         
+        let currentOriginal = '';
+        let currentModified = '';
+        
         function generateDiff(original, modified, result) {
-            if (!original && !modified) {
+            currentOriginal = original || '';
+            currentModified = modified || '';
+            switchView('side-by-side'); // Default to pro side-by-side view
+        }
+        
+        function switchView(mode) {
+            // Update tabs
+            document.getElementById('tabUnified').classList.remove('active');
+            document.getElementById('tabSplit').classList.remove('active');
+            document.getElementById('tabGranular').classList.remove('active');
+            
+            if (mode === 'line-by-line') document.getElementById('tabUnified').classList.add('active');
+            if (mode === 'side-by-side') document.getElementById('tabSplit').classList.add('active');
+            if (mode === 'granular') document.getElementById('tabGranular').classList.add('active');
+            
+            if (!currentOriginal && !currentModified) {
                 document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No differences found or text could not be loaded.</p>';
                 return;
             }
             
-            // Execute Pro-Level granular diff using jsdiff
-            // Diff.diffChars detects every single space, character, and punctuation change
-            const diff = Diff.diffChars(original, modified);
             const displayElement = document.getElementById('diffBody');
             
-            const container = document.createElement('div');
-            container.className = 'pro-diff-container';
-            
-            diff.forEach((part) => {
-                const span = document.createElement('span');
-                if (part.added) {
-                    span.className = 'diff-added';
-                } else if (part.removed) {
-                    span.className = 'diff-removed';
-                }
-                span.appendChild(document.createTextNode(part.value));
-                container.appendChild(span);
-            });
-            
-            displayElement.innerHTML = '';
-            displayElement.appendChild(container);
+            if (mode === 'granular') {
+                // Execute Pro-Level granular diff using jsdiff (Character level)
+                const diff = Diff.diffChars(currentOriginal, currentModified);
+                const container = document.createElement('div');
+                container.className = 'pro-diff-container';
+                
+                diff.forEach((part) => {
+                    const span = document.createElement('span');
+                    if (part.added) {
+                        span.className = 'diff-added';
+                    } else if (part.removed) {
+                        span.className = 'diff-removed';
+                    }
+                    span.appendChild(document.createTextNode(part.value));
+                    container.appendChild(span);
+                });
+                
+                displayElement.innerHTML = '';
+                displayElement.appendChild(container);
+            } else {
+                // Use diff2html for professional side-by-side or unified view
+                const patch = Diff.createTwoFilesPatch("Source A", "Source B", currentOriginal, currentModified);
+                const diffHtml = Diff2Html.html(patch, { 
+                    drawFileList: false, 
+                    matching: 'lines', 
+                    outputFormat: mode,
+                    renderNothingWhenEmpty: false
+                });
+                displayElement.innerHTML = diffHtml;
+            }
         }
         
         function escapeHtml(text) {
@@ -286,6 +344,50 @@
         function shareLink() {
             navigator.clipboard.writeText(window.location.href);
             showToast('Link copied!', 'success');
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            input.value = '';
+            
+            const history = document.getElementById('chatHistory');
+            // Append user msg
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-msg user';
+            userMsg.textContent = msg;
+            history.appendChild(userMsg);
+            history.scrollTop = history.scrollHeight;
+            
+            // Loading state
+            const botLoading = document.createElement('div');
+            botLoading.className = 'chat-msg bot';
+            botLoading.textContent = 'Thinking...';
+            history.appendChild(botLoading);
+            history.scrollTop = history.scrollHeight;
+            
+            try {
+                const res = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text1: currentOriginal,
+                        text2: currentModified,
+                        query: msg
+                    })
+                });
+                
+                const data = await res.json();
+                botLoading.textContent = data.reply || 'Sorry, I encountered an error.';
+            } catch (e) {
+                botLoading.textContent = 'Connection error.';
+            }
+            history.scrollTop = history.scrollHeight;
         }
         
         function showToast(msg, type) {

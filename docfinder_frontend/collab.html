@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Collaboration · DiffLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .main{padding:2rem 2.5rem;background:var(--bg)}
+        .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+        .page-head h1{font-size:1.75rem;font-weight:800;letter-spacing:-.02em}
+        
+        .collab-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; height: calc(100vh - 180px); }
+        .editor-col { display: flex; flex-direction: column; background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .editor-head { background: #fafbfc; padding: 1rem; border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .editor-head .status { font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 10px; background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        textarea { flex: 1; border: none; padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.6; resize: none; outline: none; }
+        
+        .room-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); align-items: center; }
+        .room-bar input { flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                DiffLab Live
+            </div>
+            
+            <div class="s-section">Workspace</div>
+            <a href="dashboard.html" class="s-link">⚡ Dashboard</a>
+            <a href="collab.html" class="s-link active">👥 Live Collab</a>
+            
+            <div class="s-user">
+                <div class="avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
+                    <div style="font-size:.8rem;opacity:.7">Collab Mode</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>Live Collaboration</h1>
+                    <p>Real-time document synchronization via WebSockets.</p>
+                </div>
+                <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">Return to Dashboard</button>
+            </div>
+            
+            <div class="room-bar animate-in">
+                <strong>Room ID:</strong>
+                <input type="text" id="roomIdInput" value="default-room">
+                <button class="btn btn-dark" onclick="joinRoom()">Join Room</button>
+                <div id="connStatus" style="color:var(--muted); font-size:0.85rem; margin-left:auto;">Disconnected</div>
+            </div>
+            
+            <div class="collab-container animate-in delay-1">
+                <div class="editor-col">
+                    <div class="editor-head">
+                        Source A 
+                        <span class="status">Live Sync</span>
+                    </div>
+                    <textarea id="textA" placeholder="Type here... others in the room will see it instantly." oninput="sendSync('A')"></textarea>
+                </div>
+                
+                <div class="editor-col">
+                    <div class="editor-head">
+                        Source B
+                        <span class="status">Live Sync</span>
+                    </div>
+                    <textarea id="textB" placeholder="Type here... others in the room will see it instantly." oninput="sendSync('B')"></textarea>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const user = localStorage.getItem('user');
+        document.getElementById('userName').textContent = user || 'User';
+        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
+        
+        let ws;
+        
+        function joinRoom() {
+            if (ws) ws.close();
+            const roomId = document.getElementById('roomIdInput').value || 'default-room';
+            // Use current host for websocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || 'localhost:8000'; // fallback
+            
+            ws = new WebSocket(`${protocol}//${host}/ws/collab/${roomId}`);
+            
+            ws.onopen = () => {
+                document.getElementById('connStatus').textContent = 'Connected ✅';
+                document.getElementById('connStatus').style.color = '#10b981';
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.source === 'A' && document.getElementById('textA').value !== data.text) {
+                    document.getElementById('textA').value = data.text;
+                }
+                if (data.source === 'B' && document.getElementById('textB').value !== data.text) {
+                    document.getElementById('textB').value = data.text;
+                }
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('connStatus').textContent = 'Disconnected ❌';
+                document.getElementById('connStatus').style.color = '#ef4444';
+            };
+        }
+        
+        function sendSync(source) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const text = source === 'A' ? document.getElementById('textA').value : document.getElementById('textB').value;
+            ws.send(JSON.stringify({ source: source, text: text }));
+        }
+        
+        // Auto-join on load
+        joinRoom();
+    </script>
+</body>
+</html>

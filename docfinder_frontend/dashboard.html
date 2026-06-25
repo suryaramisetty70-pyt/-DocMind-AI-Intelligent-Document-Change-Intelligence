@@ -102,7 +102,14 @@
                     <div class="file-upload-overlay hidden" id="fileOverlay1" onclick="document.getElementById('file1').click()">
                         <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
                         <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
-                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc1">Supports PDF, Excel, CSV, Images</span>
+                        <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <select id="versionSelect" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); width: 80%; font-size: 0.85rem;" onchange="loadVersion()">
+                                <option value="">-- Or select past version --</option>
+                                <option value="v1">Version 1 (Initial Draft)</option>
+                                <option value="v2">Version 2 (Legal Review)</option>
+                            </select>
+                        </div>
                     </div>
                     <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
                     
@@ -211,7 +218,6 @@
                 
                 document.getElementById('file1').accept = accepts;
                 document.getElementById('file2').accept = accepts;
-                document.getElementById('fileDesc1').textContent = `Upload ${currentType.toUpperCase()} file`;
                 document.getElementById('fileDesc2').textContent = `Upload ${currentType.toUpperCase()} file`;
             }
         }
@@ -236,6 +242,15 @@
             }
             if (n === 1) selectedFile1 = null;
             if (n === 2) selectedFile2 = null;
+        }
+        
+        // Version Tracking Logic
+        function loadVersion() {
+            const select = document.getElementById('versionSelect');
+            if(select.value) {
+                document.getElementById('text1').value = `This is the auto-loaded content of ${select.options[select.selectedIndex].text}.\n\nIt is acting as your Base Version.`;
+                showToast(`Loaded ${select.options[select.selectedIndex].text}`, 'success');
+            }
         }
         
         async function compareFiles() {

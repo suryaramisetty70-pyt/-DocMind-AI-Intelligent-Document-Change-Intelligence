@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from typing import Optional, Dict
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
@@ -29,6 +29,7 @@ from services.ai_engine import AIEngine
 from services.report_generator import ReportGenerator
 from services.email_service import email_service
 from services.ai_integration import ai_service
+from services.vector_db import vector_db
 
 # Create uploads directory
 UPLOAD_DIR = "uploads"
@@ -76,6 +77,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# WebSockets Connection Manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[str, list[WebSocket]] = {}
+
+    async def connect(self, websocket: WebSocket, room_id: str):
+        await websocket.accept()
+        if room_id not in self.active_connections:
+            self.active_connections[room_id] = []
+        self.active_connections[room_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, room_id: str):
+        if room_id in self.active_connections:
+            self.active_connections[room_id].remove(websocket)
+
+    async def broadcast(self, message: str, room_id: str, sender: WebSocket):
+        if room_id in self.active_connections:
+            for connection in self.active_connections[room_id]:
+                if connection != sender:
+                    await connection.send_text(message)
+
+manager = ConnectionManager()
 
 
 # Helper function to get current user
@@ -132,6 +156,15 @@ class ComparisonResponse(BaseModel):
     file2_name: str
     similarity_score: float
     status: str
+
+class ChatRequest(BaseModel):
+    text1: str
+    text2: str
+    query: str
+
+class SearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
 
 
 def generate_otp():
@@ -298,6 +331,21 @@ async def login(user: UserLogin, request: Request, db: AsyncSession = Depends(ge
     )
 
 
+@app.post("/api/chat")
+async def chat_with_docs(req: ChatRequest, current_user: User = Depends(get_current_user)):
+    """RAG Chat endpoint to query document differences."""
+    if not req.text1 and not req.text2:
+        raise HTTPException(status_code=400, detail="Document text is required.")
+        
+    response = ai_service.chat_with_document(req.text1, req.text2, req.query)
+    return {"reply": response}
+
+@app.post("/api/search")
+async def search_docs(req: SearchRequest, current_user: User = Depends(get_current_user)):
+    """Semantic vector search across uploaded documents."""
+    results = vector_db.search(req.query, req.top_k)
+    return {"results": results}
+
 # File comparison endpoints
 @app.post("/api/compare/text")
 async def compare_text(
@@ -347,6 +395,11 @@ async def compare_text(
     db.add(comparison)
     await db.commit()
     await db.refresh(comparison)
+    
+    # Save to vector db
+    if current_user:
+        vector_db.add_document(text1, {"type": "text1", "id": comparison.id, "user": current_user.username})
+        vector_db.add_document(text2, {"type": "text2", "id": comparison.id, "user": current_user.username})
     
     # Add AI analysis using Groq/Gemini
     ai_analysis = ai_service.get_semantic_analysis(text1, text2)
@@ -703,3 +756,15 @@ async def api_info():
 
 from fastapi.responses import StreamingResponse
 import io
+
+@app.websocket("/ws/collab/{room_id}")
+async def websocket_collab(websocket: WebSocket, room_id: str):
+    """Real-time collaboration websocket endpoint."""
+    await manager.connect(websocket, room_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Broadcast the change to all other clients in the room
+            await manager.broadcast(data, room_id, websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, room_id)

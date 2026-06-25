@@ -50,17 +50,14 @@
                 <a href="dashboard.html"><button class="btn btn-primary">+ New comparison</button></a>
             </div>
             
-            <div class="empty-search">
-                <span>🔍</span>
-                <input type="text" placeholder="Search by name or type..." id="searchInput" oninput="filterHistory()">
+            <div class="empty-search" style="max-width:600px; display:flex;">
+                <span>🧠</span>
+                <input type="text" placeholder="Semantic AI Search (e.g., 'find the contract update')" id="searchInput" onkeypress="if(event.key === 'Enter') performSemanticSearch()">
+                <button class="btn btn-primary" onclick="performSemanticSearch()" style="padding:0.5rem 1rem;">Semantic Search</button>
             </div>
             
             <div class="filters" id="filters">
-                <button class="filter active" data-filter="all">All</button>
-                <button class="filter" data-filter="text">📝 Text</button>
-                <button class="filter" data-filter="pdf">📄 PDF</button>
-                <button class="filter" data-filter="excel">📊 Excel</button>
-                <button class="filter" data-filter="csv">📈 CSV</button>
+                <button class="filter active" data-filter="all" onclick="loadHistory()">All History</button>
             </div>
             
             <div class="list" id="historyList">
@@ -220,20 +217,52 @@
             window.location.href = 'results.html';
         }
         
-        // Filter buttons
-        document.querySelectorAll('.filter').forEach(f => {
-            f.onclick = () => {
-                document.querySelectorAll('.filter').forEach(x => x.classList.remove('active'));
-                f.classList.add('active');
-            };
-        });
-        
-        function filterHistory() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.row').forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(search) ? 'grid' : 'none';
-            });
+        async function performSemanticSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                loadHistory();
+                return;
+            }
+            
+            document.getElementById('historyList').innerHTML = '<p style="padding:2rem;text-align:center;">🧠 Searching Vector Database...</p>';
+            
+            try {
+                const res = await fetch(`${API_URL}/api/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query, top_k: 5 })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0) {
+                        const list = document.getElementById('historyList');
+                        list.innerHTML = data.results.map((item, i) => {
+                            const meta = item.metadata;
+                            const score = Math.round(item.score * 100);
+                            return `
+                                <div class="row animate-in delay-${(i % 4) + 1}" onclick="viewResult(${meta.id})">
+                                    <div class="type-icon" style="background:${getGradient('text')}">🧠</div>
+                                    <div class="row-meta">
+                                        <h3>Semantic Match [ID: ${meta.id}]</h3>
+                                        <p>Type: ${meta.type} · User: ${meta.user}</p>
+                                    </div>
+                                    <div class="row-date">Vector Match</div>
+                                    <div class="score-pill high">${score}% Sim</div>
+                                    <div class="row-arrow">→</div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        document.getElementById('historyList').innerHTML = '<p style="padding:2rem;text-align:center;">No semantic matches found in vector DB.</p>';
+                    }
+                }
+            } catch (e) {
+                document.getElementById('historyList').innerHTML = '<p style="padding:2rem;text-align:center;color:red;">Error searching vector database.</p>';
+            }
         }
     </script>
 </body>

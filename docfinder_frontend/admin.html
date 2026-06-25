@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard · DiffLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .main{padding:2rem 2.5rem;background:var(--bg)}
+        .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+        .page-head h1{font-size:1.75rem;font-weight:800;letter-spacing:-.02em}
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: #fff; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-card h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .stat-card .val { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        
+        .table-container { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { background: #fafbfc; font-weight: 600; color: var(--muted); }
+        .admin-badge { padding: 0.25rem 0.5rem; background: rgba(59, 130, 246, 0.1); color: var(--accent); border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                DiffLab Admin
+            </div>
+            
+            <div class="s-section">Workspace</div>
+            <a href="dashboard.html" class="s-link">⚡ Dashboard</a>
+            <a href="admin.html" class="s-link active">👑 Admin Panel</a>
+            <a href="history.html" class="s-link">🕓 History</a>
+            
+            <div class="s-user">
+                <div class="avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
+                    <div style="font-size:.8rem;opacity:.7">Admin</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>Platform Admin</h1>
+                    <p>Manage users and view system analytics.</p>
+                </div>
+            </div>
+            
+            <div class="stat-grid" id="statsGrid">
+                <div class="stat-card animate-in delay-1">
+                    <h3>Total Users</h3>
+                    <div class="val" id="statUsers">...</div>
+                </div>
+                <div class="stat-card animate-in delay-2">
+                    <h3>Total Comparisons</h3>
+                    <div class="val" id="statComps">...</div>
+                </div>
+                <div class="stat-card animate-in delay-3">
+                    <h3>System Health</h3>
+                    <div class="val" style="color:#10b981">99.9%</div>
+                </div>
+                <div class="stat-card animate-in delay-4">
+                    <h3>Vector Embeddings</h3>
+                    <div class="val" id="statVectors">Active</div>
+                </div>
+            </div>
+            
+            <h3>Registered Users</h3>
+            <div class="table-container animate-in delay-2" style="margin-top: 1rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <tr><td colspan="4" style="text-align:center;">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = '';
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'login.html';
+        
+        const user = localStorage.getItem('user');
+        document.getElementById('userName').textContent = user || 'Admin';
+        document.getElementById('userAvatar').textContent = (user || 'A')[0].toUpperCase();
+        
+        async function loadAdminData() {
+            try {
+                // Fetch stats
+                const statRes = await fetch(`${API_URL}/api/admin/stats`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                
+                if (!statRes.ok) {
+                    if (statRes.status === 403) {
+                        alert("Access Denied: You must be an administrator.");
+                        window.location.href = 'dashboard.html';
+                    }
+                    return;
+                }
+                
+                const stats = await statRes.json();
+                document.getElementById('statUsers').textContent = stats.total_users;
+                document.getElementById('statComps').textContent = stats.total_comparisons;
+                
+                // Fetch users
+                const userRes = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                const users = await userRes.json();
+                
+                const tbody = document.getElementById('usersTable');
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td>${u.id}</td>
+                        <td style="font-weight:600">${u.username}</td>
+                        <td>${u.email}</td>
+                        <td>${u.is_admin ? '<span class="admin-badge">ADMIN</span>' : 'User'}</td>
+                    </tr>
+                `).join('');
+                
+            } catch (err) {
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="4" style="color:red">Failed to load admin data.</td></tr>';
+            }
+        }
+        
+        loadAdminData();
+    </script>
+</body>
+</html>
