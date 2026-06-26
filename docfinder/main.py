@@ -669,6 +669,193 @@ async def compare_image(
         safe_unlink(t1_path)
         safe_unlink(t2_path)
 
+async def extract_file_text(file: UploadFile) -> str:
+    filename = file.filename or ""
+    ext = os.path.splitext(filename)[1].lower()
+    
+    # Read the file content
+    content = await file.read()
+    await file.seek(0)
+    
+    # If it is a simple text file
+    if ext in [".txt", ".html", ".css", ".js", ".json", ".xml", ".md", ".py", ".sh", ".bat"]:
+        return content.decode("utf-8", errors="ignore")
+        
+    # For binary files, write to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+        
+    try:
+        if ext == ".pdf":
+            return extract_text_from_pdf(tmp_path)
+        elif ext == ".docx":
+            return extract_text_from_docx(tmp_path)
+        elif ext == ".pptx":
+            return extract_text_from_pptx(tmp_path)
+        elif ext in [".xlsx", ".xls"]:
+            return extract_text_from_excel(tmp_path)
+        elif ext == ".csv":
+            return extract_text_from_csv(tmp_path)
+        else:
+            # Try plain text decode as fallback
+            return content.decode("utf-8", errors="ignore")
+    except Exception as e:
+        return f"Error extracting content from {filename}: {str(e)}"
+    finally:
+        safe_unlink(tmp_path)
+
+@app.post("/api/compare/folder")
+async def compare_folder(
+    files1: List[UploadFile] = File(...),
+    files2: List[UploadFile] = File(...),
+    use_ai: str = Form("false"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Map filenames to upload files
+    f1_map = {f.filename: f for f in files1}
+    f2_map = {f.filename: f for f in files2}
+    
+    all_filenames = set(f1_map.keys()).union(set(f2_map.keys()))
+    
+    differences = []
+    added_count = 0
+    removed_count = 0
+    changed_count = 0
+    total_score = 0
+    score_count = 0
+    
+    for filename in all_filenames:
+        if filename not in f1_map:
+            # Added in folder 2
+            differences.append({
+                "filename": filename,
+                "status": "added",
+                "similarity": 0.0,
+                "changes": {"added": 1, "removed": 0, "changed": 0}
+            })
+            added_count += 1
+        elif filename not in f2_map:
+            # Removed in folder 2
+            differences.append({
+                "filename": filename,
+                "status": "removed",
+                "similarity": 0.0,
+                "changes": {"added": 0, "removed": 1, "changed": 0}
+            })
+            removed_count += 1
+        else:
+            # Exists in both, compare content
+            file1 = f1_map[filename]
+            file2 = f2_map[filename]
+            
+            ext = os.path.splitext(filename)[1].lower()
+            
+            # If it is an image, run image visual diff comparison
+            if ext in [".png", ".jpg", ".jpeg", ".bmp", ".gif"]:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t1, \
+                     tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t2:
+                    t1.write(await file1.read()); t1_path = t1.name
+                    t2.write(await file2.read()); t2_path = t2.name
+                await file1.seek(0)
+                await file2.seek(0)
+                
+                try:
+                    img_report = image_diff(t1_path, t2_path)
+                    sim = img_report["stats"]["similarity_percent"]
+                    status = "identical" if sim == 100.0 else "modified"
+                    if status == "modified":
+                        changed_count += 1
+                    
+                    differences.append({
+                        "filename": filename,
+                        "status": status,
+                        "similarity": sim,
+                        "changes": {
+                            "added": img_report["stats"].get("changed_elements_count", 0),
+                            "removed": 0,
+                            "changed": img_report["stats"].get("changed_pixels", 0)
+                        },
+                        "results": img_report
+                    })
+                    total_score += sim
+                    score_count += 1
+                except Exception as e:
+                    differences.append({
+                        "filename": filename,
+                        "status": "error",
+                        "similarity": 0.0,
+                        "error": str(e)
+                    })
+                finally:
+                    safe_unlink(t1_path)
+                    safe_unlink(t2_path)
+            else:
+                # Document/Text comparison
+                try:
+                    text1 = await extract_file_text(file1)
+                    text2 = await extract_file_text(file2)
+                    
+                    file_report = compute_diff_report(text1, text2)
+                    sim = file_report["stats"]["similarity_percent"]
+                    
+                    status = "identical" if sim == 100.0 else "modified"
+                    if status == "modified":
+                        changed_count += 1
+                    
+                    differences.append({
+                        "filename": filename,
+                        "status": status,
+                        "similarity": sim,
+                        "changes": file_report["stats"],
+                        "results": file_report
+                    })
+                    total_score += sim
+                    score_count += 1
+                except Exception as e:
+                    differences.append({
+                        "filename": filename,
+                        "status": "error",
+                        "similarity": 0.0,
+                        "error": str(e)
+                    })
+            
+    avg_similarity = round(total_score / score_count, 2) if score_count > 0 else 100.0
+    
+    report = {
+        "file_type": "folder",
+        "type": "folder",
+        "differences": differences,
+        "stats": {
+            "added": added_count,
+            "removed": removed_count,
+            "changed": changed_count,
+            "similarity_percent": avg_similarity,
+            "difference_percent": round(100.0 - avg_similarity, 2),
+            "total_changes": added_count + removed_count + changed_count
+        }
+    }
+    
+    # Save to history
+    comparison = Comparison(
+        user_id=current_user.id if current_user else 0,
+        file1_name="Folder A",
+        file2_name="Folder B",
+        file1_type="folder",
+        file2_type="folder",
+        comparison_type="folder",
+        similarity_score=avg_similarity,
+        status="completed",
+        results=report
+    )
+    db.add(comparison)
+    await db.commit()
+    await db.refresh(comparison)
+    
+    report["comparison_id"] = comparison.id
+    return report
+
 @app.post("/api/ai/chat")
 async def ai_chat(
     message: str = Form(...),

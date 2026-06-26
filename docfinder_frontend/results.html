@@ -132,6 +132,42 @@
 
   .empty-state { text-align: center; padding: 60px; color: var(--muted); }
   .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+
+  /* Modal styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 90%;
+    width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    animation: modalFadeIn 0.3s ease;
+  }
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
 </style>
 </head>
 <body>
@@ -333,18 +369,173 @@ function renderGranular(differences) {
 // ═══ IMAGE DIFF ═══
 function renderImageDiff(result) {
   document.getElementById("imageTab").style.display = "inline-block";
+  const changedElems = result.stats.changed_elements_count != null ? result.stats.changed_elements_count : "—";
   document.getElementById("statsBar").innerHTML = `
+    <div class="stat-card stat-yellow"><span class="stat-icon">📦</span><div><div class="stat-value">${changedElems}</div><div class="stat-label">Changed Elements</div></div></div>
     <div class="stat-card stat-red"><span class="stat-icon">🖼</span><div><div class="stat-value">${(result.stats.changed_pixels||0).toLocaleString()}</div><div class="stat-label">Changed Pixels</div></div></div>
     <div class="stat-card stat-blue"><span class="stat-icon">📊</span><div><div class="stat-value">${result.stats.similarity_percent}%</div><div class="stat-label">Similarity</div></div></div>
     <div class="stat-card"><span class="stat-icon">🔍</span><div><div class="stat-value">${result.stats.difference_percent}%</div><div class="stat-label">Difference</div></div></div>`;
 
   const src1 = sessionStorage.getItem("imgSrc1") || "";
   const src2 = sessionStorage.getItem("imgSrc2") || "";
-  document.getElementById("imageGrid").innerHTML = `
-    <div class="image-card"><div class="image-card-title">📄 Original</div>${src1 ? `<img src="${src1}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
-    <div class="image-card"><div class="image-card-title">📄 Modified</div>${src2 ? `<img src="${src2}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
-    <div class="image-card"><div class="image-card-title">🔴 Differences</div><img src="data:image/png;base64,${result.diff_image_base64}"/></div>`;
-  switchTab("imagePanel", document.getElementById("imageTab"));
+  
+  let html = `
+    <div class="image-grid" id="imageGrid" style="margin-bottom: 2rem;">
+      <div class="image-card"><div class="image-card-title">📄 Original</div>${src1 ? `<img src="${src1}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
+      <div class="image-card"><div class="image-card-title">📄 Modified</div>${src2 ? `<img src="${src2}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
+      <div class="image-card"><div class="image-card-title">🔴 Differences (Overlay Highlight)</div><img src="data:image/png;base64,${result.diff_image_base64}"/></div>
+    </div>
+    
+    <div class="slider-container" style="position:relative; width:100%; max-width:800px; height:450px; margin: 2rem auto; border: 1px solid var(--border); border-radius: 12px; overflow:hidden; user-select:none; background:#222;">
+      <div class="slider-img img-before" style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${src1}') no-repeat center/contain;"></div>
+      <div class="slider-img img-after" id="sliderAfter" style="position:absolute; top:0; left:0; width:100%; height:100%; background: url('${src2}') no-repeat center/contain; width:50%; border-right: 2px solid var(--accent);"></div>
+      <input type="range" min="0" max="100" value="50" class="image-comparison-slider" id="splitSlider" oninput="handleSliderMove(this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor: ew-resize; z-index: 10;" />
+      <div class="slider-handle" id="sliderHandle" style="position:absolute; top:0; left:50%; width:4px; height:100%; background:var(--accent); pointer-events:none; transform: translateX(-50%); display:flex; align-items:center; justify-content:center;">
+         <span style="background:var(--accent); color:white; border-radius:50%; padding:6px; font-size:12px; font-weight:700; box-shadow: 0 4px 10px rgba(0,0,0,0.5)">↔</span>
+      </div>
+      <span style="position:absolute; bottom:1rem; left:1rem; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Before (Original)</span>
+      <span style="position:absolute; bottom:1rem; right:1rem; background:rgba(0,0,0,0.6); color:white; padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">After (Modified)</span>
+    </div>`;
+    
+  const grid = document.getElementById("imageGrid");
+  if (grid && grid.parentNode) {
+    grid.parentNode.innerHTML = html;
+  }
+}
+
+function handleSliderMove(val) {
+  const imgAfter = document.getElementById("sliderAfter");
+  const handle = document.getElementById("sliderHandle");
+  if (imgAfter) imgAfter.style.width = val + "%";
+  if (handle) handle.style.left = val + "%";
+}
+
+// ═══ FOLDER DIFF ═══
+function renderFolderDiff(result) {
+  document.getElementById("tabsRow").style.display = "none";
+  document.getElementById("statsBar").innerHTML = `
+    <div class="stat-card stat-green"><span class="stat-icon">➕</span><div><div class="stat-value">${result.stats.added}</div><div class="stat-label">Added Files</div></div></div>
+    <div class="stat-card stat-red"><span class="stat-icon">➖</span><div><div class="stat-value">${result.stats.removed}</div><div class="stat-label">Removed Files</div></div></div>
+    <div class="stat-card stat-yellow"><span class="stat-icon">✏️</span><div><div class="stat-value">${result.stats.changed}</div><div class="stat-label">Modified Files</div></div></div>
+    <div class="stat-card stat-blue"><span class="stat-icon">📊</span><div><div class="stat-value">${result.stats.similarity_percent}%</div><div class="stat-label">Avg Similarity</div></div></div>`;
+    
+  const container = document.getElementById("sideBySide");
+  container.classList.add("active");
+  
+  let html = `
+    <div class="sbs-container" style="grid-template-columns: 1fr; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; background: var(--surface); padding: 1.5rem; display:block;">
+      <h2 style="font-size: 1.25rem; font-weight:700; margin-bottom:1.5rem; display:flex; align-items:center; gap:8px;">📂 Folder Comparison Results</h2>
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Filename</th>
+            <th>Status</th>
+            <th>Similarity</th>
+            <th>Details</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>`;
+        
+  result.differences.forEach((file, index) => {
+    let badge = "";
+    let score = `${file.similarity}%`;
+    let action = "";
+    let details = "";
+    
+    if (file.status === "added") {
+      badge = `<span class="badge badge-added">Added</span>`;
+      score = "—";
+      details = "File only exists in Folder B (Modified)";
+      action = `—`;
+    } else if (file.status === "removed") {
+      badge = `<span class="badge badge-removed">Removed</span>`;
+      score = "—";
+      details = "File only exists in Folder A (Original)";
+      action = `—`;
+    } else if (file.status === "identical") {
+      badge = `<span style="background:rgba(255,255,255,0.05); color:var(--muted);" class="badge">Identical</span>`;
+      details = "No changes detected";
+      action = `—`;
+    } else if (file.status === "modified") {
+      badge = `<span class="badge badge-changed">Modified</span>`;
+      details = `Added: ${file.changes.added}, Removed: ${file.changes.removed}, Changed: ${file.changes.changed}`;
+      action = `<button class="back-btn" onclick="viewFolderFileDiff(${index})" style="background:var(--accent); color:#fff; padding:4px 10px; font-size:11px; border-radius:4px; font-weight:700;">🔍 View Diff</button>`;
+    }
+    
+    html += `
+      <tr>
+        <td style="font-weight:700; font-family: 'JetBrains Mono', monospace; font-size:0.9rem;">${escHtml(file.filename)}</td>
+        <td>${badge}</td>
+        <td style="font-family: 'JetBrains Mono', monospace;">${score}</td>
+        <td style="color:var(--muted); font-size:0.85rem;">${details}</td>
+        <td>${action}</td>
+      </tr>`;
+  });
+  
+  html += `</tbody></table></div>`;
+  
+  html += `
+    <div id="fileDiffModal" class="modal-overlay" onclick="closeFileDiffModal()" style="padding: 2rem;">
+      <div class="modal" onclick="event.stopPropagation()" style="max-width: 90%; width: 1200px; max-height: 90vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+          <h3 style="font-size: 1.2rem; font-weight:800; color:var(--text);" id="modalTitle">File Diff</h3>
+          <button onclick="closeFileDiffModal()" class="back-btn" style="padding: 4px 12px; background:var(--border)">Close</button>
+        </div>
+        <div id="modalDiffContent" style="flex:1; max-height: 70vh; overflow-y:auto;"></div>
+      </div>
+    </div>`;
+    
+  container.innerHTML = html;
+}
+
+function viewFolderFileDiff(index) {
+  let resStr = sessionStorage.getItem("diffResult") || localStorage.getItem("lastResult");
+  const resultObj = JSON.parse(resStr || "{}");
+  const actualResult = resultObj.results || resultObj;
+  
+  const file = actualResult.differences[index];
+  if (!file || !file.results) return;
+  
+  document.getElementById("modalTitle").textContent = `Differences in ${file.filename} (${file.similarity}% similarity)`;
+  document.getElementById("fileDiffModal").classList.add("active");
+  
+  const contentDiv = document.getElementById("modalDiffContent");
+  
+  if (file.results.type === "image") {
+    contentDiv.innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; gap:16px; padding: 1rem;">
+        <div class="stat-card" style="width:fit-content; margin:0 auto;">
+          <span class="stat-icon">📊</span>
+          <div>
+            <div class="stat-value">${file.similarity}%</div>
+            <div class="stat-label">Similarity (Visual)</div>
+          </div>
+        </div>
+        <div style="text-align:center; width:100%;">
+          <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase;">🔴 Difference Overlay Highlight</div>
+          <img src="data:image/png;base64,${file.results.diff_image_base64}" style="max-width:100%; max-height:60vh; border:1px solid var(--border); border-radius:8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"/>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  // Hijack sbsContent temporarily
+  const origSbs = document.getElementById("sbsContent");
+  const tempDiv = document.createElement("div");
+  tempDiv.id = "sbsContent";
+  contentDiv.innerHTML = "";
+  contentDiv.appendChild(tempDiv);
+  
+  renderSideBySide(file.results.full_text1, file.results.full_text2, file.results.differences);
+  
+  // Re-id to prevent collision
+  tempDiv.id = "modalSbsContent";
+}
+
+function closeFileDiffModal() {
+  document.getElementById("fileDiffModal").classList.remove("active");
 }
 
 // ═══ AI ═══
@@ -434,6 +625,13 @@ async function downloadReport(type) {
 
   if (!actualResult || Object.keys(actualResult).length === 0) {
     document.querySelector(".content").innerHTML = `<div class="empty-state" style="margin-top:40px"><div class="icon">❌</div><p>No result data found. Go back and compare documents.</p></div>`;
+    return;
+  }
+
+  // Folder mode
+  if (resultObj.fileType === "folder" || actualResult.type === "folder") {
+    renderFolderDiff(actualResult);
+    if (actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
     return;
   }
 

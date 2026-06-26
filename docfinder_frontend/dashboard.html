@@ -99,6 +99,7 @@
                 <button class="type-tab" data-type="excel">📊 Excel</button>
                 <button class="type-tab" data-type="csv">📈 CSV</button>
                 <button class="type-tab" data-type="image">🖼️ Image</button>
+                <button class="type-tab" data-type="folder">📂 Folder</button>
             </div>
             
             <div class="compare-grid">
@@ -176,6 +177,8 @@
         
         let selectedFile1 = null;
         let selectedFile2 = null;
+        let selectedFiles1 = [];
+        let selectedFiles2 = [];
 
         // Check auth
         const token = localStorage.getItem('token');
@@ -204,6 +207,7 @@
 
         function updateUIForType() {
             const isText = currentType === 'text';
+            const isFolder = currentType === 'folder';
             
             // Toggle textareas vs file overlays
             document.getElementById('text1').style.display = isText ? 'block' : 'none';
@@ -223,25 +227,47 @@
                 
                 let accepts = "";
                 if (currentType === 'pdf') accepts = ".pdf";
-                if (currentType === 'excel') accepts = ".xlsx,.xls";
-                if (currentType === 'csv') accepts = ".csv";
-                if (currentType === 'image') accepts = "image/*";
+                else if (currentType === 'excel') accepts = ".xlsx,.xls";
+                else if (currentType === 'csv') accepts = ".csv";
+                else if (currentType === 'image') accepts = "image/*";
+                else if (currentType === 'folder') accepts = "*";
                 
                 document.getElementById('file1').accept = accepts;
                 document.getElementById('file2').accept = accepts;
-                document.getElementById('fileDesc2').textContent = `Upload ${currentType.toUpperCase()} file`;
+                document.getElementById('file1').multiple = isFolder;
+                document.getElementById('file2').multiple = isFolder;
+                
+                if (isFolder) {
+                    document.getElementById('file1').setAttribute('webkitdirectory', '');
+                    document.getElementById('file2').setAttribute('webkitdirectory', '');
+                    document.getElementById('fileDesc2').textContent = `Upload Folder B files`;
+                } else {
+                    document.getElementById('file1').removeAttribute('webkitdirectory');
+                    document.getElementById('file2').removeAttribute('webkitdirectory');
+                    document.getElementById('fileDesc2').textContent = `Upload ${currentType.toUpperCase()} file`;
+                }
             }
         }
 
         function handleFile(input, n) {
             if (input.files && input.files[0]) {
-                const file = input.files[0];
-                if (n === 1) selectedFile1 = file;
-                if (n === 2) selectedFile2 = file;
-                
-                document.getElementById(`fileOverlay${n}`).classList.add('hidden');
-                document.getElementById(`file${n}Preview`).style.display = 'block';
-                document.getElementById(`file${n}Name`).textContent = file.name;
+                if (currentType === 'folder') {
+                    const files = Array.from(input.files);
+                    if (n === 1) selectedFiles1 = files;
+                    if (n === 2) selectedFiles2 = files;
+                    
+                    document.getElementById(`fileOverlay${n}`).classList.add('hidden');
+                    document.getElementById(`file${n}Preview`).style.display = 'block';
+                    document.getElementById(`file${n}Name`).textContent = `${files.length} files selected in Folder ${n === 1 ? 'A' : 'B'}`;
+                } else {
+                    const file = input.files[0];
+                    if (n === 1) selectedFile1 = file;
+                    if (n === 2) selectedFile2 = file;
+                    
+                    document.getElementById(`fileOverlay${n}`).classList.add('hidden');
+                    document.getElementById(`file${n}Preview`).style.display = 'block';
+                    document.getElementById(`file${n}Name`).textContent = file.name;
+                }
             }
         }
 
@@ -251,8 +277,8 @@
             if (!document.getElementById(`text${n}`).style.display || document.getElementById(`text${n}`).style.display === 'none') {
                  document.getElementById(`fileOverlay${n}`).classList.remove('hidden');
             }
-            if (n === 1) selectedFile1 = null;
-            if (n === 2) selectedFile2 = null;
+            if (n === 1) { selectedFile1 = null; selectedFiles1 = []; }
+            if (n === 2) { selectedFile2 = null; selectedFiles2 = []; }
         }
         
         // Version Tracking Logic
@@ -280,6 +306,23 @@
                 formData.append('use_ai', String(currentMode === 'ai'));
                 
                 await doFetch(`${API_URL}/api/compare/text`, formData);
+            } else if (currentType === 'folder') {
+                if (selectedFiles1.length === 0 || selectedFiles2.length === 0) {
+                    return showToast('Please upload files for both folders', 'error');
+                }
+                
+                const formData = new FormData();
+                selectedFiles1.forEach(file => {
+                    const path = file.webkitRelativePath || file.name;
+                    formData.append('files1', file, path);
+                });
+                selectedFiles2.forEach(file => {
+                    const path = file.webkitRelativePath || file.name;
+                    formData.append('files2', file, path);
+                });
+                formData.append('use_ai', String(currentMode === 'ai'));
+                
+                await doFetch(`${API_URL}/api/compare/folder`, formData);
             } else {
                 if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
                 

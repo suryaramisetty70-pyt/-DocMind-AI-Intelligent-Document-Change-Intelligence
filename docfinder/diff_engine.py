@@ -368,11 +368,62 @@ def image_diff(path1: str, path2: str) -> dict:
     arr2 = np.array(img2, dtype=np.int32)
     diff_arr = np.abs(arr1 - arr2).astype(np.uint8)
 
+    # 1. Calculate pixel difference mask
     mask = np.any(diff_arr > 10, axis=2)
+    
+    # 2. Advanced Contour/Object detection to find "things" that changed
+    bounding_boxes = []
+    try:
+        import cv2
+        # Convert mask to uint8 binary image: 255 where changed, 0 otherwise
+        binary_mask = (mask.astype(np.uint8)) * 255
+        
+        # Dilate mask with a 15x15 rectangle kernel to merge nearby pixel differences (like words or shapes)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        dilated = cv2.dilate(binary_mask, kernel, iterations=1)
+        
+        # Find outer contours of differences
+        contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        for contour in contours:
+            x, y, w, h = cv2.boundingRect(contour)
+            # Filter out tiny noise (area < 20 pixels) to avoid noise boxes
+            if w * h >= 20:
+                bounding_boxes.append((x, y, w, h))
+        
+        # Sort bounding boxes top-to-bottom, then left-to-right
+        bounding_boxes = sorted(bounding_boxes, key=lambda b: (b[1], b[0]))
+    except Exception:
+        pass
+
+    # 3. Create the overlay highlight image
     highlight = img1.copy().convert("RGBA")
     highlight_arr = np.array(highlight)
-    highlight_arr[mask] = [255, 0, 0, 200]
+    
+    # Semi-transparent red overlay for changed pixels so original content remains visible
+    highlight_arr[mask, 0] = np.clip(highlight_arr[mask, 0] * 0.5 + 120, 0, 255)
+    highlight_arr[mask, 1] = np.clip(highlight_arr[mask, 1] * 0.5, 0, 255)
+    highlight_arr[mask, 2] = np.clip(highlight_arr[mask, 2] * 0.5, 0, 255)
+    highlight_arr[mask, 3] = 180 # Semi-transparent Alpha
+    
     diff_img = Image.fromarray(highlight_arr, "RGBA")
+    
+    # 4. Draw bounding boxes around visual regions of differences using PIL ImageDraw
+    if bounding_boxes:
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(diff_img)
+        for idx, (x, y, w, h) in enumerate(bounding_boxes):
+            # Draw semi-transparent filled rectangle
+            draw.rectangle([x, y, x + w, y + h], fill=(255, 0, 0, 30), outline=(255, 30, 30, 220), width=2)
+            
+            # Draw a small badge displaying the element index (e.g. #1, #2)
+            try:
+                badge_y1 = y - 15 if y >= 15 else y
+                badge_y2 = y if y >= 15 else y + 15
+                draw.rectangle([x, badge_y1, x + 32, badge_y2], fill=(255, 30, 30, 220))
+                draw.text((x + 4, badge_y1 + 1), f"#{idx+1}", fill=(255, 255, 255, 255))
+            except Exception:
+                pass
 
     buf = io.BytesIO()
     diff_img.save(buf, format="PNG")
@@ -388,9 +439,11 @@ def image_diff(path1: str, path2: str) -> dict:
         "stats": {
             "total_pixels": total_pixels,
             "changed_pixels": changed_pixels,
+            "changed_elements_count": len(bounding_boxes),
             "similarity_percent": similarity,
             "difference_percent": round(100 - similarity, 2)
-        }
+        },
+        "bounding_boxes": [{"x": x, "y": y, "width": w, "height": h} for (x, y, w, h) in bounding_boxes]
     }
 
 
