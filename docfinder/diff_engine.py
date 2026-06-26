@@ -1,11 +1,26 @@
 import difflib
-import fitz
-import pandas as pd
-from PIL import Image
-import numpy as np
 import io
 import base64
 import os
+
+try:
+    import fitz
+    FITZ_OK = True
+except ImportError:
+    FITZ_OK = False
+
+try:
+    import pandas as pd
+    PANDAS_OK = True
+except ImportError:
+    PANDAS_OK = False
+
+try:
+    from PIL import Image
+    import numpy as np
+    IMAGE_OK = True
+except ImportError:
+    IMAGE_OK = False
 
 try:
     import docx
@@ -126,6 +141,8 @@ def compute_diff_report(text1: str, text2: str) -> dict:
     }
 
 def extract_text_from_pdf(path: str) -> str:
+    if not FITZ_OK:
+        return "PyMuPDF not installed - cannot extract PDF text"
     doc = fitz.open(path)
     pages = []
     for i, page in enumerate(doc):
@@ -152,6 +169,8 @@ def extract_text_from_pptx(path: str) -> str:
     return "\n\n".join(slides)
 
 def extract_text_from_excel(path: str) -> str:
+    if not PANDAS_OK:
+        return "pandas not installed - cannot extract Excel text"
     xl = pd.ExcelFile(path)
     sheets = []
     for sheet in xl.sheet_names:
@@ -160,10 +179,14 @@ def extract_text_from_excel(path: str) -> str:
     return "\n\n".join(sheets)
 
 def extract_text_from_csv(path: str) -> str:
+    if not PANDAS_OK:
+        return "pandas not installed - cannot extract CSV text"
     df = pd.read_csv(path)
     return df.to_string(index=True)
 
 def image_diff(path1: str, path2: str) -> dict:
+    if not IMAGE_OK:
+        return {"type": "image", "diff_image_base64": "", "stats": {"total_pixels": 0, "changed_pixels": 0, "similarity_percent": 0, "difference_percent": 0}}
     img1 = Image.open(path1).convert("RGB")
     img2 = Image.open(path2).convert("RGB")
 
