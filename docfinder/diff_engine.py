@@ -193,13 +193,42 @@ def compute_diff_report(text1: str, text2: str) -> dict:
 
 
 def extract_text_from_pdf(path: str) -> str:
-    if not FITZ_OK:
-        return "PyMuPDF not installed - cannot extract PDF text"
-    doc = fitz.open(path)
-    pages = []
-    for i, page in enumerate(doc):
-        pages.append(f"[PAGE {i+1}]\n{page.get_text()}")
-    return "\n\n".join(pages)
+    # Try PyMuPDF (fitz) first
+    if FITZ_OK:
+        try:
+            doc = fitz.open(path)
+            pages = []
+            for i, page in enumerate(doc):
+                pages.append(f"[PAGE {i+1}]\n{page.get_text()}")
+            return "\n\n".join(pages)
+        except Exception:
+            pass
+
+    # Try pdfplumber next
+    try:
+        import pdfplumber
+        pages = []
+        with pdfplumber.open(path) as pdf:
+            for i, page in enumerate(pdf.pages):
+                text = page.extract_text() or ""
+                pages.append(f"[PAGE {i+1}]\n{text}")
+        return "\n\n".join(pages)
+    except Exception:
+        pass
+
+    # Try PyPDF2 as final fallback
+    try:
+        from PyPDF2 import PdfReader
+        pages = []
+        reader = PdfReader(path)
+        for i, page in enumerate(reader.pages):
+            text = page.extract_text() or ""
+            pages.append(f"[PAGE {i+1}]\n{text}")
+        return "\n\n".join(pages)
+    except Exception:
+        pass
+
+    return "Error: Could not extract text from PDF (all extractors failed)"
 
 
 def extract_text_from_docx(path: str) -> str:
@@ -224,14 +253,31 @@ def extract_text_from_pptx(path: str) -> str:
 
 
 def extract_text_from_excel(path: str) -> str:
-    if not PANDAS_OK:
-        return "pandas not installed - cannot extract Excel text"
-    xl = pd.ExcelFile(path)
-    sheets = []
-    for sheet in xl.sheet_names:
-        df = xl.parse(sheet)
-        sheets.append(f"[SHEET: {sheet}]\n{df.to_string(index=True)}")
-    return "\n\n".join(sheets)
+    if PANDAS_OK:
+        try:
+            xl = pd.ExcelFile(path)
+            sheets = []
+            for sheet in xl.sheet_names:
+                df = xl.parse(sheet)
+                sheets.append(f"[SHEET: {sheet}]\n{df.to_string(index=True)}")
+            return "\n\n".join(sheets)
+        except Exception:
+            pass
+
+    # Try openpyxl directly
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(path, data_only=True)
+        sheets = []
+        for name in wb.sheetnames:
+            ws = wb[name]
+            lines = []
+            for row in ws.iter_rows(values_only=True):
+                lines.append("\t".join(str(val) if val is not None else "" for val in row))
+            sheets.append(f"[SHEET: {name}]\n" + "\n".join(lines))
+        return "\n\n".join(sheets)
+    except Exception as e:
+        return f"Excel extraction failed: {str(e)}"
 
 
 def extract_text_from_csv(path: str) -> str:
