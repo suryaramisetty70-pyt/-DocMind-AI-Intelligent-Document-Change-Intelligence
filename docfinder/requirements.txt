@@ -40,3 +40,10 @@ google-generativeai
 # Backend additions
 numpy
 websockets
+# New diff_engine dependencies
+PyMuPDF
+pandas
+openpyxl
+Pillow
+python-docx
+python-pptx
