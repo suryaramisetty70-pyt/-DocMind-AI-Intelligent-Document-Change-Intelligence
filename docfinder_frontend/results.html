@@ -1,418 +1,515 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Results · DiffLab</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="shared.css">
-    <style>
-        .score-card{background:var(--grad-dark);border-radius:24px;padding:2.5rem;color:#fff;display:grid;grid-template-columns:auto 1fr auto;gap:2.5rem;align-items:center;margin-bottom:1.5rem;position:relative;overflow:hidden}
-        .score-card::before{content:"";position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:var(--grad-accent);filter:blur(100px);opacity:.3;border-radius:50%}
-        .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;position:relative;z-index:1}
-        .stat{padding:1rem;border-radius:12px;background:rgba(255,255,255,.06);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
-        .stat .n{font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace}
-        .stat .l{font-size:.75rem;opacity:.7;margin-top:.25rem}
-        .diff-wrap{display:grid;grid-template-columns:1fr 380px;gap:1.5rem}
-        .diff-view{background:#fff;border-radius:16px;border:1px solid var(--border);overflow:hidden}
-        .diff-head{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fafbfc}
-        .diff-head h3{font-weight:700;font-size:1rem}
-        .diff-tabs{display:flex;gap:.25rem}
-        .diff-tab{padding:.4rem .8rem;border-radius:8px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer}
-        .diff-tab.active{background:var(--primary);color:#fff}
-        .diff-body{padding:0;font-family:'JetBrains Mono',monospace;font-size:.85rem;line-height:1.7;max-height:520px;overflow:auto}
-        .side-panel{display:flex;flex-direction:column;gap:1rem}
-        .legend{padding:1.25rem;background:#fff;border-radius:14px;border:1px solid var(--border)}
-        .legend h4{font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-        .leg-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
-        .leg-item:last-child{border:none}
-        .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.5rem;vertical-align:middle}
-        .ai-card{padding:1.5rem;background:var(--grad-dark);color:#fff;border-radius:16px;position:relative;overflow:hidden}
-        .ai-card::before{content:"";position:absolute;top:-30%;right:-30%;width:200px;height:200px;background:var(--grad-accent);filter:blur(60px);opacity:.4;border-radius:50%}
-        .ai-card h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:.75rem;position:relative}
-        .ai-card p{font-size:.9rem;line-height:1.65;opacity:.9;position:relative}
-        .export{padding:1.25rem;background:#fff;border-radius:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem}
-        @media(max-width:1100px){.diff-wrap{grid-template-columns:1fr}.score-card{grid-template-columns:1fr}}
-        
-        /* Pro-Level Diff Styles */
-        .pro-diff-container { padding: 1.5rem; white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; line-height: 1.8; color: #334155; }
-        .diff-added { background-color: rgba(16, 185, 129, 0.2); color: #047857; font-weight: 700; border-radius: 4px; padding: 2px 0; }
-        .diff-removed { background-color: rgba(239, 68, 68, 0.2); color: #b91c1c; text-decoration: line-through; border-radius: 4px; padding: 2px 0; }
-        
-        /* Override diff2html fonts */
-        .d2h-wrapper { font-family: 'JetBrains Mono', monospace; }
-        .d2h-code-line { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
-        
-        /* Chat UI */
-        .chat-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-        .chat-box h4 { font-size: .85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 0; }
-        .chat-history { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; line-height: 1.5; }
-        .chat-msg { padding: 0.75rem; border-radius: 8px; }
-        .chat-msg.user { background: rgba(59, 130, 246, 0.1); color: var(--accent); align-self: flex-end; max-width: 90%; }
-        .chat-msg.bot { background: #f8fafc; color: var(--text); align-self: flex-start; max-width: 90%; }
-        .chat-input { display: flex; gap: 0.5rem; }
-        .chat-input input { flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; }
-        .chat-input button { padding: 0.5rem 1rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    </style>
-    <!-- jsdiff CDN for character-level granular difference finding -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
-    <!-- Diff2Html CDN for Side-by-Side Viewer -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DocMind AI — Diff Results</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.47/diff2html.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.47/diff2html.min.css"/>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+    --accent: #1f6feb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 18px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; }
+  .logo span { color: var(--purple); }
+  .back-btn {
+    background: var(--border);
+    border: none;
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #444c56; }
+
+  /* ── Stats Bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .stat-icon { font-size: 18px; }
+  .stat-value { font-size: 20px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-green .stat-value { color: var(--green); }
+  .stat-red .stat-value { color: var(--red); }
+  .stat-yellow .stat-value { color: var(--yellow); }
+  .stat-blue .stat-value { color: var(--blue); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 24px 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tab {
+    padding: 8px 16px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    border-radius: 4px 4px 0 0;
+  }
+  .tab:hover { color: var(--text); background: var(--bg); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── Content ── */
+  .content { padding: 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Granular diff table ── */
+  .diff-table { width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 13px; }
+  .diff-table th {
+    background: var(--border);
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    position: sticky;
+    top: 60px;
+  }
+  .diff-table td { padding: 6px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .diff-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-added { background: rgba(63,185,80,0.2); color: var(--green); }
+  .badge-removed { background: rgba(248,81,73,0.2); color: var(--red); }
+  .badge-changed { background: rgba(210,153,34,0.2); color: var(--yellow); }
+
+  .line-old { background: rgba(248,81,73,0.1); border-left: 3px solid var(--red); padding-left: 8px; }
+  .line-new { background: rgba(63,185,80,0.1); border-left: 3px solid var(--green); padding-left: 8px; }
+  .line-num { color: var(--muted); font-size: 11px; user-select: none; min-width: 40px; display: inline-block; }
+
+  /* inline char diff */
+  .char-del { background: rgba(248,81,73,0.4); border-radius: 2px; }
+  .char-add { background: rgba(63,185,80,0.4); border-radius: 2px; }
+
+  /* ── AI Panel ── */
+  .ai-panel { max-width: 860px; }
+  .ai-analysis-box {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    font-size: 14px;
+  }
+  .ai-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--purple);
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .chat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .chat-messages { padding: 16px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+  .chat-msg { padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; max-width: 80%; }
+  .chat-msg.user { background: var(--accent); align-self: flex-end; }
+  .chat-msg.ai { background: var(--border); align-self: flex-start; }
+  .chat-input-row { display: flex; padding: 12px; gap: 8px; border-top: 1px solid var(--border); }
+  .chat-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .chat-input:focus { outline: none; border-color: var(--accent); }
+  .chat-send {
+    background: var(--accent);
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: opacity 0.2s;
+  }
+  .chat-send:hover { opacity: 0.85; }
+  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Image diff ── */
+  .image-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .image-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .image-card-title { padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  .image-card img { width: 100%; display: block; }
+
+  /* ── Loader ── */
+  .loader { display: flex; align-items: center; justify-content: center; height: 200px; flex-direction: column; gap: 12px; color: var(--muted); }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 60px; color: var(--muted); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+
+  /* ── diff2html overrides for dark mode ── */
+  .d2h-wrapper { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .d2h-file-header { background: var(--surface) !important; border-color: var(--border) !important; color: var(--text) !important; }
+  .d2h-code-side-linenumber, .d2h-code-linenumber { background: var(--surface) !important; color: var(--muted) !important; border-color: var(--border) !important; }
+  .d2h-code-line, .d2h-code-side-line { background: var(--bg) !important; color: var(--text) !important; }
+  .d2h-del { background: rgba(248,81,73,0.15) !important; }
+  .d2h-ins { background: rgba(63,185,80,0.15) !important; }
+  .d2h-del .d2h-code-line-ctn del, .d2h-del-op { background: rgba(248,81,73,0.4) !important; }
+  .d2h-ins .d2h-code-line-ctn ins, .d2h-ins-op { background: rgba(63,185,80,0.4) !important; }
+  .d2h-tag { background: var(--border) !important; color: var(--muted) !important; }
+</style>
 </head>
 <body>
-    <div class="app">
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-mark">D</div>
-                DiffLab
-            </div>
-            
-            <div class="s-section">Workspace</div>
-            <a href="dashboard.html" class="s-link">⚡ New Comparison</a>
-            <a href="results.html" class="s-link active">📊 Results</a>
-            <a href="history.html" class="s-link">🕓 History</a>
-            <a href="#" class="s-link">⭐ Saved</a>
-            
-            <div class="s-user">
-                <div class="avatar" id="userAvatar">A</div>
-                <div>
-                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
-                    <div style="font-size:.8rem;opacity:.7">Free plan</div>
-                </div>
-            </div>
-        </aside>
-        
-        <main class="main">
-            <div class="page-head">
-                <div>
-                    <h1>Comparison Results</h1>
-                    <p id="fileNames">Comparing documents...</p>
-                </div>
-                <a href="dashboard.html"><button class="btn btn-primary">+ New Comparison</button></a>
-            </div>
-            
-            <div class="score-card animate-in">
-                <div class="score-ring">
-                    <svg width="160" height="160">
-                        <defs>
-                            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:#10b981"/>
-                                <stop offset="100%" style="stop-color:#3b82f6"/>
-                            </linearGradient>
-                        </defs>
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12"/>
-                        <circle cx="80" cy="80" r="70" fill="none" stroke="url(#g)" stroke-width="12" 
-                                stroke-dasharray="440" stroke-dashoffset="88" stroke-linecap="round"
-                                style="transform:rotate(-90deg);transform-origin:center" id="scoreCircle"/>
-                    </svg>
-                    <div class="score-num" id="scoreNum">80%</div>
-                </div>
-                <div class="score-info">
-                    <h1 id="scoreLabel">Highly similar</h1>
-                    <p id="timeAgo">Compared just now</p>
-                </div>
-                <div class="stat-grid">
-                    <div class="stat">
-                        <div class="n" style="color:var(--success)" id="additions">+24</div>
-                        <div class="l">Additions</div>
-                    </div>
-                    <div class="stat">
-                        <div class="n" style="color:var(--error)" id="deletions">-12</div>
-                        <div class="l">Deletions</div>
-                    </div>
-                    <div class="stat">
-                        <div class="n" style="color:var(--warning)" id="modifications">~8</div>
-                        <div class="l">Modified</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="diff-wrap">
-                <div class="diff-view animate-in delay-1">
-                    <div class="diff-head">
-                        <h3>Difference Viewer</h3>
-                        <div class="diff-tabs">
-                            <button class="diff-tab active" id="tabUnified" onclick="switchView('line-by-line')">Unified</button>
-                            <button class="diff-tab" id="tabSplit" onclick="switchView('side-by-side')">Side-by-Side</button>
-                            <button class="diff-tab" id="tabGranular" onclick="switchView('granular')">Granular (Inch-by-Inch)</button>
-                        </div>
-                    </div>
-                    <div class="diff-body" id="diffBody">
-                        <!-- Diff lines will be inserted here -->
-                    </div>
-                </div>
-                
-                <div class="side-panel">
-                    <div class="legend animate-in delay-2">
-                        <h4>Summary</h4>
-                        <div class="leg-item">
-                            <span><span class="dot" style="background:#10b981"></span>Additions</span>
-                            <strong style="color:#10b981" id="legAdd">24</strong>
-                        </div>
-                        <div class="leg-item">
-                            <span><span class="dot" style="background:#ef4444"></span>Deletions</span>
-                            <strong style="color:#ef4444" id="legDel">12</strong>
-                        </div>
-                        <div class="leg-item">
-                            <span><span class="dot" style="background:#f59e0b"></span>Modifications</span>
-                            <strong style="color:#f59e0b" id="legMod">8</strong>
-                        </div>
-                        <div class="leg-item">
-                            <span><span class="dot" style="background:#94a3b8"></span>Unchanged</span>
-                            <strong id="legSame">186</strong>
-                        </div>
-                    </div>
-                    
-                    <div class="ai-card animate-in delay-3">
-                        <h4>✨ AI Analysis</h4>
-                        <p id="aiAnalysis">Analyzing...</p>
-                    </div>
-                    
-                    <div class="chat-box animate-in delay-3">
-                        <h4>💬 Ask Document AI</h4>
-                        <div class="chat-history" id="chatHistory">
-                            <div class="chat-msg bot">Hello! I am your RAG assistant. Ask me anything about these documents or their differences!</div>
-                        </div>
-                        <div class="chat-input">
-                            <input type="text" id="chatInput" placeholder="Why did the user change...?" onkeypress="if(event.key === 'Enter') sendChatMessage()">
-                            <button onclick="sendChatMessage()">Send</button>
-                        </div>
-                    </div>
-                    
-                    <div class="export animate-in delay-4">
-                        <button class="btn btn-dark" onclick="exportPDF()">⬇️ Export as PDF</button>
-                        <button class="btn btn-ghost" onclick="exportJSON()">⬇️ Export as JSON</button>
-                        <button class="btn btn-ghost" onclick="shareLink()">🔗 Share link</button>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
 
-    <script>
-        // Use relative URLs - proxy server handles API routing
-        const API_URL = '';
-        
-        // Check auth
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
-        
-        const user = localStorage.getItem('user');
-        document.getElementById('userName').textContent = user || 'User';
-        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
-        
-        // Load results
-        const result = JSON.parse(localStorage.getItem('lastResult') || '{}');
-        const texts = JSON.parse(localStorage.getItem('lastTexts') || '{}');
-        
-        // Render Content based on Type
-        if (result.fileType === 'image') {
-            const r = result.results;
-            const score = Math.round((r.similarity_score || 0));
-            document.getElementById('scoreNum').textContent = score + '%';
-            document.getElementById('scoreCircle').style.strokeDashoffset = 440 - (440 * score / 100);
-            
-            document.getElementById('scoreLabel').textContent = score >= 90 ? 'Nearly Identical' : score >= 70 ? 'Similar' : 'Different';
-            
-            if (r.diff_image_base64) {
-                document.getElementById('diffBody').innerHTML = `<div style="padding:1rem;text-align:center;"><img src="${r.diff_image_base64}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);" alt="Diff Image"></div>`;
-            } else {
-                document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">Image comparison failed or no differences detected.</p>';
-            }
-        } else if (result.results) {
-            const r = result.results;
-            const score = Math.round((r.similarity_score || 0) * 100) || Math.round((r.overall_similarity || 0) * 100) || 0;
-            
-            // Update score display
-            document.getElementById('scoreNum').textContent = score + '%';
-            document.getElementById('scoreCircle').style.strokeDashoffset = 440 - (440 * score / 100);
-            
-            // Score label
-            let label = 'Different';
-            if (score >= 80) label = 'Highly similar';
-            else if (score >= 60) label = 'Moderately similar';
-            else if (score >= 40) label = 'Somewhat similar';
-            document.getElementById('scoreLabel').textContent = label;
-            
-            // Stats
-            const adds = r.total_additions || r.additions_count || 0;
-            const dels = r.total_deletions || r.deletions_count || 0;
-            const mods = r.total_modifications || r.modifications_count || 0;
-            
-            document.getElementById('additions').textContent = '+' + adds;
-            document.getElementById('deletions').textContent = '-' + dels;
-            document.getElementById('modifications').textContent = '~' + mods;
-            document.getElementById('legAdd').textContent = adds;
-            document.getElementById('legDel').textContent = dels;
-            document.getElementById('legMod').textContent = mods;
-            
-            // Generate diff
-            generateDiff(texts.text1 || r.full_text1 || '', texts.text2 || r.full_text2 || '', r);
-            
-            // AI analysis
-            if (r.ai_analysis && r.ai_analysis.key_differences) {
-                document.getElementById('aiAnalysis').innerHTML = `<strong>${result.mode === 'ai' ? '[AI NODE ACTIVE]' : ''}</strong><br>` + r.ai_analysis.key_differences;
-            } else if (result.mode === 'ai') {
-                document.getElementById('aiAnalysis').textContent = 'AI Node generated analysis successfully.';
-            } else {
-                document.getElementById('aiAnalysis').textContent = 'Normal Mode: Strict text matching applied.';
-            }
-        } else {
-            document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No results found. Please run a comparison first.</p>';
-        }
-        
-        let currentOriginal = '';
-        let currentModified = '';
-        
-        function generateDiff(original, modified, result) {
-            currentOriginal = original || '';
-            currentModified = modified || '';
-            switchView('side-by-side'); // Default to pro side-by-side view
-        }
-        
-        function switchView(mode) {
-            // Update tabs
-            document.getElementById('tabUnified').classList.remove('active');
-            document.getElementById('tabSplit').classList.remove('active');
-            document.getElementById('tabGranular').classList.remove('active');
-            
-            if (mode === 'line-by-line') document.getElementById('tabUnified').classList.add('active');
-            if (mode === 'side-by-side') document.getElementById('tabSplit').classList.add('active');
-            if (mode === 'granular') document.getElementById('tabGranular').classList.add('active');
-            
-            if (!currentOriginal && !currentModified) {
-                document.getElementById('diffBody').innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted)">No differences found or text could not be loaded.</p>';
-                return;
-            }
-            
-            const displayElement = document.getElementById('diffBody');
-            
-            if (mode === 'granular') {
-                if (typeof Diff === 'undefined') {
-                    displayElement.innerHTML = '<div style="padding:2rem;color:red;">Error: jsdiff failed to load.</div>';
-                    return;
-                }
-                // Execute Pro-Level granular diff using jsdiff (Character level)
-                const diff = Diff.diffChars(currentOriginal, currentModified);
-                const container = document.createElement('div');
-                container.className = 'pro-diff-container';
-                
-                diff.forEach((part) => {
-                    const span = document.createElement('span');
-                    if (part.added) {
-                        span.className = 'diff-added';
-                    } else if (part.removed) {
-                        span.className = 'diff-removed';
-                    }
-                    span.appendChild(document.createTextNode(part.value));
-                    container.appendChild(span);
-                });
-                
-                displayElement.innerHTML = '';
-                displayElement.appendChild(container);
-            } else {
-                if (typeof Diff === 'undefined' || typeof Diff2Html === 'undefined') {
-                    displayElement.innerHTML = '<div style="padding:2rem;color:red;">Error: diff engines failed to load. Try hard-refreshing.</div>';
-                    return;
-                }
-                // Use diff2html for professional side-by-side or unified view
-                try {
-                    const patch = Diff.createTwoFilesPatch("Source A", "Source B", currentOriginal, currentModified);
-                    const diffHtml = Diff2Html.html(patch, { 
-                        drawFileList: false, 
-                        matching: 'lines', 
-                        outputFormat: mode,
-                        renderNothingWhenEmpty: false
-                    });
-                    displayElement.innerHTML = diffHtml;
-                } catch (e) {
-                    displayElement.innerHTML = `<div style="padding: 2rem; color: red;">Error generating diff: ${e.message}<br>${e.stack}</div>`;
-                    console.error("Diff Error:", e);
-                }
-            }
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function exportPDF() {
-            showToast('PDF export coming soon!', 'success');
-        }
-        
-        function exportJSON() {
-            const data = localStorage.getItem('lastResult');
-            const blob = new Blob([data || '{}'], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'comparison-result.json';
-            a.click();
-            showToast('Exported!', 'success');
-        }
-        
-        function shareLink() {
-            navigator.clipboard.writeText(window.location.href);
-            showToast('Link copied!', 'success');
-        }
-        
-        async function sendChatMessage() {
-            const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-            
-            input.value = '';
-            
-            const history = document.getElementById('chatHistory');
-            // Append user msg
-            const userMsg = document.createElement('div');
-            userMsg.className = 'chat-msg user';
-            userMsg.textContent = msg;
-            history.appendChild(userMsg);
-            history.scrollTop = history.scrollHeight;
-            
-            // Loading state
-            const botLoading = document.createElement('div');
-            botLoading.className = 'chat-msg bot';
-            botLoading.textContent = 'Thinking...';
-            history.appendChild(botLoading);
-            history.scrollTop = history.scrollHeight;
-            
-            try {
-                const res = await fetch(`${API_URL}/api/chat`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text1: currentOriginal,
-                        text2: currentModified,
-                        query: msg
-                    })
-                });
-                
-                const data = await res.json();
-                botLoading.textContent = data.reply || 'Sorry, I encountered an error.';
-            } catch (e) {
-                botLoading.textContent = 'Connection error.';
-            }
-            history.scrollTop = history.scrollHeight;
-        }
-        
-        function showToast(msg, type) {
-            const toast = document.getElementById('toast') || document.createElement('div');
-            toast.id = 'toast';
-            toast.className = `toast show ${type}`;
-            toast.textContent = msg;
-            toast.style.cssText = 'position:fixed;bottom:2rem;right:2rem;padding:1rem 1.5rem;border-radius:12px;color:#fff;font-weight:500;z-index:200';
-            toast.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-    </script>
+<header class="header">
+  <div class="logo">DocMind <span>AI</span></div>
+  <button class="back-btn" onclick="history.back()">← New Comparison</button>
+</header>
+
+<!-- Stats Bar -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-card stat-green">
+    <span class="stat-icon">➕</span>
+    <div><div class="stat-value" id="statAdded">—</div><div class="stat-label">Added</div></div>
+  </div>
+  <div class="stat-card stat-red">
+    <span class="stat-icon">➖</span>
+    <div><div class="stat-value" id="statRemoved">—</div><div class="stat-label">Removed</div></div>
+  </div>
+  <div class="stat-card stat-yellow">
+    <span class="stat-icon">✏️</span>
+    <div><div class="stat-value" id="statChanged">—</div><div class="stat-label">Changed</div></div>
+  </div>
+  <div class="stat-card stat-blue">
+    <span class="stat-icon">🔍</span>
+    <div><div class="stat-value" id="statSimilarity">—</div><div class="stat-label">Similarity</div></div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">📊</span>
+    <div><div class="stat-value" id="statDiff">—</div><div class="stat-label">Difference</div></div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" id="tabsRow">
+  <button class="tab active" onclick="switchTab('sideBySide', this)">Side by Side</button>
+  <button class="tab" onclick="switchTab('unified', this)">Unified</button>
+  <button class="tab" onclick="switchTab('granular', this)">Granular (Line by Line)</button>
+  <button class="tab" onclick="switchTab('aiPanel', this)" id="aiTab">🤖 AI Analysis</button>
+  <button class="tab" onclick="switchTab('imagePanel', this)" id="imageTab" style="display:none">🖼 Image Diff</button>
+</div>
+
+<!-- Content Panels -->
+<div class="content">
+
+  <!-- Side by Side -->
+  <div id="sideBySide" class="panel active">
+    <div class="loader" id="loaderSBS"><div class="spinner"></div><span>Rendering diff...</span></div>
+    <div id="sbsContent" class="d2h-wrapper"></div>
+  </div>
+
+  <!-- Unified -->
+  <div id="unified" class="panel">
+    <div id="unifiedContent" class="d2h-wrapper"></div>
+  </div>
+
+  <!-- Granular -->
+  <div id="granular" class="panel">
+    <div id="granularContent"></div>
+  </div>
+
+  <!-- AI Analysis -->
+  <div id="aiPanel" class="panel">
+    <div class="ai-panel">
+      <div id="aiAnalysisBox" class="ai-analysis-box">
+        <div class="ai-label">🤖 AI Analysis</div>
+        <div id="aiText">Loading AI analysis...</div>
+      </div>
+      <div class="chat-box">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" placeholder="Ask about the differences..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="chat-send" id="chatSend" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Diff -->
+  <div id="imagePanel" class="panel">
+    <div class="image-grid" id="imageGrid"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Load result from sessionStorage ──────────────────────────────────────────
+const result = JSON.parse(sessionStorage.getItem("diffResult") || "{}");
+
+// ── Populate stats ─────────────────────────────────────────────────────────
+function populateStats(stats) {
+  if (!stats) return;
+  document.getElementById("statAdded").textContent = stats.added ?? "—";
+  document.getElementById("statRemoved").textContent = stats.removed ?? "—";
+  document.getElementById("statChanged").textContent = stats.changed ?? "—";
+  document.getElementById("statSimilarity").textContent = stats.similarity_percent != null ? stats.similarity_percent + "%" : "—";
+  document.getElementById("statDiff").textContent = stats.difference_percent != null ? stats.difference_percent + "%" : "—";
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ── Build inline char diff HTML ───────────────────────────────────────────────
+function buildInlineHtml(inline) {
+  if (!inline) return "";
+  return inline.map(seg => {
+    if (seg.type === "removed") return `<span class="char-del">${escHtml(seg.text)}</span>`;
+    if (seg.type === "added") return `<span class="char-add">${escHtml(seg.text)}</span>`;
+    return escHtml(seg.text);
+  }).join("");
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ── Render Granular Panel ─────────────────────────────────────────────────────
+function renderGranular(differences) {
+  const container = document.getElementById("granularContent");
+  if (!differences || differences.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No differences found. Documents are identical.</p></div>`;
+    return;
+  }
+
+  let html = `<table class="diff-table">
+    <thead><tr>
+      <th>Type</th><th>Line #</th><th>Document 1 (Original)</th><th>Document 2 (Modified)</th>
+    </tr></thead><tbody>`;
+
+  differences.forEach(d => {
+    let badge = "";
+    let oldCell = "";
+    let newCell = "";
+    let lineNum = "";
+
+    if (d.type === "added") {
+      badge = `<span class="badge badge-added">Added</span>`;
+      oldCell = `<td>—</td>`;
+      newCell = `<td class="line-new"><span class="line-num">${d.line_num2}</span> ${escHtml(d.new)}</td>`;
+      lineNum = `<td>—→ ${d.line_num2}</td>`;
+    } else if (d.type === "removed") {
+      badge = `<span class="badge badge-removed">Removed</span>`;
+      oldCell = `<td class="line-old"><span class="line-num">${d.line_num1}</span> ${escHtml(d.old)}</td>`;
+      newCell = `<td>—</td>`;
+      lineNum = `<td>${d.line_num1} →—</td>`;
+    } else if (d.type === "changed") {
+      badge = `<span class="badge badge-changed">Changed</span>`;
+      oldCell = `<td class="line-old"><span class="line-num">${d.line_num1}</span> ${d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="added")) : escHtml(d.old)}</td>`;
+      newCell = `<td class="line-new"><span class="line-num">${d.line_num2}</span> ${d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="removed")) : escHtml(d.new)}</td>`;
+      lineNum = `<td>${d.line_num1} → ${d.line_num2}</td>`;
+    }
+
+    html += `<tr><td>${badge}</td>${lineNum}${oldCell}${newCell}</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+// ── Render diff2html panels ──────────────────────────────────────────────────
+function renderDiff2Html(unifiedDiff) {
+  if (!unifiedDiff || unifiedDiff.trim() === "") {
+    document.getElementById("sbsContent").innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
+    document.getElementById("unifiedContent").innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
+    return;
+  }
+  const sbsHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "side-by-side" });
+  const unifiedHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "line-by-line" });
+  document.getElementById("sbsContent").innerHTML = sbsHtml;
+  document.getElementById("unifiedContent").innerHTML = unifiedHtml;
+}
+
+// ── Render Image Diff ─────────────────────────────────────────────────────────
+function renderImageDiff(result) {
+  document.getElementById("imageTab").style.display = "inline-block";
+  document.getElementById("statsBar").innerHTML = `
+    <div class="stat-card stat-red"><span class="stat-icon">🖼</span>
+      <div><div class="stat-value">${result.stats.changed_pixels.toLocaleString()}</div><div class="stat-label">Changed Pixels</div></div>
+    </div>
+    <div class="stat-card stat-blue"><span class="stat-icon">📊</span>
+      <div><div class="stat-value">${result.stats.similarity_percent}%</div><div class="stat-label">Similarity</div></div>
+    </div>
+    <div class="stat-card"><span class="stat-icon">🔍</span>
+      <div><div class="stat-value">${result.stats.difference_percent}%</div><div class="stat-label">Difference</div></div>
+    </div>`;
+
+  const src1 = sessionStorage.getItem("imgSrc1") || "";
+  const src2 = sessionStorage.getItem("imgSrc2") || "";
+
+  document.getElementById("imageGrid").innerHTML = `
+    <div class="image-card"><div class="image-card-title">📄 Document 1 (Original)</div>${src1 ? `<img src="${src1}"/>` : "<p style='padding:20px;color:var(--muted)'>Preview N/A</p>"}</div>
+    <div class="image-card"><div class="image-card-title">📄 Document 2 (Modified)</div>${src2 ? `<img src="${src2}"/>` : "<p style='padding:20px;color:var(--muted)'>Preview N/A</p>"}</div>
+    <div class="image-card"><div class="image-card-title">🔴 Pixel Difference Highlight</div><img src="data:image/png;base64,${result.diff_image_base64}"/></div>`;
+
+  // Switch to image tab by default
+  switchTab("imagePanel", document.getElementById("imageTab"));
+}
+
+// ── AI Panel ──────────────────────────────────────────────────────────────────
+function renderAI(analysis) {
+  document.getElementById("aiText").textContent = analysis || "No AI analysis available. Enable AI Node on dashboard.";
+}
+
+let chatContext = "";
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const messages = document.getElementById("chatMessages");
+  messages.innerHTML += `<div class="chat-msg user">${escHtml(msg)}</div>`;
+  input.value = "";
+  document.getElementById("chatSend").disabled = true;
+
+  const loadingDiv = document.createElement("div");
+  loadingDiv.className = "chat-msg ai";
+  loadingDiv.textContent = "Thinking...";
+  messages.appendChild(loadingDiv);
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    const form = new FormData();
+    form.append("message", msg);
+    form.append("context", chatContext);
+    const token = localStorage.getItem("token") || "";
+    const res = await fetch("/api/ai/chat", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token },
+      body: form
+    });
+    const data = await res.json();
+    loadingDiv.textContent = data.reply || "No response.";
+  } catch (e) {
+    loadingDiv.textContent = "Error: " + e.message;
+  }
+
+  document.getElementById("chatSend").disabled = false;
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(function init() {
+  // Try to parse diffResult from sessionStorage
+  let resStr = sessionStorage.getItem("diffResult");
+  // Fallback to localStorage just in case we used it
+  if (!resStr) resStr = localStorage.getItem("lastResult");
+  
+  const resultObj = JSON.parse(resStr || "{}");
+
+  // In our original code, endpoints nested inside `results`, Claude unnested them, let's handle both
+  const actualResult = resultObj.results || resultObj;
+
+  if (!actualResult || Object.keys(actualResult).length === 0) {
+    document.body.innerHTML += `<div class="empty-state" style="margin-top:60px"><div class="icon">❌</div><p>No result data found. Please go back and compare documents.</p></div>`;
+    return;
+  }
+
+  // Image mode
+  if (actualResult.type === "image" || resultObj.fileType === "image") {
+    renderImageDiff(actualResult);
+    if(actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
+    return;
+  }
+
+  // Text-based mode
+  populateStats(actualResult.stats);
+  renderDiff2Html(actualResult.unified_diff || "");
+  renderGranular(actualResult.differences || []);
+  renderAI(actualResult.ai_analysis);
+
+  // Build chat context
+  chatContext = `Similarity: ${actualResult.stats?.similarity_percent}%. Total changes: ${actualResult.stats?.total_changes}. ` +
+    `Added: ${actualResult.stats?.added}, Removed: ${actualResult.stats?.removed}, Changed: ${actualResult.stats?.changed}.`;
+
+  document.getElementById("loaderSBS").style.display = "none";
+})();
+</script>
 </body>
 </html>

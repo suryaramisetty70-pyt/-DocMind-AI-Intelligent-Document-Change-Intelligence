@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from typing import Optional, Dict
 
+from diff_engine import compute_diff_report, extract_text_from_pdf, extract_text_from_excel, extract_text_from_csv, image_diff, extract_text_from_docx, extract_text_from_pptx, get_ai_analysis, GROQ_OK
+import tempfile
+import os
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -352,106 +355,61 @@ async def compare_text(
     text1: str = Form(...),
     text2: str = Form(...),
     level: str = Form("word"),
-    to_lowercase: bool = Form(False),
-    sort_lines: bool = Form(False),
-    replace_line_breaks: bool = Form(False),
-    remove_extra_spaces: bool = Form(False),
+    to_lowercase: str = Form("false"),
+    remove_extra_spaces: str = Form("false"),
+    sort_lines: str = Form("false"),
     use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Compare two text inputs with optional preprocessing."""
-    # Text preprocessing
-    if to_lowercase:
-        text1 = text1.lower()
-        text2 = text2.lower()
+    report = compute_diff_report(text1, text2)
+    report["file_type"] = "text"
     
-    if sort_lines:
-        text1 = '\n'.join(sorted(text1.splitlines()))
-        text2 = '\n'.join(sorted(text2.splitlines()))
-    
-    if replace_line_breaks:
-        text1 = text1.replace('\n', ' ').replace('\r', ' ')
-        text2 = text2.replace('\n', ' ').replace('\r', ' ')
-    
-    if remove_extra_spaces:
-        text1 = ' '.join(text1.split())
-        text2 = ' '.join(text2.split())
-    
-    engine = TextComparisonEngine()
-    result = engine.compare_text(text1, text2, level)
-    
-    # Save comparison
+    if use_ai.lower() == "true":
+        report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+    # Save history
     comparison = Comparison(
         user_id=current_user.id if current_user else 0,
-        file1_name="text_input_1",
-        file2_name="text_input_2",
-        file1_type="txt",
-        file2_type="txt",
-        comparison_type=f"text_{level}",
-        similarity_score=result["similarity_score"],
+        file1_name="Text Input 1",
+        file2_name="Text Input 2",
+        file1_type="text",
+        file2_type="text",
+        comparison_type="text",
+        similarity_score=report["stats"]["similarity_percent"],
         status="completed",
-        results=result
+        results=report
     )
     db.add(comparison)
     await db.commit()
     await db.refresh(comparison)
-    
-    # Save to vector db
-    if current_user:
-        vector_db.add_document(text1, {"type": "text1", "id": comparison.id, "user": current_user.username})
-        vector_db.add_document(text2, {"type": "text2", "id": comparison.id, "user": current_user.username})
-    
-    # Add AI analysis if requested
-    if use_ai.lower() == "true":
-        ai_analysis = ai_service.get_semantic_analysis(text1, text2)
-        result["ai_analysis"] = ai_analysis
-    else:
-        result["ai_analysis"] = None
-    
-    # ALWAYS ensure texts are returned so the frontend diff viewer can render them
-    result["full_text1"] = text1
-    result["full_text2"] = text2
-    
-    return {"comparison_id": comparison.id, "results": result}
 
+    report["comparison_id"] = comparison.id
+    return report
 
 @app.post("/api/compare/pdf")
 async def compare_pdf(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
-    use_ocr: bool = Form(False),
     use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Compare two PDF files."""
-    # Save uploaded files
-    file1_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file1.filename}")
-    file2_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file2.filename}")
-    
-    with open(file1_path, "wb") as f:
-        shutil.copyfileobj(file1.file, f)
-    with open(file2_path, "wb") as f:
-        shutil.copyfileobj(file2.file, f)
-    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
     try:
-        # Read file contents
-        with open(file1_path, "rb") as f:
-            pdf1_content = f.read()
-        with open(file2_path, "rb") as f:
-            pdf2_content = f.read()
+        text1 = extract_text_from_pdf(t1_path)
+        text2 = extract_text_from_pdf(t2_path)
+        report = compute_diff_report(text1, text2)
+        report["file_type"] = "pdf"
         
-        # Check if OCR is needed
-        if use_ocr:
-            from .services.ocr_engine import OCREngine
-            if OCREngine.detect_if_scanned(pdf1_content) or OCREngine.detect_if_scanned(pdf2_content):
-                pass  # OCR will be applied automatically
-        
-        # Compare PDFs
-        result = PDFComparisonEngine.compare_pdfs(pdf1_content, pdf2_content, use_ocr)
-        
-        # Save comparison
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+        # Save history
         comparison = Comparison(
             user_id=current_user.id if current_user else 0,
             file1_name=file1.filename,
@@ -459,105 +417,172 @@ async def compare_pdf(
             file1_type="pdf",
             file2_type="pdf",
             comparison_type="pdf",
-            similarity_score=result["similarity_score"],
+            similarity_score=report["stats"]["similarity_percent"],
             status="completed",
-            results=result
+            results=report
         )
         db.add(comparison)
         await db.commit()
         await db.refresh(comparison)
-        
-        # Add AI analysis if requested
-        if use_ai.lower() == "true":
-            ai_result = AIEngine.compare_semantically(
-                result.get("full_text1", ""),
-                result.get("full_text2", "")
-            )
-            result["ai_analysis"] = ai_result
-        else:
-            result["ai_analysis"] = None
-        
-        result["full_text1"] = result.get("full_text1", "")
-        result["full_text2"] = result.get("full_text2", "")
-        
-        return {"comparison_id": comparison.id, "results": result}
-    
-    finally:
-        # Cleanup temp files
-        os.remove(file1_path)
-        os.remove(file2_path)
 
+        report["comparison_id"] = comparison.id
+        return report
+    finally:
+        os.unlink(t1_path); os.unlink(t2_path)
+
+@app.post("/api/compare/docx")
+async def compare_docx(
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
+    try:
+        text1 = extract_text_from_docx(t1_path)
+        text2 = extract_text_from_docx(t2_path)
+        report = compute_diff_report(text1, text2)
+        report["file_type"] = "docx"
+        
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+        # Save history
+        comparison = Comparison(
+            user_id=current_user.id if current_user else 0,
+            file1_name=file1.filename,
+            file2_name=file2.filename,
+            file1_type="docx",
+            file2_type="docx",
+            comparison_type="docx",
+            similarity_score=report["stats"]["similarity_percent"],
+            status="completed",
+            results=report
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+
+        report["comparison_id"] = comparison.id
+        return report
+    finally:
+        os.unlink(t1_path); os.unlink(t2_path)
+
+@app.post("/api/compare/pptx")
+async def compare_pptx(
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
+    try:
+        text1 = extract_text_from_pptx(t1_path)
+        text2 = extract_text_from_pptx(t2_path)
+        report = compute_diff_report(text1, text2)
+        report["file_type"] = "pptx"
+        
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+        # Save history
+        comparison = Comparison(
+            user_id=current_user.id if current_user else 0,
+            file1_name=file1.filename,
+            file2_name=file2.filename,
+            file1_type="pptx",
+            file2_type="pptx",
+            comparison_type="pptx",
+            similarity_score=report["stats"]["similarity_percent"],
+            status="completed",
+            results=report
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+
+        report["comparison_id"] = comparison.id
+        return report
+    finally:
+        os.unlink(t1_path); os.unlink(t2_path)
 
 @app.post("/api/compare/excel")
 async def compare_excel(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Compare two Excel files."""
-    file1_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file1.filename}")
-    file2_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file2.filename}")
-    
-    with open(file1_path, "wb") as f:
-        shutil.copyfileobj(file1.file, f)
-    with open(file2_path, "wb") as f:
-        shutil.copyfileobj(file2.file, f)
-    
+    suffix = ".xlsx" if "xlsx" in file1.filename else ".xls"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
     try:
-        with open(file1_path, "rb") as f:
-            excel1_content = f.read()
-        with open(file2_path, "rb") as f:
-            excel2_content = f.read()
+        text1 = extract_text_from_excel(t1_path)
+        text2 = extract_text_from_excel(t2_path)
+        report = compute_diff_report(text1, text2)
+        report["file_type"] = "excel"
         
-        result = ExcelComparisonEngine.compare_excels(excel1_content, excel2_content)
-        
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+        # Save history
         comparison = Comparison(
             user_id=current_user.id if current_user else 0,
             file1_name=file1.filename,
             file2_name=file2.filename,
-            file1_type="xlsx",
-            file2_type="xlsx",
+            file1_type="excel",
+            file2_type="excel",
             comparison_type="excel",
-            similarity_score=result.get("overall_similarity", 0),
+            similarity_score=report["stats"]["similarity_percent"],
             status="completed",
-            results=result
+            results=report
         )
         db.add(comparison)
         await db.commit()
         await db.refresh(comparison)
-        
-        return {"comparison_id": comparison.id, "results": result}
-    
-    finally:
-        os.remove(file1_path)
-        os.remove(file2_path)
 
+        report["comparison_id"] = comparison.id
+        return report
+    finally:
+        os.unlink(t1_path); os.unlink(t2_path)
 
 @app.post("/api/compare/csv")
 async def compare_csv(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Compare two CSV files."""
-    file1_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file1.filename}")
-    file2_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file2.filename}")
-    
-    with open(file1_path, "wb") as f:
-        shutil.copyfileobj(file1.file, f)
-    with open(file2_path, "wb") as f:
-        shutil.copyfileobj(file2.file, f)
-    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
     try:
-        with open(file1_path, "rb") as f:
-            csv1_content = f.read()
-        with open(file2_path, "rb") as f:
-            csv2_content = f.read()
+        text1 = extract_text_from_csv(t1_path)
+        text2 = extract_text_from_csv(t2_path)
+        report = compute_diff_report(text1, text2)
+        report["file_type"] = "csv"
         
-        result = ExcelComparisonEngine.compare_csvs(csv1_content, csv2_content)
-        
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+
+        # Save history
         comparison = Comparison(
             user_id=current_user.id if current_user else 0,
             file1_name=file1.filename,
@@ -565,45 +590,44 @@ async def compare_csv(
             file1_type="csv",
             file2_type="csv",
             comparison_type="csv",
-            similarity_score=result.get("similarity_score", 0),
+            similarity_score=report["stats"]["similarity_percent"],
             status="completed",
-            results=result
+            results=report
         )
         db.add(comparison)
         await db.commit()
         await db.refresh(comparison)
-        
-        return {"comparison_id": comparison.id, "results": result}
-    
-    finally:
-        os.remove(file1_path)
-        os.remove(file2_path)
 
+        report["comparison_id"] = comparison.id
+        return report
+    finally:
+        os.unlink(t1_path); os.unlink(t2_path)
 
 @app.post("/api/compare/image")
 async def compare_image(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Compare two Image files."""
-    file1_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file1.filename}")
-    file2_path = os.path.join(UPLOAD_DIR, f"{datetime.now().timestamp()}_{file2.filename}")
-    
-    with open(file1_path, "wb") as f:
-        shutil.copyfileobj(file1.file, f)
-    with open(file2_path, "wb") as f:
-        shutil.copyfileobj(file2.file, f)
-    
+    ext1 = os.path.splitext(file1.filename)[1] or ".png"
+    ext2 = os.path.splitext(file2.filename)[1] or ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext1) as t1, \
+         tempfile.NamedTemporaryFile(delete=False, suffix=ext2) as t2:
+        t1.write(await file1.read()); t1_path = t1.name
+        t2.write(await file2.read()); t2_path = t2.name
+
     try:
-        with open(file1_path, "rb") as f:
-            img1_content = f.read()
-        with open(file2_path, "rb") as f:
-            img2_content = f.read()
+        report = image_diff(t1_path, t2_path)
+        report["file_type"] = "image"
         
-        result = ImageComparisonEngine.compare_images(img1_content, img2_content)
-        
+        if use_ai.lower() == "true" and GROQ_OK:
+            report["ai_analysis"] = "AI image analysis: " + \
+                f"Found {report['stats']['changed_pixels']} different pixels " \
+                f"({report['stats']['difference_percent']}% of image changed)."
+
+        # Save history
         comparison = Comparison(
             user_id=current_user.id if current_user else 0,
             file1_name=file1.filename,
@@ -611,22 +635,42 @@ async def compare_image(
             file1_type="image",
             file2_type="image",
             comparison_type="image",
-            similarity_score=result.get("overall_similarity", 0),
+            similarity_score=report["stats"]["similarity_percent"],
             status="completed",
-            results=result
+            results=report
         )
         db.add(comparison)
         await db.commit()
         await db.refresh(comparison)
-        
-        return {"comparison_id": comparison.id, "results": result}
-    
+
+        report["comparison_id"] = comparison.id
+        return report
     finally:
-        os.remove(file1_path)
-        os.remove(file2_path)
+        os.unlink(t1_path); os.unlink(t2_path)
 
+@app.post("/api/ai/chat")
+async def ai_chat(
+    message: str = Form(...),
+    context: str = Form(""),
+    current_user: User = Depends(get_current_user)
+):
+    from groq import Groq
+    GROQ_CLIENT = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
+    try:
+        response = GROQ_CLIENT.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": f"You are a document analysis assistant. Context from compared documents:\n{context[:2000]}"},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=800,
+            temperature=0.5
+        )
+        return {"reply": response.choices[0].message.content}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(500, f"AI error: {str(e)}")
 
-# Report endpoints
 @app.post("/api/report/pdf/{comparison_id}")
 async def generate_pdf_report(
     comparison_id: int,

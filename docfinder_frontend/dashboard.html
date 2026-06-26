@@ -277,6 +277,12 @@
                 formData.append('file2', selectedFile2);
                 formData.append('use_ai', String(currentMode === 'ai'));
                 
+                if (currentType === 'image') {
+                    const toBase64 = f => new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(f); });
+                    sessionStorage.setItem("imgSrc1", await toBase64(selectedFile1));
+                    sessionStorage.setItem("imgSrc2", await toBase64(selectedFile2));
+                }
+                
                 await doFetch(`${API_URL}/api/compare/${currentType}`, formData);
             }
         }
