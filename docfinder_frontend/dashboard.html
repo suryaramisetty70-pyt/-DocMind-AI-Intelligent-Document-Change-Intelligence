@@ -303,7 +303,7 @@
                     data.fileType = currentType;
                     
                     localStorage.setItem('lastResult', JSON.stringify(data));
-                    window.location.href = 'results.html';
+                    window.location.href = 'results.html?v=' + new Date().getTime();
                 } else {
                     showToast(data.detail || 'Comparison failed', 'error');
                 }

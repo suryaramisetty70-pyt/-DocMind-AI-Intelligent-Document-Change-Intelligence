@@ -405,6 +405,10 @@ async def compare_text(
     ai_analysis = ai_service.get_semantic_analysis(text1, text2)
     result["ai_analysis"] = ai_analysis
     
+    # ALWAYS ensure texts are returned so the frontend diff viewer can render them
+    result["full_text1"] = text1
+    result["full_text2"] = text2
+    
     return {"comparison_id": comparison.id, "results": result}
 
 
@@ -464,6 +468,9 @@ async def compare_pdf(
             result.get("full_text2", "")
         )
         result["ai_analysis"] = ai_result
+        
+        result["full_text1"] = result.get("full_text1", "")
+        result["full_text2"] = result.get("full_text2", "")
         
         return {"comparison_id": comparison.id, "results": result}
     
