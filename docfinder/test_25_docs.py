@@ -46,12 +46,12 @@ for i in range(10):
     total_count += 1
     t1 = f"This is original text document {i}. It has some base content."
     t2 = f"This is modified text document {i}. It has DIFFERENT base content."
-    res = requests.post(f"{API_URL}/compare/text", data={"text1": t1, "text2": t2, "level": "word", "use_ai": "true"}, headers=HEADERS)
+    res = requests.post(f"{API_URL}/compare/text", data={"text1": t1, "text2": t2, "level": "word", "use_ai": "false"}, headers=HEADERS)
     if res.status_code == 200:
-        print(f"✅ Text {i+1} OK")
+        print(f"[OK] Text {i+1} OK")
         success_count += 1
     else:
-        print(f"❌ Text {i+1} FAILED: {res.status_code}")
+        print(f"[FAILED] Text {i+1} FAILED: {res.status_code}")
 
 # 2. CSV (10 pairs)
 print("\n--- Testing CSV (10 pairs) ---")
@@ -63,12 +63,12 @@ for i in range(10):
         'file1': ('test1.csv', io.BytesIO(csv1), 'text/csv'),
         'file2': ('test2.csv', io.BytesIO(csv2), 'text/csv')
     }
-    res = requests.post(f"{API_URL}/compare/csv", files=files, data={"use_ai": "true"}, headers=HEADERS)
+    res = requests.post(f"{API_URL}/compare/csv", files=files, data={"use_ai": "false"}, headers=HEADERS)
     if res.status_code == 200:
-        print(f"✅ CSV {i+1} OK")
+        print(f"[OK] CSV {i+1} OK")
         success_count += 1
     else:
-        print(f"❌ CSV {i+1} FAILED: {res.status_code}")
+        print(f"[FAILED] CSV {i+1} FAILED: {res.status_code}")
 
 # 3. IMAGES (5 pairs)
 print("\n--- Testing Images (5 pairs) ---")
@@ -92,12 +92,12 @@ for i in range(5):
         'file1': ('img1.jpg', b1, 'image/jpeg'),
         'file2': ('img2.jpg', b2, 'image/jpeg')
     }
-    res = requests.post(f"{API_URL}/compare/image", files=files, data={"use_ai": "true"}, headers=HEADERS)
+    res = requests.post(f"{API_URL}/compare/image", files=files, data={"use_ai": "false"}, headers=HEADERS)
     if res.status_code == 200:
-        print(f"✅ Image {i+1} OK")
+        print(f"[OK] Image {i+1} OK")
         success_count += 1
     else:
-        print(f"❌ Image {i+1} FAILED: {res.status_code}")
+        print(f"[FAILED] Image {i+1} FAILED: {res.status_code}")
 
 print(f"\n==================================")
 print(f"TEST RUN COMPLETE: {success_count}/{total_count} PASSED")

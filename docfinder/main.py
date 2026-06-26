@@ -364,6 +364,7 @@ async def compare_text(
 ):
     report = compute_diff_report(text1, text2)
     report["file_type"] = "text"
+    report["type"] = "text"
     
     if use_ai.lower() == "true":
         report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -405,6 +406,7 @@ async def compare_pdf(
         text2 = extract_text_from_pdf(t2_path)
         report = compute_diff_report(text1, text2)
         report["file_type"] = "pdf"
+        report["type"] = "pdf"
         
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -448,6 +450,7 @@ async def compare_docx(
         text2 = extract_text_from_docx(t2_path)
         report = compute_diff_report(text1, text2)
         report["file_type"] = "docx"
+        report["type"] = "docx"
         
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -491,6 +494,7 @@ async def compare_pptx(
         text2 = extract_text_from_pptx(t2_path)
         report = compute_diff_report(text1, text2)
         report["file_type"] = "pptx"
+        report["type"] = "pptx"
         
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -535,6 +539,7 @@ async def compare_excel(
         text2 = extract_text_from_excel(t2_path)
         report = compute_diff_report(text1, text2)
         report["file_type"] = "excel"
+        report["type"] = "excel"
         
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -578,6 +583,7 @@ async def compare_csv(
         text2 = extract_text_from_csv(t2_path)
         report = compute_diff_report(text1, text2)
         report["file_type"] = "csv"
+        report["type"] = "csv"
         
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
@@ -621,8 +627,9 @@ async def compare_image(
     try:
         report = image_diff(t1_path, t2_path)
         report["file_type"] = "image"
+        report["type"] = "image"
         
-        if use_ai.lower() == "true" and GROQ_OK:
+        if use_ai.lower() == "true":
             report["ai_analysis"] = "AI image analysis: " + \
                 f"Found {report['stats']['changed_pixels']} different pixels " \
                 f"({report['stats']['difference_percent']}% of image changed)."
@@ -742,6 +749,36 @@ async def get_history(
         }
         for c in comparisons
     ]
+
+
+@app.get("/api/comparison/{comparison_id}")
+async def get_comparison(
+    comparison_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific comparison by ID."""
+    result = await db.execute(select(Comparison).where(Comparison.id == comparison_id))
+    comparison = result.scalar_one_or_none()
+    
+    if not comparison:
+        raise HTTPException(status_code=404, detail="Comparison not found")
+        
+    if current_user and comparison.user_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to view this comparison")
+        
+    return {
+        "id": comparison.id,
+        "file1_name": comparison.file1_name,
+        "file2_name": comparison.file2_name,
+        "file1_type": comparison.file1_type,
+        "file2_type": comparison.file2_type,
+        "comparison_type": comparison.comparison_type,
+        "similarity_score": comparison.similarity_score,
+        "status": comparison.status,
+        "results": comparison.results,
+        "created_at": comparison.created_at.isoformat() if comparison.created_at else None
+    }
 
 
 # Admin endpoints

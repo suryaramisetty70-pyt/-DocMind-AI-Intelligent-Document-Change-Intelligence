@@ -42,7 +42,9 @@ try:
 except Exception:
     GROQ_OK = False
 
+
 def get_inline_diff(old: str, new: str) -> list:
+    """Character-level inline diff for changed lines."""
     matcher = difflib.SequenceMatcher(None, old, new)
     result = []
     for op, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -57,10 +59,28 @@ def get_inline_diff(old: str, new: str) -> list:
             result.append({"type": "added", "text": new[j1:j2]})
     return result
 
-def compute_diff_report(text1: str, text2: str) -> dict:
-    lines1 = text1.splitlines(keepends=True)
-    lines2 = text2.splitlines(keepends=True)
 
+def _ensure_trailing_newlines(text: str) -> list:
+    """Split text into lines, ensuring every line ends with newline.
+    This is critical for difflib.unified_diff to produce valid output
+    that diff2html can parse without crashing."""
+    lines = text.splitlines()
+    return [line + "\n" for line in lines]
+
+
+def compute_diff_report(text1: str, text2: str) -> dict:
+    """
+    Core diff engine. Returns everything the frontend needs:
+    - full_text1 / full_text2   -> for reference
+    - unified_diff              -> for diff2html visual viewer  
+    - differences               -> structured list for granular view
+    - stats                     -> counts and percentages
+    """
+    # Ensure every line ends with \n for proper unified diff output
+    lines1 = _ensure_trailing_newlines(text1)
+    lines2 = _ensure_trailing_newlines(text2)
+
+    # --- Build structured differences list ---
     differ = difflib.Differ()
     delta = list(differ.compare(lines1, lines2))
 
@@ -74,12 +94,18 @@ def compute_diff_report(text1: str, text2: str) -> dict:
         code = line[:2]
         content = line[2:].rstrip("\n")
 
-        if code == "  ":
+        if code == "  ":          # unchanged
             line_num1 += 1
             line_num2 += 1
-        elif code == "- ":
-            if i + 1 < len(delta) and delta[i+1][:2] == "+ ":
-                next_content = delta[i+1][2:].rstrip("\n")
+        elif code == "- ":        # removed or changed
+            # peek ahead - if next is "? " then further ahead for "+ "
+            next_idx = i + 1
+            # skip "? " hint lines from Differ
+            while next_idx < len(delta) and delta[next_idx][:2] == "? ":
+                next_idx += 1
+            
+            if next_idx < len(delta) and delta[next_idx][:2] == "+ ":
+                next_content = delta[next_idx][2:].rstrip("\n")
                 differences.append({
                     "type": "changed",
                     "line_num1": line_num1 + 1,
@@ -91,7 +117,11 @@ def compute_diff_report(text1: str, text2: str) -> dict:
                 changed += 1
                 line_num1 += 1
                 line_num2 += 1
-                i += 2
+                # skip past the "? " lines and the "+ " line
+                i = next_idx + 1
+                # also skip any trailing "? " after the "+ " line
+                while i < len(delta) and delta[i][:2] == "? ":
+                    i += 1
                 continue
             else:
                 differences.append({
@@ -104,7 +134,7 @@ def compute_diff_report(text1: str, text2: str) -> dict:
                 })
                 removed += 1
                 line_num1 += 1
-        elif code == "+ ":
+        elif code == "+ ":        # added
             differences.append({
                 "type": "added",
                 "line_num1": None,
@@ -115,15 +145,31 @@ def compute_diff_report(text1: str, text2: str) -> dict:
             })
             added += 1
             line_num2 += 1
+        # skip "? " hint lines
         i += 1
 
+    # --- Similarity ---
     similarity = difflib.SequenceMatcher(None, text1, text2).ratio() * 100
 
-    unified = "".join(difflib.unified_diff(
+    # --- Build unified diff string for diff2html ---
+    unified_lines = list(difflib.unified_diff(
         lines1, lines2,
         fromfile="Document 1",
         tofile="Document 2"
     ))
+    unified = "".join(unified_lines)
+
+    # For backwards compatibility with ReportLab/openpyxl report generators:
+    additions_list = []
+    deletions_list = []
+    for d in differences:
+        if d["type"] == "added":
+            additions_list.append(d["new"])
+        elif d["type"] == "removed":
+            deletions_list.append(d["old"])
+        elif d["type"] == "changed":
+            deletions_list.append(d["old"])
+            additions_list.append(d["new"])
 
     return {
         "full_text1": text1,
@@ -137,8 +183,14 @@ def compute_diff_report(text1: str, text2: str) -> dict:
             "total_changes": added + removed + changed,
             "similarity_percent": round(similarity, 2),
             "difference_percent": round(100 - similarity, 2)
-        }
+        },
+        "similarity_score": similarity / 100.0,
+        "total_additions": added + changed,
+        "total_deletions": removed + changed,
+        "additions": additions_list,
+        "deletions": deletions_list
     }
+
 
 def extract_text_from_pdf(path: str) -> str:
     if not FITZ_OK:
@@ -149,11 +201,13 @@ def extract_text_from_pdf(path: str) -> str:
         pages.append(f"[PAGE {i+1}]\n{page.get_text()}")
     return "\n\n".join(pages)
 
+
 def extract_text_from_docx(path: str) -> str:
     if not DOCX_OK:
         return "python-docx not installed"
     d = docx.Document(path)
     return "\n".join(p.text for p in d.paragraphs)
+
 
 def extract_text_from_pptx(path: str) -> str:
     if not PPTX_OK:
@@ -168,6 +222,7 @@ def extract_text_from_pptx(path: str) -> str:
         slides.append(f"[SLIDE {i+1}]\n" + "\n".join(texts))
     return "\n\n".join(slides)
 
+
 def extract_text_from_excel(path: str) -> str:
     if not PANDAS_OK:
         return "pandas not installed - cannot extract Excel text"
@@ -178,11 +233,13 @@ def extract_text_from_excel(path: str) -> str:
         sheets.append(f"[SHEET: {sheet}]\n{df.to_string(index=True)}")
     return "\n\n".join(sheets)
 
+
 def extract_text_from_csv(path: str) -> str:
     if not PANDAS_OK:
         return "pandas not installed - cannot extract CSV text"
     df = pd.read_csv(path)
     return df.to_string(index=True)
+
 
 def image_diff(path1: str, path2: str) -> dict:
     if not IMAGE_OK:
@@ -222,9 +279,9 @@ def image_diff(path1: str, path2: str) -> dict:
         }
     }
 
+
 async def get_ai_analysis(text1: str, text2: str, diff_report: dict) -> str:
-    if not GROQ_OK:
-        return "AI unavailable: GROQ_API_KEY not set or groq package missing."
+    from services.ai_integration import ai_service
 
     changes_summary = "\n".join([
         f"- [{d['type'].upper()}] Line {d.get('line_num1') or d.get('line_num2')}: "
@@ -243,20 +300,23 @@ DOCUMENT 2 (first 500 chars):
 DETECTED CHANGES:
 {changes_summary}
 
+STATS: {diff_report.get('stats', {})}
+
 Provide:
 1. A concise executive summary of what changed
-2. Key differences categorized
+2. Key differences categorized (additions, deletions, modifications)
 3. Significance/impact of the changes
 
 Be specific and professional."""
 
-    try:
-        response = GROQ_CLIENT.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1000,
-            temperature=0.3
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"AI analysis failed: {str(e)}"
+    # Try Groq API first via ai_service
+    res = ai_service.analyze_with_groq(prompt)
+    if res:
+        return res
+
+    # Try Gemini API next via ai_service
+    res = ai_service.analyze_with_gemini(prompt)
+    if res:
+        return res
+
+    return "AI analysis failed: Groq and Gemini APIs are both unavailable or returned errors."

@@ -59,7 +59,7 @@ class EmailService:
             if response.status_code in [200, 201, 202]:
                 logger.info(f"Email sent successfully to {to_email} via Brevo")
                 print(f"\n{'='*50}")
-                print(f"✅ EMAIL SENT (VIA BREVO API)")
+                print(f"[SUCCESS] EMAIL SENT (VIA BREVO API)")
                 print(f"To: {to_email}")
                 print(f"Subject: {subject}")
                 print(f"{'='*50}\n")
@@ -67,7 +67,7 @@ class EmailService:
             else:
                 logger.error(f"Failed to send email to {to_email}: {response.text}")
                 print(f"\n{'='*50}")
-                print(f"❌ EMAIL FAILED")
+                print(f"[FAILED] EMAIL FAILED")
                 print(f"To: {to_email}")
                 print(f"Error: {response.text}")
                 print(f"{'='*50}\n")
@@ -76,7 +76,7 @@ class EmailService:
         except Exception as e:
             logger.error(f"Exception sending email to {to_email}: {str(e)}")
             print(f"\n{'='*50}")
-            print(f"❌ EMAIL EXCEPTION")
+            print(f"[ERROR] EMAIL EXCEPTION")
             print(f"To: {to_email}")
             print(f"Error: {str(e)}")
             print(f"{'='*50}\n")

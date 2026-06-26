@@ -104,7 +104,7 @@
                         <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
                         <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
                         <div style="margin-top: 1rem; text-align: center;">
-                            <select id="versionSelect" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); width: 80%; font-size: 0.85rem;" onchange="loadVersion()">
+                            <select id="versionSelect" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); width: 80%; font-size: 0.85rem;" onchange="loadVersion()" onclick="event.stopPropagation()">
                                 <option value="">-- Or select past version --</option>
                                 <option value="v1">Version 1 (Initial Draft)</option>
                                 <option value="v2">Version 2 (Legal Review)</option>

@@ -85,14 +85,25 @@
         
         let ws;
         
-        function joinRoom() {
+        async function joinRoom() {
             if (ws) ws.close();
             const roomId = document.getElementById('roomIdInput').value || 'default-room';
-            // Use current host for websocket
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host || 'localhost:8000'; // fallback
             
-            ws = new WebSocket(`${protocol}//${host}/ws/collab/${roomId}`);
+            let wsUrl = '';
+            try {
+                const configRes = await fetch('/api/config');
+                const config = await configRes.json();
+                wsUrl = config.ws_url;
+            } catch (e) {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                wsUrl = `${protocol}//localhost:8000`;
+            }
+            
+            if (wsUrl.endsWith('/')) {
+                wsUrl = wsUrl.slice(0, -1);
+            }
+            
+            ws = new WebSocket(`${wsUrl}/ws/collab/${roomId}`);
             
             ws.onopen = () => {
                 document.getElementById('connStatus').textContent = 'Connected ✅';

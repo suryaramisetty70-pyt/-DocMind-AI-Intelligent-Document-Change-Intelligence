@@ -91,6 +91,20 @@ class DocFinderHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
     
     def do_GET(self):
+        if self.path == '/api/config':
+            self.send_response(200)
+            self.send_cors_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            # Convert HTTP URL to WS URL
+            ws_url = BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://')
+            config = {
+                "backend_url": BACKEND_URL,
+                "ws_url": ws_url
+            }
+            self.wfile.write(json.dumps(config).encode())
+            return
+
         if self.path.startswith('/api/'):
             return self.proxy_request('GET')
         # Serve index.html for root

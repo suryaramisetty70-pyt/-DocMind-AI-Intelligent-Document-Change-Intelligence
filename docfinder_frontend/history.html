@@ -212,9 +212,21 @@
             return date.toLocaleDateString();
         }
         
-        function viewResult(id) {
-            // In real app, would fetch result by ID
-            window.location.href = 'results.html';
+        async function viewResult(id) {
+            try {
+                const res = await fetch(`${API_URL}/api/comparison/${id}`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    sessionStorage.setItem('diffResult', JSON.stringify(data.results || data));
+                    window.location.href = 'results.html';
+                } else {
+                    window.location.href = 'results.html';
+                }
+            } catch (err) {
+                window.location.href = 'results.html';
+            }
         }
         
         async function performSemanticSearch() {

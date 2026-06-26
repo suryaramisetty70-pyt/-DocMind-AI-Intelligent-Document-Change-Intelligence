@@ -4,9 +4,6 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>DocMind AI — Diff Results</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.47/diff2html.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.47/diff2html.min.css"/>
 <style>
   :root {
     --bg: #0d1117;
@@ -24,7 +21,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-  /* ── Header ── */
   .header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -32,43 +28,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
   }
-  .logo { font-size: 18px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; }
+  .logo { font-size: 20px; font-weight: 700; color: var(--blue); }
   .logo span { color: var(--purple); }
   .back-btn {
-    background: var(--border);
-    border: none;
-    color: var(--text);
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
+    background: var(--border); border: none; color: var(--text);
+    padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
     transition: background 0.2s;
   }
   .back-btn:hover { background: #444c56; }
 
-  /* ── Stats Bar ── */
+  /* Stats */
   .stats-bar {
-    display: flex;
-    gap: 12px;
-    padding: 16px 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
+    display: flex; gap: 12px; padding: 16px 24px;
+    background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap;
   }
   .stat-card {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 16px;
-    flex: 1;
-    min-width: 120px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px; flex: 1; min-width: 120px;
   }
   .stat-icon { font-size: 18px; }
   .stat-value { font-size: 20px; font-weight: 700; }
@@ -78,157 +57,81 @@
   .stat-yellow .stat-value { color: var(--yellow); }
   .stat-blue .stat-value { color: var(--blue); }
 
-  /* ── Tabs ── */
+  /* Tabs */
   .tabs {
-    display: flex;
-    gap: 4px;
-    padding: 12px 24px 0;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
+    display: flex; gap: 4px; padding: 12px 24px 0;
+    border-bottom: 1px solid var(--border); background: var(--surface);
   }
   .tab {
-    padding: 8px 16px;
-    border: none;
-    background: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 13px;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    border-radius: 4px 4px 0 0;
+    padding: 8px 16px; border: none; background: none; color: var(--muted);
+    cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent;
+    transition: all 0.2s; border-radius: 4px 4px 0 0;
   }
   .tab:hover { color: var(--text); background: var(--bg); }
   .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
 
-  /* ── Content ── */
   .content { padding: 24px; }
   .panel { display: none; }
   .panel.active { display: block; }
 
-  /* ── Granular diff table ── */
+  /* Side-by-side custom diff */
+  .sbs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .sbs-header { background: var(--border); padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .sbs-body { font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; }
+  .sbs-line { display: flex; min-height: 24px; border-bottom: 1px solid rgba(48,54,61,0.4); }
+  .sbs-num { min-width: 45px; padding: 2px 8px; text-align: right; color: var(--muted); font-size: 11px; user-select: none; border-right: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+  .sbs-code { padding: 2px 12px; flex: 1; white-space: pre-wrap; word-break: break-all; }
+  .sbs-line.del { background: rgba(248,81,73,0.1); }
+  .sbs-line.del .sbs-code { color: var(--red); }
+  .sbs-line.ins { background: rgba(63,185,80,0.1); }
+  .sbs-line.ins .sbs-code { color: var(--green); }
+  .sbs-line.mod { background: rgba(210,153,34,0.08); }
+  .sbs-col { border-right: 1px solid var(--border); }
+
+  /* Granular table */
   .diff-table { width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 13px; }
   .diff-table th {
-    background: var(--border);
-    padding: 10px 16px;
-    text-align: left;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    position: sticky;
-    top: 60px;
+    background: var(--border); padding: 10px 16px; text-align: left;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted); position: sticky; top: 60px;
   }
   .diff-table td { padding: 6px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
   .diff-table tr:hover td { background: rgba(255,255,255,0.03); }
 
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
   .badge-added { background: rgba(63,185,80,0.2); color: var(--green); }
   .badge-removed { background: rgba(248,81,73,0.2); color: var(--red); }
   .badge-changed { background: rgba(210,153,34,0.2); color: var(--yellow); }
-
   .line-old { background: rgba(248,81,73,0.1); border-left: 3px solid var(--red); padding-left: 8px; }
   .line-new { background: rgba(63,185,80,0.1); border-left: 3px solid var(--green); padding-left: 8px; }
   .line-num { color: var(--muted); font-size: 11px; user-select: none; min-width: 40px; display: inline-block; }
+  .char-del { background: rgba(248,81,73,0.4); border-radius: 2px; padding: 0 1px; }
+  .char-add { background: rgba(63,185,80,0.4); border-radius: 2px; padding: 0 1px; }
 
-  /* inline char diff */
-  .char-del { background: rgba(248,81,73,0.4); border-radius: 2px; }
-  .char-add { background: rgba(63,185,80,0.4); border-radius: 2px; }
-
-  /* ── AI Panel ── */
+  /* AI */
   .ai-panel { max-width: 860px; }
-  .ai-analysis-box {
-    background: var(--surface);
-    border: 1px solid var(--accent);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-    line-height: 1.7;
-    white-space: pre-wrap;
-    font-size: 14px;
-  }
-  .ai-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--purple);
-    font-weight: 600;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .chat-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
+  .ai-analysis-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; margin-bottom: 24px; line-height: 1.7; white-space: pre-wrap; font-size: 14px; }
+  .ai-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--purple); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .chat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
   .chat-messages { padding: 16px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
   .chat-msg { padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; max-width: 80%; }
   .chat-msg.user { background: var(--accent); align-self: flex-end; }
   .chat-msg.ai { background: var(--border); align-self: flex-start; }
   .chat-input-row { display: flex; padding: 12px; gap: 8px; border-top: 1px solid var(--border); }
-  .chat-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-size: 14px;
-  }
+  .chat-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; }
   .chat-input:focus { outline: none; border-color: var(--accent); }
-  .chat-send {
-    background: var(--accent);
-    border: none;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: opacity 0.2s;
-  }
+  .chat-send { background: var(--accent); border: none; color: white; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; }
   .chat-send:hover { opacity: 0.85; }
   .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* ── Image diff ── */
-  .image-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    margin-top: 8px;
-  }
+  /* Image */
+  .image-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 8px; }
   .image-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .image-card-title { padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
   .image-card img { width: 100%; display: block; }
 
-  /* ── Loader ── */
-  .loader { display: flex; align-items: center; justify-content: center; height: 200px; flex-direction: column; gap: 12px; color: var(--muted); }
-  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Empty state ── */
   .empty-state { text-align: center; padding: 60px; color: var(--muted); }
   .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
-
-  /* ── diff2html overrides for dark mode ── */
-  .d2h-wrapper { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-  .d2h-file-header { background: var(--surface) !important; border-color: var(--border) !important; color: var(--text) !important; }
-  .d2h-code-side-linenumber, .d2h-code-linenumber { background: var(--surface) !important; color: var(--muted) !important; border-color: var(--border) !important; }
-  .d2h-code-line, .d2h-code-side-line { background: var(--bg) !important; color: var(--text) !important; }
-  .d2h-del { background: rgba(248,81,73,0.15) !important; }
-  .d2h-ins { background: rgba(63,185,80,0.15) !important; }
-  .d2h-del .d2h-code-line-ctn del, .d2h-del-op { background: rgba(248,81,73,0.4) !important; }
-  .d2h-ins .d2h-code-line-ctn ins, .d2h-ins-op { background: rgba(63,185,80,0.4) !important; }
-  .d2h-tag { background: var(--border) !important; color: var(--muted) !important; }
 </style>
 </head>
 <body>
@@ -238,64 +141,29 @@
   <button class="back-btn" onclick="history.back()">← New Comparison</button>
 </header>
 
-<!-- Stats Bar -->
 <div class="stats-bar" id="statsBar">
-  <div class="stat-card stat-green">
-    <span class="stat-icon">➕</span>
-    <div><div class="stat-value" id="statAdded">—</div><div class="stat-label">Added</div></div>
-  </div>
-  <div class="stat-card stat-red">
-    <span class="stat-icon">➖</span>
-    <div><div class="stat-value" id="statRemoved">—</div><div class="stat-label">Removed</div></div>
-  </div>
-  <div class="stat-card stat-yellow">
-    <span class="stat-icon">✏️</span>
-    <div><div class="stat-value" id="statChanged">—</div><div class="stat-label">Changed</div></div>
-  </div>
-  <div class="stat-card stat-blue">
-    <span class="stat-icon">🔍</span>
-    <div><div class="stat-value" id="statSimilarity">—</div><div class="stat-label">Similarity</div></div>
-  </div>
-  <div class="stat-card">
-    <span class="stat-icon">📊</span>
-    <div><div class="stat-value" id="statDiff">—</div><div class="stat-label">Difference</div></div>
-  </div>
+  <div class="stat-card stat-green"><span class="stat-icon">➕</span><div><div class="stat-value" id="statAdded">—</div><div class="stat-label">Added</div></div></div>
+  <div class="stat-card stat-red"><span class="stat-icon">➖</span><div><div class="stat-value" id="statRemoved">—</div><div class="stat-label">Removed</div></div></div>
+  <div class="stat-card stat-yellow"><span class="stat-icon">✏️</span><div><div class="stat-value" id="statChanged">—</div><div class="stat-label">Changed</div></div></div>
+  <div class="stat-card stat-blue"><span class="stat-icon">🔍</span><div><div class="stat-value" id="statSimilarity">—</div><div class="stat-label">Similarity</div></div></div>
+  <div class="stat-card"><span class="stat-icon">📊</span><div><div class="stat-value" id="statDiff">—</div><div class="stat-label">Difference</div></div></div>
 </div>
 
-<!-- Tabs -->
 <div class="tabs" id="tabsRow">
   <button class="tab active" onclick="switchTab('sideBySide', this)">Side by Side</button>
-  <button class="tab" onclick="switchTab('unified', this)">Unified</button>
   <button class="tab" onclick="switchTab('granular', this)">Granular (Line by Line)</button>
   <button class="tab" onclick="switchTab('aiPanel', this)" id="aiTab">🤖 AI Analysis</button>
   <button class="tab" onclick="switchTab('imagePanel', this)" id="imageTab" style="display:none">🖼 Image Diff</button>
 </div>
 
-<!-- Content Panels -->
 <div class="content">
-
-  <!-- Side by Side -->
-  <div id="sideBySide" class="panel active">
-    <div class="loader" id="loaderSBS"><div class="spinner"></div><span>Rendering diff...</span></div>
-    <div id="sbsContent" class="d2h-wrapper"></div>
-  </div>
-
-  <!-- Unified -->
-  <div id="unified" class="panel">
-    <div id="unifiedContent" class="d2h-wrapper"></div>
-  </div>
-
-  <!-- Granular -->
-  <div id="granular" class="panel">
-    <div id="granularContent"></div>
-  </div>
-
-  <!-- AI Analysis -->
+  <div id="sideBySide" class="panel active"><div id="sbsContent"></div></div>
+  <div id="granular" class="panel"><div id="granularContent"></div></div>
   <div id="aiPanel" class="panel">
     <div class="ai-panel">
       <div id="aiAnalysisBox" class="ai-analysis-box">
         <div class="ai-label">🤖 AI Analysis</div>
-        <div id="aiText">Loading AI analysis...</div>
+        <div id="aiText">No AI analysis available. Enable AI Node on dashboard.</div>
       </div>
       <div class="chat-box">
         <div class="chat-messages" id="chatMessages"></div>
@@ -306,19 +174,21 @@
       </div>
     </div>
   </div>
-
-  <!-- Image Diff -->
-  <div id="imagePanel" class="panel">
-    <div class="image-grid" id="imageGrid"></div>
-  </div>
-
+  <div id="imagePanel" class="panel"><div class="image-grid" id="imageGrid"></div></div>
 </div>
 
 <script>
-// ── Load result from sessionStorage ──────────────────────────────────────────
-const result = JSON.parse(sessionStorage.getItem("diffResult") || "{}");
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
 
-// ── Populate stats ─────────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+
 function populateStats(stats) {
   if (!stats) return;
   document.getElementById("statAdded").textContent = stats.added ?? "—";
@@ -328,15 +198,88 @@ function populateStats(stats) {
   document.getElementById("statDiff").textContent = stats.difference_percent != null ? stats.difference_percent + "%" : "—";
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function switchTab(id, btn) {
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  btn.classList.add("active");
+// ═══ CUSTOM SIDE-BY-SIDE DIFF (no diff2html dependency) ═══
+function renderSideBySide(text1, text2, differences) {
+  const container = document.getElementById("sbsContent");
+  const lines1 = (text1 || "").split("\n");
+  const lines2 = (text2 || "").split("\n");
+
+  // Build change maps
+  const changedLines1 = {};  // line_num1 -> diff object
+  const changedLines2 = {};  // line_num2 -> diff object
+  (differences || []).forEach(d => {
+    if (d.type === "changed") { changedLines1[d.line_num1] = d; changedLines2[d.line_num2] = d; }
+    else if (d.type === "removed") { changedLines1[d.line_num1] = d; }
+    else if (d.type === "added") { changedLines2[d.line_num2] = d; }
+  });
+
+  // Build aligned rows
+  let rows = [];
+  let i1 = 0, i2 = 0;
+
+  while (i1 < lines1.length || i2 < lines2.length) {
+    const ln1 = i1 + 1;
+    const ln2 = i2 + 1;
+    const d1 = changedLines1[ln1];
+    const d2 = changedLines2[ln2];
+
+    if (d1 && d1.type === "changed" && d2 && d2.type === "changed") {
+      rows.push({ type: "mod", ln1, ln2, t1: lines1[i1], t2: lines2[i2], diff: d1 });
+      i1++; i2++;
+    } else if (d1 && d1.type === "removed") {
+      rows.push({ type: "del", ln1, ln2: null, t1: lines1[i1], t2: null });
+      i1++;
+    } else if (d2 && d2.type === "added") {
+      rows.push({ type: "ins", ln1: null, ln2, t1: null, t2: lines2[i2] });
+      i2++;
+    } else {
+      rows.push({ type: "eq", ln1: i1 < lines1.length ? ln1 : null, ln2: i2 < lines2.length ? ln2 : null, t1: lines1[i1] || "", t2: lines2[i2] || "" });
+      if (i1 < lines1.length) i1++;
+      if (i2 < lines2.length) i2++;
+    }
+  }
+
+  // Render
+  let leftHtml = "";
+  let rightHtml = "";
+
+  rows.forEach(r => {
+    if (r.type === "eq") {
+      leftHtml += `<div class="sbs-line"><span class="sbs-num">${r.ln1 || ""}</span><span class="sbs-code">${escHtml(r.t1)}</span></div>`;
+      rightHtml += `<div class="sbs-line"><span class="sbs-num">${r.ln2 || ""}</span><span class="sbs-code">${escHtml(r.t2)}</span></div>`;
+    } else if (r.type === "del") {
+      leftHtml += `<div class="sbs-line del"><span class="sbs-num">${r.ln1}</span><span class="sbs-code">- ${escHtml(r.t1)}</span></div>`;
+      rightHtml += `<div class="sbs-line"><span class="sbs-num"></span><span class="sbs-code"></span></div>`;
+    } else if (r.type === "ins") {
+      leftHtml += `<div class="sbs-line"><span class="sbs-num"></span><span class="sbs-code"></span></div>`;
+      rightHtml += `<div class="sbs-line ins"><span class="sbs-num">${r.ln2}</span><span class="sbs-code">+ ${escHtml(r.t2)}</span></div>`;
+    } else if (r.type === "mod") {
+      const inl = r.diff && r.diff.inline;
+      const oldHtml = inl ? buildInlineHtml(inl.filter(s=>s.type!=="added")) : escHtml(r.t1);
+      const newHtml = inl ? buildInlineHtml(inl.filter(s=>s.type!=="removed")) : escHtml(r.t2);
+      leftHtml += `<div class="sbs-line mod"><span class="sbs-num">${r.ln1}</span><span class="sbs-code">${oldHtml}</span></div>`;
+      rightHtml += `<div class="sbs-line mod"><span class="sbs-num">${r.ln2}</span><span class="sbs-code">${newHtml}</span></div>`;
+    }
+  });
+
+  if (rows.length === 0 || (differences || []).length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="sbs-container">
+      <div class="sbs-col">
+        <div class="sbs-header">📄 Document 1 (Original)</div>
+        <div class="sbs-body">${leftHtml}</div>
+      </div>
+      <div>
+        <div class="sbs-header">📄 Document 2 (Modified)</div>
+        <div class="sbs-body">${rightHtml}</div>
+      </div>
+    </div>`;
 }
 
-// ── Build inline char diff HTML ───────────────────────────────────────────────
 function buildInlineHtml(inline) {
   if (!inline) return "";
   return inline.map(seg => {
@@ -346,11 +289,7 @@ function buildInlineHtml(inline) {
   }).join("");
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-
-// ── Render Granular Panel ─────────────────────────────────────────────────────
+// ═══ GRANULAR TABLE ═══
 function renderGranular(differences) {
   const container = document.getElementById("granularContent");
   if (!differences || differences.length === 0) {
@@ -358,34 +297,28 @@ function renderGranular(differences) {
     return;
   }
 
-  let html = `<table class="diff-table">
-    <thead><tr>
-      <th>Type</th><th>Line #</th><th>Document 1 (Original)</th><th>Document 2 (Modified)</th>
-    </tr></thead><tbody>`;
+  let html = `<table class="diff-table"><thead><tr><th>Type</th><th>Line #</th><th>Document 1 (Original)</th><th>Document 2 (Modified)</th></tr></thead><tbody>`;
 
   differences.forEach(d => {
-    let badge = "";
-    let oldCell = "";
-    let newCell = "";
-    let lineNum = "";
-
+    let badge="", oldCell="", newCell="", lineNum="";
     if (d.type === "added") {
       badge = `<span class="badge badge-added">Added</span>`;
       oldCell = `<td>—</td>`;
       newCell = `<td class="line-new"><span class="line-num">${d.line_num2}</span> ${escHtml(d.new)}</td>`;
-      lineNum = `<td>—→ ${d.line_num2}</td>`;
+      lineNum = `<td>— → ${d.line_num2}</td>`;
     } else if (d.type === "removed") {
       badge = `<span class="badge badge-removed">Removed</span>`;
       oldCell = `<td class="line-old"><span class="line-num">${d.line_num1}</span> ${escHtml(d.old)}</td>`;
       newCell = `<td>—</td>`;
-      lineNum = `<td>${d.line_num1} →—</td>`;
+      lineNum = `<td>${d.line_num1} → —</td>`;
     } else if (d.type === "changed") {
       badge = `<span class="badge badge-changed">Changed</span>`;
-      oldCell = `<td class="line-old"><span class="line-num">${d.line_num1}</span> ${d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="added")) : escHtml(d.old)}</td>`;
-      newCell = `<td class="line-new"><span class="line-num">${d.line_num2}</span> ${d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="removed")) : escHtml(d.new)}</td>`;
+      const oldInl = d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="added")) : escHtml(d.old);
+      const newInl = d.inline ? buildInlineHtml(d.inline.filter(s=>s.type!=="removed")) : escHtml(d.new);
+      oldCell = `<td class="line-old"><span class="line-num">${d.line_num1}</span> ${oldInl}</td>`;
+      newCell = `<td class="line-new"><span class="line-num">${d.line_num2}</span> ${newInl}</td>`;
       lineNum = `<td>${d.line_num1} → ${d.line_num2}</td>`;
     }
-
     html += `<tr><td>${badge}</td>${lineNum}${oldCell}${newCell}</tr>`;
   });
 
@@ -393,52 +326,24 @@ function renderGranular(differences) {
   container.innerHTML = html;
 }
 
-// ── Render diff2html panels ──────────────────────────────────────────────────
-function renderDiff2Html(unifiedDiff) {
-  if (!unifiedDiff || unifiedDiff.trim() === "") {
-    document.getElementById("sbsContent").innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
-    document.getElementById("unifiedContent").innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
-    return;
-  }
-  try {
-    const sbsHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "side-by-side" });
-    const unifiedHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "line-by-line" });
-    document.getElementById("sbsContent").innerHTML = sbsHtml;
-    document.getElementById("unifiedContent").innerHTML = unifiedHtml;
-  } catch(e) {
-    console.error("Diff2Html error", e);
-    document.getElementById("sbsContent").innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error rendering visual diff. Try the Granular tab.</p></div>`;
-    document.getElementById("unifiedContent").innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error rendering visual diff. Try the Granular tab.</p></div>`;
-  }
-}
-
-// ── Render Image Diff ─────────────────────────────────────────────────────────
+// ═══ IMAGE DIFF ═══
 function renderImageDiff(result) {
   document.getElementById("imageTab").style.display = "inline-block";
   document.getElementById("statsBar").innerHTML = `
-    <div class="stat-card stat-red"><span class="stat-icon">🖼</span>
-      <div><div class="stat-value">${result.stats.changed_pixels.toLocaleString()}</div><div class="stat-label">Changed Pixels</div></div>
-    </div>
-    <div class="stat-card stat-blue"><span class="stat-icon">📊</span>
-      <div><div class="stat-value">${result.stats.similarity_percent}%</div><div class="stat-label">Similarity</div></div>
-    </div>
-    <div class="stat-card"><span class="stat-icon">🔍</span>
-      <div><div class="stat-value">${result.stats.difference_percent}%</div><div class="stat-label">Difference</div></div>
-    </div>`;
+    <div class="stat-card stat-red"><span class="stat-icon">🖼</span><div><div class="stat-value">${(result.stats.changed_pixels||0).toLocaleString()}</div><div class="stat-label">Changed Pixels</div></div></div>
+    <div class="stat-card stat-blue"><span class="stat-icon">📊</span><div><div class="stat-value">${result.stats.similarity_percent}%</div><div class="stat-label">Similarity</div></div></div>
+    <div class="stat-card"><span class="stat-icon">🔍</span><div><div class="stat-value">${result.stats.difference_percent}%</div><div class="stat-label">Difference</div></div></div>`;
 
   const src1 = sessionStorage.getItem("imgSrc1") || "";
   const src2 = sessionStorage.getItem("imgSrc2") || "";
-
   document.getElementById("imageGrid").innerHTML = `
-    <div class="image-card"><div class="image-card-title">📄 Document 1 (Original)</div>${src1 ? `<img src="${src1}"/>` : "<p style='padding:20px;color:var(--muted)'>Preview N/A</p>"}</div>
-    <div class="image-card"><div class="image-card-title">📄 Document 2 (Modified)</div>${src2 ? `<img src="${src2}"/>` : "<p style='padding:20px;color:var(--muted)'>Preview N/A</p>"}</div>
-    <div class="image-card"><div class="image-card-title">🔴 Pixel Difference Highlight</div><img src="data:image/png;base64,${result.diff_image_base64}"/></div>`;
-
-  // Switch to image tab by default
+    <div class="image-card"><div class="image-card-title">📄 Original</div>${src1 ? `<img src="${src1}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
+    <div class="image-card"><div class="image-card-title">📄 Modified</div>${src2 ? `<img src="${src2}"/>` : "<p style='padding:20px;color:var(--muted)'>N/A</p>"}</div>
+    <div class="image-card"><div class="image-card-title">🔴 Differences</div><img src="data:image/png;base64,${result.diff_image_base64}"/></div>`;
   switchTab("imagePanel", document.getElementById("imageTab"));
 }
 
-// ── AI Panel ──────────────────────────────────────────────────────────────────
+// ═══ AI ═══
 function renderAI(analysis) {
   document.getElementById("aiText").textContent = analysis || "No AI analysis available. Enable AI Node on dashboard.";
 }
@@ -448,73 +353,57 @@ async function sendChat() {
   const input = document.getElementById("chatInput");
   const msg = input.value.trim();
   if (!msg) return;
-
   const messages = document.getElementById("chatMessages");
   messages.innerHTML += `<div class="chat-msg user">${escHtml(msg)}</div>`;
   input.value = "";
   document.getElementById("chatSend").disabled = true;
-
   const loadingDiv = document.createElement("div");
   loadingDiv.className = "chat-msg ai";
   loadingDiv.textContent = "Thinking...";
   messages.appendChild(loadingDiv);
   messages.scrollTop = messages.scrollHeight;
-
   try {
     const form = new FormData();
     form.append("message", msg);
     form.append("context", chatContext);
     const token = localStorage.getItem("token") || "";
-    const res = await fetch("/api/ai/chat", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + token },
-      body: form
-    });
+    const res = await fetch("/api/ai/chat", { method: "POST", headers: { "Authorization": "Bearer " + token }, body: form });
     const data = await res.json();
-    loadingDiv.textContent = data.reply || "No response.";
+    loadingDiv.textContent = data.reply || data.detail || "No response.";
   } catch (e) {
     loadingDiv.textContent = "Error: " + e.message;
   }
-
   document.getElementById("chatSend").disabled = false;
   messages.scrollTop = messages.scrollHeight;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ═══ INIT ═══
 (function init() {
-  // Try to parse diffResult from sessionStorage
   let resStr = sessionStorage.getItem("diffResult");
-  // Fallback to localStorage just in case we used it
   if (!resStr) resStr = localStorage.getItem("lastResult");
   
   const resultObj = JSON.parse(resStr || "{}");
-
-  // In our original code, endpoints nested inside `results`, Claude unnested them, let's handle both
   const actualResult = resultObj.results || resultObj;
 
   if (!actualResult || Object.keys(actualResult).length === 0) {
-    document.body.innerHTML += `<div class="empty-state" style="margin-top:60px"><div class="icon">❌</div><p>No result data found. Please go back and compare documents.</p></div>`;
+    document.querySelector(".content").innerHTML = `<div class="empty-state" style="margin-top:40px"><div class="icon">❌</div><p>No result data found. Go back and compare documents.</p></div>`;
     return;
   }
 
   // Image mode
   if (actualResult.type === "image" || resultObj.fileType === "image") {
     renderImageDiff(actualResult);
-    if(actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
+    if (actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
     return;
   }
 
-  // Text-based mode
+  // Text mode
   populateStats(actualResult.stats);
-  renderDiff2Html(actualResult.unified_diff || "");
+  renderSideBySide(actualResult.full_text1, actualResult.full_text2, actualResult.differences);
   renderGranular(actualResult.differences || []);
-  renderAI(actualResult.ai_analysis);
+  if (actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
 
-  // Build chat context
-  chatContext = `Similarity: ${actualResult.stats?.similarity_percent}%. Total changes: ${actualResult.stats?.total_changes}. ` +
-    `Added: ${actualResult.stats?.added}, Removed: ${actualResult.stats?.removed}, Changed: ${actualResult.stats?.changed}.`;
-
-  document.getElementById("loaderSBS").style.display = "none";
+  chatContext = `Similarity: ${actualResult.stats?.similarity_percent}%. Changes: ${actualResult.stats?.total_changes}. Added: ${actualResult.stats?.added}, Removed: ${actualResult.stats?.removed}, Changed: ${actualResult.stats?.changed}.`;
 })();
 </script>
 </body>
