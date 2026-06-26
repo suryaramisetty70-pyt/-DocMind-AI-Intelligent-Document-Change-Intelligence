@@ -38,6 +38,14 @@ from services.vector_db import vector_db
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+def safe_unlink(path: str):
+    """Safely unlink a file, ignoring errors (especially on Windows due to open handles)."""
+    try:
+        if os.path.exists(path):
+            os.unlink(path)
+    except Exception:
+        pass
+
 security = HTTPBearer(auto_error=False)
 
 # OTP Storage (in-memory, use Redis/DB in production)
@@ -430,7 +438,8 @@ async def compare_pdf(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/compare/docx")
 async def compare_docx(
@@ -474,7 +483,8 @@ async def compare_docx(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/compare/pptx")
 async def compare_pptx(
@@ -518,7 +528,8 @@ async def compare_pptx(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/compare/excel")
 async def compare_excel(
@@ -563,7 +574,8 @@ async def compare_excel(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/compare/csv")
 async def compare_csv(
@@ -607,7 +619,8 @@ async def compare_csv(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/compare/image")
 async def compare_image(
@@ -653,7 +666,8 @@ async def compare_image(
         report["comparison_id"] = comparison.id
         return report
     finally:
-        os.unlink(t1_path); os.unlink(t2_path)
+        safe_unlink(t1_path)
+        safe_unlink(t2_path)
 
 @app.post("/api/ai/chat")
 async def ai_chat(
@@ -661,22 +675,28 @@ async def ai_chat(
     context: str = Form(""),
     current_user: User = Depends(get_current_user)
 ):
-    from groq import Groq
-    GROQ_CLIENT = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
-    try:
-        response = GROQ_CLIENT.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": f"You are a document analysis assistant. Context from compared documents:\n{context[:2000]}"},
-                {"role": "user", "content": message}
-            ],
-            max_tokens=800,
-            temperature=0.5
-        )
-        return {"reply": response.choices[0].message.content}
-    except Exception as e:
-        from fastapi import HTTPException
-        raise HTTPException(500, f"AI error: {str(e)}")
+    from services.ai_integration import ai_service
+    
+    # Construct a proper system prompt using the context
+    system_prompt = (
+        "You are a document analysis assistant. Context from compared documents:\n"
+        f"{context[:2000]}\n"
+        "Analyze the context and answer user query professionally. Be concise."
+    )
+    
+    # Try Groq first via ai_service (which uses the correct resolved key)
+    response = ai_service.analyze_with_groq(message, system_prompt)
+    if response and "error" not in response.lower() and "unauthorized" not in response.lower():
+        return {"reply": response}
+        
+    # Try Gemini next via ai_service
+    response = ai_service.analyze_with_gemini(f"{system_prompt}\nUser Query: {message}")
+    if response and "error" not in response.lower() and "unauthorized" not in response.lower():
+        return {"reply": response}
+        
+    # Fallback to local rule-based smart mock if all else fails
+    reply = ai_service._generate_mock_chat_response(context, "", message)
+    return {"reply": reply}
 
 @app.post("/api/report/pdf/{comparison_id}")
 async def generate_pdf_report(

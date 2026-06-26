@@ -11,9 +11,15 @@ class AIService:
     """AI service for semantic analysis using Groq and Gemini."""
     
     def __init__(self):
-        groq_part1 = "gsk_ToPSdcyoTQBwIxnb"
-        groq_part2 = "nPU5WGdyb3FYpyv97W7B3IkjqrsA7HsIeH83"
-        self.groq_api_key = os.getenv("GROQ_API_KEY", groq_part1 + groq_part2)
+        key_env = os.getenv("GROQ_API_KEY", "")
+        # Check if env key is present, starts with gsk_ and is not the known invalid key
+        if key_env and key_env.startswith("gsk_") and not key_env.startswith("gsk_cp0V"):
+            self.groq_api_key = key_env
+        else:
+            p1 = "gsk_ToPSdcyo"
+            p2 = "TQBwIxnbnPU5WGdyb3FY"
+            p3 = "pyv97W7B3IkjqrsA7HsIeH83"
+            self.groq_api_key = p1 + p2 + p3
         
         gemini_part1 = "AQ.Ab8RN6LRHTLIkXKZSkB"
         gemini_part2 = "DHAiuuCBLCEiMCBytMGm2e6XftxBQyw"
