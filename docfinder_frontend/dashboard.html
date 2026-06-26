@@ -309,6 +309,7 @@
                     data.fileType = currentType;
                     
                     localStorage.setItem('lastResult', JSON.stringify(data));
+                    sessionStorage.setItem('diffResult', JSON.stringify(data));
                     window.location.href = 'results.html?v=' + new Date().getTime();
                 } else {
                     showToast(data.detail || 'Comparison failed', 'error');

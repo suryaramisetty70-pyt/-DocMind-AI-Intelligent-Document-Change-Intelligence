@@ -19,10 +19,11 @@ try:
 except ImportError:
     PPTX_OK = False
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 try:
     from groq import Groq
-    GROQ_CLIENT = Groq(api_key=os.getenv("GROQ_API_KEY", ""))
-    GROQ_OK = True
+    GROQ_CLIENT = Groq(api_key=GROQ_API_KEY)
+    GROQ_OK = bool(GROQ_API_KEY)
 except Exception:
     GROQ_OK = False
 
