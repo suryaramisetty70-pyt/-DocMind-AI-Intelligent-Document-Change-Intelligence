@@ -201,7 +201,56 @@ def compute_diff_report(text1: str, text2: str) -> dict:
     }
 
 
+def extract_text_via_ocr(pdf_path: str) -> str:
+    """Tries to render PDF pages as images and run OCR using pytesseract or easyocr."""
+    try:
+        import fitz
+        doc = fitz.open(pdf_path)
+        pages_text = []
+        
+        # Try pytesseract first
+        try:
+            import pytesseract
+            from PIL import Image
+            import subprocess
+            subprocess.run(["tesseract", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            
+            for i, page in enumerate(doc):
+                pix = page.get_pixmap(dpi=150)
+                img_data = pix.tobytes("png")
+                img = Image.open(io.BytesIO(img_data))
+                text = pytesseract.image_to_string(img)
+                pages_text.append(f"[PAGE {i+1} (OCR)]\n{text}")
+            return "\n\n".join(pages_text)
+        except Exception:
+            pass
+            
+        # Try easyocr next
+        try:
+            import easyocr
+            import numpy as np
+            from PIL import Image
+            reader = easyocr.Reader(['en'])
+            
+            for i, page in enumerate(doc):
+                pix = page.get_pixmap(dpi=150)
+                img_data = pix.tobytes("png")
+                img = Image.open(io.BytesIO(img_data))
+                arr = np.array(img)
+                results = reader.readtext(arr, detail=0)
+                text = "\n".join(results)
+                pages_text.append(f"[PAGE {i+1} (OCR)]\n{text}")
+            return "\n\n".join(pages_text)
+        except Exception:
+            pass
+            
+    except Exception:
+        pass
+    return ""
+
+
 def extract_text_from_pdf(path: str) -> str:
+    extracted_text = ""
     # Try PyMuPDF (fitz) first
     if FITZ_OK:
         try:
@@ -209,35 +258,43 @@ def extract_text_from_pdf(path: str) -> str:
             pages = []
             for i, page in enumerate(doc):
                 pages.append(f"[PAGE {i+1}]\n{page.get_text()}")
-            return "\n\n".join(pages)
+            extracted_text = "\n\n".join(pages)
         except Exception:
             pass
 
-    # Try pdfplumber next
-    try:
-        import pdfplumber
-        pages = []
-        with pdfplumber.open(path) as pdf:
-            for i, page in enumerate(pdf.pages):
-                text = page.extract_text() or ""
-                pages.append(f"[PAGE {i+1}]\n{text}")
-        return "\n\n".join(pages)
-    except Exception:
-        pass
+    # If fitz failed or returned empty text, try pdfplumber
+    if not extracted_text.strip() or len(extracted_text.strip()) < 50:
+        try:
+            import pdfplumber
+            pages = []
+            with pdfplumber.open(path) as pdf:
+                for i, page in enumerate(pdf.pages):
+                    text = page.extract_text() or ""
+                    pages.append(f"[PAGE {i+1}]\n{text}")
+            extracted_text = "\n\n".join(pages)
+        except Exception:
+            pass
 
     # Try PyPDF2 as final fallback
-    try:
-        from PyPDF2 import PdfReader
-        pages = []
-        reader = PdfReader(path)
-        for i, page in enumerate(reader.pages):
-            text = page.extract_text() or ""
-            pages.append(f"[PAGE {i+1}]\n{text}")
-        return "\n\n".join(pages)
-    except Exception:
-        pass
+    if not extracted_text.strip() or len(extracted_text.strip()) < 50:
+        try:
+            from PyPDF2 import PdfReader
+            pages = []
+            reader = PdfReader(path)
+            for i, page in enumerate(reader.pages):
+                text = page.extract_text() or ""
+                pages.append(f"[PAGE {i+1}]\n{text}")
+            extracted_text = "\n\n".join(pages)
+        except Exception:
+            pass
 
-    return "Error: Could not extract text from PDF (all extractors failed)"
+    # If all standard text extractions returned empty text, run OCR!
+    if not extracted_text.strip() or len(extracted_text.strip()) < 50:
+        ocr_text = extract_text_via_ocr(path)
+        if ocr_text.strip():
+            return ocr_text
+
+    return extracted_text if extracted_text.strip() else "Error: Could not extract text from PDF (all extractors failed)"
 
 
 def extract_text_from_docx(path: str) -> str:

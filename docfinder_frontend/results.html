@@ -138,7 +138,11 @@
 
 <header class="header">
   <div class="logo">DocMind <span>AI</span></div>
-  <button class="back-btn" onclick="history.back()">← New Comparison</button>
+  <div style="display:flex; gap:10px;">
+    <button class="back-btn" id="downloadPdfBtn" onclick="downloadReport('pdf')" style="background:var(--accent); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export PDF Report</button>
+    <button class="back-btn" id="downloadExcelBtn" onclick="downloadReport('excel')" style="background:var(--green); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export Excel Report</button>
+    <button class="back-btn" onclick="location.href='dashboard.html'">← New Comparison</button>
+  </div>
 </header>
 
 <div class="stats-bar" id="statsBar">
@@ -375,6 +379,49 @@ async function sendChat() {
   }
   document.getElementById("chatSend").disabled = false;
   messages.scrollTop = messages.scrollHeight;
+}
+
+async function downloadReport(type) {
+  const token = localStorage.getItem("token") || "";
+  let resStr = sessionStorage.getItem("diffResult");
+  if (!resStr) resStr = localStorage.getItem("lastResult");
+  const resultObj = JSON.parse(resStr || "{}");
+  const comparisonId = resultObj.comparison_id || resultObj.id;
+  
+  if (!comparisonId) {
+    alert("No comparison ID found to export report.");
+    return;
+  }
+  
+  const originalText = type === 'pdf' ? '📥 Export PDF Report' : '📥 Export Excel Report';
+  const btn = document.getElementById(type === 'pdf' ? 'downloadPdfBtn' : 'downloadExcelBtn');
+  if (btn) {
+    btn.textContent = "Generating...";
+    btn.disabled = true;
+  }
+  
+  try {
+    const res = await fetch(`/api/report/${type}/${comparisonId}`, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) throw new Error("Report generation failed");
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `DocMind_Report_${comparisonId}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) {
+    alert("Error: " + e.message);
+  } finally {
+    if (btn) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
 }
 
 // ═══ INIT ═══
