@@ -19,7 +19,7 @@ class AIService:
         gemini_part2 = "DHAiuuCBLCEiMCBytMGm2e6XftxBQyw"
         self.gemini_api_key = os.getenv("GEMINI_API_KEY", gemini_part1 + gemini_part2)
         self.groq_url = "https://api.groq.com/openai/v1/chat/completions"
-        self.gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        self.gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
         
         # Available Groq models (fast and free)
         self.groq_model = "llama-3.1-8b-instant"
