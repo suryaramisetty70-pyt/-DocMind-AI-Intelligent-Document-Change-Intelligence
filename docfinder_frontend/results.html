@@ -400,10 +400,16 @@ function renderDiff2Html(unifiedDiff) {
     document.getElementById("unifiedContent").innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Documents are identical.</p></div>`;
     return;
   }
-  const sbsHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "side-by-side" });
-  const unifiedHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "line-by-line" });
-  document.getElementById("sbsContent").innerHTML = sbsHtml;
-  document.getElementById("unifiedContent").innerHTML = unifiedHtml;
+  try {
+    const sbsHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "side-by-side" });
+    const unifiedHtml = Diff2Html.html(unifiedDiff, { drawFileList: false, matching: "lines", outputFormat: "line-by-line" });
+    document.getElementById("sbsContent").innerHTML = sbsHtml;
+    document.getElementById("unifiedContent").innerHTML = unifiedHtml;
+  } catch(e) {
+    console.error("Diff2Html error", e);
+    document.getElementById("sbsContent").innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error rendering visual diff. Try the Granular tab.</p></div>`;
+    document.getElementById("unifiedContent").innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error rendering visual diff. Try the Granular tab.</p></div>`;
+  }
 }
 
 // ── Render Image Diff ─────────────────────────────────────────────────────────

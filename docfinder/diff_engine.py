@@ -106,8 +106,7 @@ def compute_diff_report(text1: str, text2: str) -> dict:
     unified = "".join(difflib.unified_diff(
         lines1, lines2,
         fromfile="Document 1",
-        tofile="Document 2",
-        lineterm=""
+        tofile="Document 2"
     ))
 
     return {
