@@ -356,6 +356,7 @@ async def compare_text(
     sort_lines: bool = Form(False),
     replace_line_breaks: bool = Form(False),
     remove_extra_spaces: bool = Form(False),
+    use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -401,9 +402,12 @@ async def compare_text(
         vector_db.add_document(text1, {"type": "text1", "id": comparison.id, "user": current_user.username})
         vector_db.add_document(text2, {"type": "text2", "id": comparison.id, "user": current_user.username})
     
-    # Add AI analysis using Groq/Gemini
-    ai_analysis = ai_service.get_semantic_analysis(text1, text2)
-    result["ai_analysis"] = ai_analysis
+    # Add AI analysis if requested
+    if use_ai.lower() == "true":
+        ai_analysis = ai_service.get_semantic_analysis(text1, text2)
+        result["ai_analysis"] = ai_analysis
+    else:
+        result["ai_analysis"] = None
     
     # ALWAYS ensure texts are returned so the frontend diff viewer can render them
     result["full_text1"] = text1
@@ -417,6 +421,7 @@ async def compare_pdf(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
     use_ocr: bool = Form(False),
+    use_ai: str = Form("false"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -462,12 +467,15 @@ async def compare_pdf(
         await db.commit()
         await db.refresh(comparison)
         
-        # Add AI analysis
-        ai_result = AIEngine.compare_semantically(
-            result.get("full_text1", ""),
-            result.get("full_text2", "")
-        )
-        result["ai_analysis"] = ai_result
+        # Add AI analysis if requested
+        if use_ai.lower() == "true":
+            ai_result = AIEngine.compare_semantically(
+                result.get("full_text1", ""),
+                result.get("full_text2", "")
+            )
+            result["ai_analysis"] = ai_result
+        else:
+            result["ai_analysis"] = None
         
         result["full_text1"] = result.get("full_text1", "")
         result["full_text2"] = result.get("full_text2", "")
