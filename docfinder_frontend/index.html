@@ -41,7 +41,7 @@
         <div class="nav-links">
             <a href="#features" class="nav-link">Features</a>
             <a href="dashboard.html" class="nav-link">User Dashboard</a>
-            <a href="admin.html" class="nav-link">Admin Panel</a>
+            <a href="admin.html" class="nav-link" id="adminLink" style="display:none">Admin Panel</a>
             <a href="#pricing" class="nav-link">Pricing</a>
             <a href="#enterprise" class="nav-link">Enterprise</a>
             <a href="#desktop" class="nav-link">Desktop</a>
@@ -274,6 +274,12 @@
         }
         loop(0);
         addEventListener('resize',()=>{camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight)});
+    </script>
+    <script>
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminLink = document.getElementById('adminLink');
+            if (adminLink) adminLink.style.display = 'inline-block';
+        }
     </script>
 </body>
 </html>

@@ -32,8 +32,10 @@
             <a href="collab.html" class="s-link">👥 Live Collab</a>
             <a href="#" class="s-link">📂 Folders</a>
             
-            <div class="s-section">Admin Control</div>
-            <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            <div id="adminMenu" style="display:none">
+                <div class="s-section">Admin Control</div>
+                <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            </div>
             
             <div class="s-section">Resources</div>
             <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
@@ -80,21 +82,29 @@
         const API_URL = '';
         
         
-        // Check auth
+        // Check auth (make optional)
         const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
-        
         const user = localStorage.getItem('user');
-        document.getElementById('userName').textContent = user || 'User';
-        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
+        
+        document.getElementById('userName').textContent = user || 'Guest';
+        document.getElementById('userAvatar').textContent = (user || 'Guest')[0].toUpperCase();
+        
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminMenu = document.getElementById('adminMenu');
+            if (adminMenu) adminMenu.style.display = 'block';
+        }
         
         // Load history
         loadHistory();
         
         async function loadHistory() {
             try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
                 const res = await fetch(`${API_URL}/api/history`, {
-                    headers: {'Authorization': `Bearer ${token}`}
+                    headers: headers
                 });
                 
                 if (res.ok) {
@@ -223,8 +233,12 @@
         
         async function viewResult(id) {
             try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
                 const res = await fetch(`${API_URL}/api/comparison/${id}`, {
-                    headers: {'Authorization': `Bearer ${token}`}
+                    headers: headers
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -251,7 +265,7 @@
                 const res = await fetch(`${API_URL}/api/search`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ query: query, top_k: 5 })

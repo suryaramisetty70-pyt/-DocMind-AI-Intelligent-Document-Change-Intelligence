@@ -116,6 +116,7 @@
                     localStorage.setItem('token', data.access_token);
                     localStorage.setItem('user', username);
                     localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('isAdmin', data.is_admin);
                     showToast('Login successful!', 'success');
                     setTimeout(() => window.location.href = 'dashboard.html', 1000);
                 } else {

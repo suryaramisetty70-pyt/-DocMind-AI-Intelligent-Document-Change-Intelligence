@@ -46,6 +46,41 @@ def safe_unlink(path: str):
     except Exception:
         pass
 
+async def save_uploaded_file(file: UploadFile, subfolder: str, db: AsyncSession, user_id: int) -> str:
+    import uuid
+    # Ensure uploads folder exists
+    folder_path = os.path.join(UPLOAD_DIR, subfolder)
+    os.makedirs(folder_path, exist_ok=True)
+    
+    # Generate unique filename to prevent collisions
+    filename = file.filename or "unnamed"
+    base, ext = os.path.splitext(filename)
+    clean_base = re.sub(r'[^a-zA-Z0-9_\-]', '_', base)
+    unique_filename = f"{clean_base}_{uuid.uuid4().hex}{ext}"
+    target_path = os.path.join(folder_path, unique_filename)
+    
+    # Read file content and write it
+    content = await file.read()
+    await file.seek(0)
+    
+    with open(target_path, "wb") as f:
+        f.write(content)
+        
+    # Save tracking metadata in UploadedFile table
+    uploaded = UploadedFile(
+        user_id=user_id,
+        filename=filename,
+        file_type=subfolder,
+        file_size=len(content),
+        file_path=target_path.replace("\\", "/"),
+        ocr_applied=False
+    )
+    db.add(uploaded)
+    await db.commit()
+    await db.refresh(uploaded)
+    
+    return target_path.replace("\\", "/")
+
 security = HTTPBearer(auto_error=False)
 
 # OTP Storage (in-memory, use Redis/DB in production)
@@ -404,10 +439,9 @@ async def compare_pdf(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "pdf", db, uid)
+    t2_path = await save_uploaded_file(file2, "pdf", db, uid)
 
     try:
         text1 = extract_text_from_pdf(t1_path)
@@ -421,7 +455,7 @@ async def compare_pdf(
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="pdf",
@@ -437,9 +471,8 @@ async def compare_pdf(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/compare/docx")
 async def compare_docx(
@@ -449,10 +482,9 @@ async def compare_docx(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "docx", db, uid)
+    t2_path = await save_uploaded_file(file2, "docx", db, uid)
 
     try:
         text1 = extract_text_from_docx(t1_path)
@@ -466,7 +498,7 @@ async def compare_docx(
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="docx",
@@ -482,9 +514,8 @@ async def compare_docx(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/compare/pptx")
 async def compare_pptx(
@@ -494,10 +525,9 @@ async def compare_pptx(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "pptx", db, uid)
+    t2_path = await save_uploaded_file(file2, "pptx", db, uid)
 
     try:
         text1 = extract_text_from_pptx(t1_path)
@@ -511,7 +541,7 @@ async def compare_pptx(
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="pptx",
@@ -527,9 +557,8 @@ async def compare_pptx(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/compare/excel")
 async def compare_excel(
@@ -539,11 +568,9 @@ async def compare_excel(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    suffix = ".xlsx" if "xlsx" in file1.filename else ".xls"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "excel", db, uid)
+    t2_path = await save_uploaded_file(file2, "excel", db, uid)
 
     try:
         text1 = extract_text_from_excel(t1_path)
@@ -557,7 +584,7 @@ async def compare_excel(
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="excel",
@@ -573,9 +600,8 @@ async def compare_excel(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/compare/csv")
 async def compare_csv(
@@ -585,10 +611,9 @@ async def compare_csv(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "csv", db, uid)
+    t2_path = await save_uploaded_file(file2, "csv", db, uid)
 
     try:
         text1 = extract_text_from_csv(t1_path)
@@ -602,7 +627,7 @@ async def compare_csv(
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="csv",
@@ -618,9 +643,8 @@ async def compare_csv(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/compare/image")
 async def compare_image(
@@ -630,12 +654,9 @@ async def compare_image(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    ext1 = os.path.splitext(file1.filename)[1] or ".png"
-    ext2 = os.path.splitext(file2.filename)[1] or ".png"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ext1) as t1, \
-         tempfile.NamedTemporaryFile(delete=False, suffix=ext2) as t2:
-        t1.write(await file1.read()); t1_path = t1.name
-        t2.write(await file2.read()); t2_path = t2.name
+    uid = current_user.id if current_user else 0
+    t1_path = await save_uploaded_file(file1, "image", db, uid)
+    t2_path = await save_uploaded_file(file2, "image", db, uid)
 
     try:
         report = image_diff(t1_path, t2_path)
@@ -643,13 +664,20 @@ async def compare_image(
         report["type"] = "image"
         
         if use_ai.lower() == "true":
-            report["ai_analysis"] = "AI image analysis: " + \
-                f"Found {report['stats']['changed_pixels']} different pixels " \
-                f"({report['stats']['difference_percent']}% of image changed)."
+            ai_analysis = ai_service.analyze_images_with_gemini(t1_path, t2_path)
+            if not ai_analysis:
+                ai_analysis = (
+                    "**AI Semantic Image Analysis:**\n\n"
+                    f"Pixel-level difference: {report['stats']['changed_pixels']} pixels changed "
+                    f"({report['stats']['difference_percent']}% of image).\n"
+                    "A semantic difference (addition, removal, or modification) is present in the highlighted region."
+                )
+            report["ai_analysis"] = ai_analysis
+            report["ai_analysis_provider"] = "Gemini-1.5-Flash Multimodal"
 
         # Save history
         comparison = Comparison(
-            user_id=current_user.id if current_user else 0,
+            user_id=uid,
             file1_name=file1.filename,
             file2_name=file2.filename,
             file1_type="image",
@@ -665,9 +693,8 @@ async def compare_image(
 
         report["comparison_id"] = comparison.id
         return report
-    finally:
-        safe_unlink(t1_path)
-        safe_unlink(t2_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def extract_file_text(file: UploadFile) -> str:
     filename = file.filename or ""
@@ -713,6 +740,7 @@ async def compare_folder(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    uid = current_user.id if current_user else 0
     # Map filenames to upload files
     f1_map = {f.filename: f for f in files1}
     f2_map = {f.filename: f for f in files2}
@@ -754,12 +782,8 @@ async def compare_folder(
             
             # If it is an image, run image visual diff comparison
             if ext in [".png", ".jpg", ".jpeg", ".bmp", ".gif"]:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t1, \
-                     tempfile.NamedTemporaryFile(delete=False, suffix=ext) as t2:
-                    t1.write(await file1.read()); t1_path = t1.name
-                    t2.write(await file2.read()); t2_path = t2.name
-                await file1.seek(0)
-                await file2.seek(0)
+                t1_path = await save_uploaded_file(file1, "folder", db, uid)
+                t2_path = await save_uploaded_file(file2, "folder", db, uid)
                 
                 try:
                     img_report = image_diff(t1_path, t2_path)
@@ -768,6 +792,11 @@ async def compare_folder(
                     if status == "modified":
                         changed_count += 1
                     
+                    if use_ai.lower() == "true":
+                        ai_analysis = ai_service.analyze_images_with_gemini(t1_path, t2_path)
+                        img_report["ai_analysis"] = ai_analysis
+                        img_report["ai_analysis_provider"] = "Gemini-1.5-Flash Multimodal"
+                        
                     differences.append({
                         "filename": filename,
                         "status": status,
@@ -788,12 +817,12 @@ async def compare_folder(
                         "similarity": 0.0,
                         "error": str(e)
                     })
-                finally:
-                    safe_unlink(t1_path)
-                    safe_unlink(t2_path)
             else:
                 # Document/Text comparison
                 try:
+                    t1_path = await save_uploaded_file(file1, "folder", db, uid)
+                    t2_path = await save_uploaded_file(file2, "folder", db, uid)
+                    
                     text1 = await extract_file_text(file1)
                     text2 = await extract_file_text(file2)
                     
@@ -839,7 +868,7 @@ async def compare_folder(
     
     # Save to history
     comparison = Comparison(
-        user_id=current_user.id if current_user else 0,
+        user_id=uid,
         file1_name="Folder A",
         file2_name="Folder B",
         file1_type="folder",

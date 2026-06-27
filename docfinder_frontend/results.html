@@ -562,7 +562,11 @@ async function sendChat() {
     form.append("message", msg);
     form.append("context", chatContext);
     const token = localStorage.getItem("token") || "";
-    const res = await fetch("/api/ai/chat", { method: "POST", headers: { "Authorization": "Bearer " + token }, body: form });
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = "Bearer " + token;
+    }
+    const res = await fetch("/api/ai/chat", { method: "POST", headers: headers, body: form });
     const data = await res.json();
     loadingDiv.textContent = data.reply || data.detail || "No response.";
   } catch (e) {
@@ -592,9 +596,13 @@ async function downloadReport(type) {
   }
   
   try {
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = "Bearer " + token;
+    }
     const res = await fetch(`/api/report/${type}/${comparisonId}`, {
       method: "POST",
-      headers: { "Authorization": "Bearer " + token }
+      headers: headers
     });
     if (!res.ok) throw new Error("Report generation failed");
     const blob = await res.blob();

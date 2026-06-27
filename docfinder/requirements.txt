@@ -47,3 +47,5 @@ openpyxl
 Pillow
 python-docx
 python-pptx
+asyncpg
+

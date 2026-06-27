@@ -59,8 +59,10 @@
             <a href="collab.html" class="s-link">👥 Live Collab</a>
             <a href="#" class="s-link">📂 Folders</a>
             
-            <div class="s-section">Admin Control</div>
-            <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            <div id="adminMenu" style="display:none">
+                <div class="s-section">Admin Control</div>
+                <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            </div>
             
             <div class="s-section">Resources</div>
             <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
@@ -180,13 +182,18 @@
         let selectedFiles1 = [];
         let selectedFiles2 = [];
 
-        // Check auth
+        // Check auth (make optional)
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
-        if (!token) window.location.href = 'login.html';
         
-        document.getElementById('userName').textContent = user || 'User';
-        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
+        document.getElementById('userName').textContent = user || 'Guest';
+        document.getElementById('userAvatar').textContent = (user || 'Guest')[0].toUpperCase();
+        document.getElementById('userPlan').textContent = token ? 'Premium Plan' : 'Free Guest Mode';
+        
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminMenu = document.getElementById('adminMenu');
+            if (adminMenu) adminMenu.style.display = 'block';
+        }
         
         // Mode logic
         function setMode(mode) {
@@ -349,9 +356,13 @@
             loadingText.textContent = currentMode === 'ai' ? 'Analyzing with AI...' : 'Comparing exact matches...';
             
             try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
                 const res = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: headers,
                     body: formData
                 });
                 

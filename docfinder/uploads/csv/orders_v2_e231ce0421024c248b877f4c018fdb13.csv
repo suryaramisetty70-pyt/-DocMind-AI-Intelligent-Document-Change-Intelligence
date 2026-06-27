@@ -1,0 +1,5 @@
+OrderID,Customer,Amount,Status
+1001,Customer A,250.00,Delivered
+1002,Customer B,200.00,Shipped
+1003,Customer C,350.00,Delivered
+1004,Customer D,180.00,Pending

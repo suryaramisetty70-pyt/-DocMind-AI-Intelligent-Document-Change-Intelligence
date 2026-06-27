@@ -35,8 +35,10 @@
             <a href="collab.html" class="s-link active">👥 Live Collab</a>
             <a href="#" class="s-link">📂 Folders</a>
             
-            <div class="s-section">Admin Control</div>
-            <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            <div id="adminMenu" style="display:none">
+                <div class="s-section">Admin Control</div>
+                <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            </div>
             
             <div class="s-section">Resources</div>
             <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
@@ -91,8 +93,13 @@
 
     <script>
         const user = localStorage.getItem('user');
-        document.getElementById('userName').textContent = user || 'User';
-        document.getElementById('userAvatar').textContent = (user || 'U')[0].toUpperCase();
+        document.getElementById('userName').textContent = user || 'Guest';
+        document.getElementById('userAvatar').textContent = (user || 'Guest')[0].toUpperCase();
+        
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminMenu = document.getElementById('adminMenu');
+            if (adminMenu) adminMenu.style.display = 'block';
+        }
         
         let ws;
         

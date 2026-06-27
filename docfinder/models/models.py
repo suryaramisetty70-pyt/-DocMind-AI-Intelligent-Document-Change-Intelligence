@@ -71,5 +71,6 @@ class UploadedFile(Base):
     filename = Column(String(255))
     file_type = Column(String(20))
     file_size = Column(Integer)
+    file_path = Column(String(500), nullable=True)
     ocr_applied = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
