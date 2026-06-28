@@ -1,0 +1,19 @@
+{
+  "name": "docfinder-animated-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite docfinder_frontend --port 3000",
+    "build": "vite build docfinder_frontend --outDir dist",
+    "preview": "vite preview docfinder_frontend"
+  },
+  "dependencies": {
+    "gsap": "^3.12.5",
+    "lenis": "^1.1.9",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
