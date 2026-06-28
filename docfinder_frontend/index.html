@@ -7,21 +7,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
-        .hero{position:relative;min-height:88vh;display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;padding:4rem 6vw;align-items:center;overflow:hidden}
+        .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 6vw 4rem 6vw;overflow:hidden;z-index:1}
         .hero::before{content:"";position:absolute;top:-20%;right:-10%;width:600px;height:600px;background:var(--grad-accent);filter:blur(120px);opacity:.18;border-radius:50%;z-index:0}
         .eyebrow{display:inline-flex;gap:.5rem;align-items:center;padding:.4rem .9rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.8rem;font-weight:600;margin-bottom:1.5rem}
         .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.2);animation:pulse-ring 1.5s infinite}
-        .hero h1{font-size:clamp(2.5rem,5vw,4.2rem);line-height:1.05;font-weight:900;letter-spacing:-.03em;margin-bottom:1.25rem;position:relative;z-index:1}
+        .hero h1{font-size:clamp(2.8rem,6vw,4.8rem);line-height:1.05;font-weight:900;letter-spacing:-.03em;margin-bottom:1.5rem;position:relative;z-index:1;max-width:850px}
         .hero h1 .grad{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent}
-        .hero p{font-size:1.15rem;color:var(--muted);max-width:520px;margin-bottom:2rem;position:relative;z-index:1}
-        .hero-cta{display:flex;gap:1rem;position:relative;z-index:1}
-        #canvas3d{width:100%;height:520px;position:relative;z-index:1}
-        .features{padding:5rem 6vw;background:#fff}
+        .hero p{font-size:1.25rem;color:var(--muted);max-width:640px;margin-bottom:2.5rem;position:relative;z-index:1;line-height:1.6}
+        .hero-cta{display:flex;gap:1rem;position:relative;z-index:1;justify-content:center}
+        #canvas3d{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+        .features{padding:6rem 6vw;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);position:relative;z-index:2}
         .section-head{text-align:center;margin-bottom:3rem}
         .section-head h2{font-size:2.5rem;font-weight:800;letter-spacing:-.02em}
         .section-head p{color:var(--muted);margin-top:.75rem}
         .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;perspective:1200px}
-        .f-card{padding:2rem;border-radius:20px;background:#fff;border:1px solid var(--border);transition:all .4s cubic-bezier(.4,0,.2,1);cursor:pointer;position:relative;overflow:hidden}
+        .f-card{padding:2rem;border-radius:20px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border:1px solid var(--border);transition:all .4s cubic-bezier(.4,0,.2,1);cursor:pointer;position:relative;overflow:hidden}
         .f-card:hover{transform:translateY(-12px);box-shadow:var(--shadow-glow)}
         .f-icon{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;margin-bottom:1.25rem;color:#fff}
         .f-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.5rem}
@@ -29,7 +29,7 @@
         .nav-links{display:flex;gap:1.5rem;align-items:center}
         .nav-link{color:var(--muted);font-weight:600;font-size:.9rem;transition:color .2s}
         .nav-link:hover{color:var(--accent)}
-        @media(max-width:900px){.hero{grid-template-columns:1fr;padding:3rem 5vw}#canvas3d{height:340px}.nav-links{display:none}}
+        @media(max-width:900px){.hero{padding:6rem 5vw 3rem 5vw}#canvas3d{height:100vh}.nav-links{display:none}}
     </style>
 </head>
 <body>
@@ -53,17 +53,16 @@
         </div>
     </nav>
 
+    <div id="canvas3d" data-us-project="2oSezxFeETqq7Y7txE7t"></div>
+
     <section class="hero">
-        <div>
-            <div class="eyebrow">✨ AI-Powered · v2.0</div>
-            <h1>Compare anything.<br><span class="grad">See every change.</span></h1>
-            <p>DiffLab analyzes text, PDFs, spreadsheets and CSVs side-by-side — surfacing every addition, deletion, and modification with AI-grade clarity.</p>
-            <div class="hero-cta">
-                <a href="register.html"><button class="btn btn-primary">Start comparing free</button></a>
-                <a href="#features"><button class="btn btn-ghost">See how it works</button></a>
-            </div>
+        <div class="eyebrow">✨ AI-Powered · v2.0</div>
+        <h1>Compare anything.<br><span class="grad">See every change.</span></h1>
+        <p>DiffLab analyzes text, PDFs, spreadsheets and CSVs side-by-side — surfacing every addition, deletion, and modification with AI-grade clarity.</p>
+        <div class="hero-cta">
+            <a href="register.html"><button class="btn btn-primary">Start comparing free</button></a>
+            <a href="#features"><button class="btn btn-ghost" style="backdrop-filter:blur(8px); background:rgba(255,255,255,0.45);">See how it works</button></a>
         </div>
-        <div id="canvas3d" style="width: 100%; height: 520px" data-us-project="tkRFm4fC8lfN7U9JG2w0"></div>
     </section>
 
     <section class="features" id="features">
