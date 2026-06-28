@@ -63,7 +63,7 @@
                 <a href="#features"><button class="btn btn-ghost">See how it works</button></a>
             </div>
         </div>
-        <canvas id="canvas3d"></canvas>
+        <div id="canvas3d" style="width: 100%; height: 520px" data-us-project="tkRFm4fC8lfN7U9JG2w0"></div>
     </section>
 
     <section class="features" id="features">
@@ -237,44 +237,7 @@
         </div>
     </section>
 
-    <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
-    <script type="module">
-        import * as THREE from 'three';
-        const el=document.getElementById('canvas3d');
-        const scene=new THREE.Scene();
-        const camera=new THREE.PerspectiveCamera(50,el.clientWidth/el.clientHeight,.1,100);camera.position.z=6;
-        const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
-        renderer.setSize(el.clientWidth,el.clientHeight);renderer.setPixelRatio(devicePixelRatio);el.appendChild(renderer.domElement);
-
-        const docs=[];
-        const colors=[0x3b82f6,0xec4899,0x10b981,0xf59e0b];
-        for(let i=0;i<4;i++){
-          const g=new THREE.BoxGeometry(1.6,2.2,.08);
-          const m=new THREE.MeshStandardMaterial({color:colors[i],roughness:.3,metalness:.4,emissive:colors[i],emissiveIntensity:.15});
-          const mesh=new THREE.Mesh(g,m);
-          mesh.position.set(Math.cos(i/4*Math.PI*2)*1.8,Math.sin(i/4*Math.PI*2)*.6,Math.sin(i)*.5);
-          mesh.userData={base:mesh.position.clone(),phase:i};
-          scene.add(mesh);docs.push(mesh);
-        }
-        scene.add(new THREE.AmbientLight(0xffffff,.6));
-        const d=new THREE.DirectionalLight(0xffffff,1.2);d.position.set(3,5,4);scene.add(d);
-        const p=new THREE.PointLight(0xec4899,2,10);p.position.set(-3,-2,3);scene.add(p);
-
-        let mx=0,my=0;
-        addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*.5;my=(e.clientY/innerHeight-.5)*.5});
-        function loop(t){
-          t*=.001;
-          docs.forEach((d,i)=>{
-            d.rotation.y=t*.5+i;d.rotation.x=Math.sin(t+i)*.3;
-            d.position.y=d.userData.base.y+Math.sin(t*1.5+i)*.3;
-          });
-          scene.rotation.y+=(mx-scene.rotation.y)*.05;
-          scene.rotation.x+=(my-scene.rotation.x)*.05;
-          renderer.render(scene,camera);requestAnimationFrame(loop);
-        }
-        loop(0);
-        addEventListener('resize',()=>{camera.aspect=el.clientWidth/el.clientHeight;camera.updateProjectionMatrix();renderer.setSize(el.clientWidth,el.clientHeight)});
-    </script>
+    <script type="text/javascript">!function(){var u=window.UnicornStudio;if(u&&u.init){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){u.init()})}else{u.init()}}else{window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.6/dist/unicornStudio.umd.js",i.onload=function(){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})}else{UnicornStudio.init()}},(document.head||document.body).appendChild(i)}}();</script>
     <script>
         if (localStorage.getItem('isAdmin') === 'true') {
             const adminLink = document.getElementById('adminLink');
