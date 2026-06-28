@@ -134,10 +134,24 @@ class ConnectionManager:
         if room_id not in self.active_connections:
             self.active_connections[room_id] = []
         self.active_connections[room_id].append(websocket)
+        await self.broadcast_count(room_id)
 
     def disconnect(self, websocket: WebSocket, room_id: str):
         if room_id in self.active_connections:
-            self.active_connections[room_id].remove(websocket)
+            if websocket in self.active_connections[room_id]:
+                self.active_connections[room_id].remove(websocket)
+        import asyncio
+        asyncio.create_task(self.broadcast_count(room_id))
+
+    async def broadcast_count(self, room_id: str):
+        if room_id in self.active_connections:
+            count = len(self.active_connections[room_id])
+            message = json.dumps({"type": "count", "count": count})
+            for connection in self.active_connections[room_id]:
+                try:
+                    await connection.send_text(message)
+                except Exception:
+                    pass
 
     async def broadcast(self, message: str, room_id: str, sender: WebSocket):
         if room_id in self.active_connections:
