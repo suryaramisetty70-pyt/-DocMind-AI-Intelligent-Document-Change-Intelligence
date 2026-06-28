@@ -7,29 +7,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
-        .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 6vw 4rem 6vw;overflow:hidden;z-index:1}
-        .hero::before{content:"";position:absolute;top:-20%;right:-10%;width:600px;height:600px;background:var(--grad-accent);filter:blur(120px);opacity:.18;border-radius:50%;z-index:0}
-        .eyebrow{display:inline-flex;gap:.5rem;align-items:center;padding:.4rem .9rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.8rem;font-weight:600;margin-bottom:1.5rem}
-        .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.2);animation:pulse-ring 1.5s infinite}
-        .hero h1{font-size:clamp(2.8rem,6vw,4.8rem);line-height:1.05;font-weight:900;letter-spacing:-.03em;margin-bottom:1.5rem;position:relative;z-index:1;max-width:850px}
-        .hero h1 .grad{background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent}
-        .hero p{font-size:1.25rem;color:var(--muted);max-width:640px;margin-bottom:2.5rem;position:relative;z-index:1;line-height:1.6}
-        .hero-cta{display:flex;gap:1rem;position:relative;z-index:1;justify-content:center}
-        #canvas3d{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
-        .features{padding:6rem 6vw;background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);position:relative;z-index:2}
-        .section-head{text-align:center;margin-bottom:3rem}
-        .section-head h2{font-size:2.5rem;font-weight:800;letter-spacing:-.02em}
-        .section-head p{color:var(--muted);margin-top:.75rem}
-        .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;perspective:1200px}
-        .f-card{padding:2rem;border-radius:20px;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border:1px solid var(--border);transition:all .4s cubic-bezier(.4,0,.2,1);cursor:pointer;position:relative;overflow:hidden}
-        .f-card:hover{transform:translateY(-12px);box-shadow:var(--shadow-glow)}
-        .f-icon{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;margin-bottom:1.25rem;color:#fff}
-        .f-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.5rem}
-        .f-card p{font-size:.9rem;color:var(--muted);line-height:1.6}
-        .nav-links{display:flex;gap:1.5rem;align-items:center}
-        .nav-link{color:var(--muted);font-weight:600;font-size:.9rem;transition:color .2s}
-        .nav-link:hover{color:var(--accent)}
-        @media(max-width:900px){.hero{padding:6rem 5vw 3rem 5vw}#canvas3d{height:100vh}.nav-links{display:none}}
+        body { background: #030712; color: #f3f4f6; }
+        .nav { background: rgba(3, 7, 18, 0.8) !important; border-bottom-color: rgba(255, 255, 255, 0.08) !important; color: #f3f4f6; }
+        .btn-ghost { color: #e5e7eb; border-color: rgba(255, 255, 255, 0.15); }
+        .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 8rem 6vw 4rem 6vw; overflow: hidden; z-index: 1; }
+        .hero::before { content: ""; position: absolute; top: -20%; right: -10%; width: 600px; height: 600px; background: var(--grad-accent); filter: blur(120px); opacity: 0.18; border-radius: 50%; z-index: 0; }
+        .eyebrow { display: inline-flex; gap: 0.5rem; align-items: center; padding: 0.4rem 0.9rem; border-radius: 99px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.8rem; font-weight: 600; margin-bottom: 1.5rem; }
+        .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); animation: pulse-ring 1.5s infinite; }
+        .hero h1 { font-size: clamp(2.8rem, 6vw, 4.8rem); line-height: 1.05; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1.5rem; position: relative; z-index: 1; max-width: 850px; color: #fff; }
+        .hero h1 .grad { background: var(--grad-accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .hero p { font-size: 1.25rem; color: #9ca3af; max-width: 640px; margin-bottom: 2.5rem; position: relative; z-index: 1; line-height: 1.6; }
+        .hero-cta { display: flex; gap: 1rem; position: relative; z-index: 1; justify-content: center; }
+        #canvas3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+        .features { padding: 6rem 6vw; background: rgba(3, 7, 18, 0.82) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.08) !important; position: relative; z-index: 2; }
+        .section-head { text-align: center; margin-bottom: 3rem; }
+        .section-head h2 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+        .section-head p { color: #9ca3af; margin-top: 0.75rem; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; perspective: 1200px; }
+        .f-card { padding: 2rem; border-radius: 20px; background: rgba(17, 24, 39, 0.45) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden; color: #f3f4f6; }
+        .f-card:hover { transform: translateY(-12px); border-color: rgba(59, 130, 246, 0.4) !important; box-shadow: var(--shadow-glow); }
+        .f-icon { width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-size: 1.5rem; margin-bottom: 1.25rem; color: #fff; }
+        .f-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: #fff; }
+        .f-card p { font-size: 0.9rem; color: #9ca3af; line-height: 1.6; }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-link { color: #9ca3af; font-weight: 600; font-size: 0.9rem; transition: color 0.2s; }
+        .nav-link:hover { color: #3b82f6; }
+        @media(max-width: 900px) { .hero { padding: 6rem 5vw 3rem 5vw; } #canvas3d { height: 100vh; } .nav-links { none; } }
     </style>
 </head>
 <body>
@@ -53,7 +57,7 @@
         </div>
     </nav>
 
-    <div id="canvas3d" data-us-project="2oSezxFeETqq7Y7txE7t"></div>
+    <canvas id="canvas3d"></canvas>
 
     <section class="hero">
         <div class="eyebrow">✨ AI-Powered · v2.0</div>
@@ -236,7 +240,231 @@
         </div>
     </section>
 
-    <script type="text/javascript">!function(){var u=window.UnicornStudio;if(u&&u.init){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){u.init()})}else{u.init()}}else{window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.2.6/dist/unicornStudio.umd.js",i.onload=function(){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})}else{UnicornStudio.init()}},(document.head||document.body).appendChild(i)}}();</script>
+    <script>
+        const canvas = document.getElementById('canvas3d');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        // 3D camera parameters
+        const fov = 400;
+        const viewerDistance = 500;
+        
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetRotX = 15;
+        let targetRotY = -25;
+        let currentRotX = 15;
+        let currentRotY = -25;
+        
+        window.addEventListener('mousemove', (e) => {
+            targetRotX = 15 + ((e.clientY / window.innerHeight) - 0.5) * -20;
+            targetRotY = -25 + ((e.clientX / window.innerWidth) - 0.5) * 30;
+        });
+
+        // Particle stream between documents
+        class Particle {
+            constructor(startX, startY, startZ, endX, endY, endZ, symbol, color) {
+                this.startX = startX;
+                this.startY = startY;
+                this.startZ = startZ;
+                this.endX = endX;
+                this.endY = endY;
+                this.endZ = endZ;
+                this.progress = 0;
+                this.speed = 0.015 + Math.random() * 0.02;
+                this.symbol = symbol;
+                this.color = color;
+                this.size = 1 + Math.random() * 2;
+                this.offsetY = (Math.random() - 0.5) * 40;
+            }
+            update() {
+                this.progress += this.speed;
+                return this.progress >= 1;
+            }
+            draw(rx, ry) {
+                const x = this.startX + (this.endX - this.startX) * this.progress;
+                const y = this.startY + (this.endY - this.startY) * this.progress + Math.sin(this.progress * Math.PI) * this.offsetY;
+                const z = this.startZ + (this.endZ - this.startZ) * this.progress;
+                
+                let p = new Point3D(x, y, z);
+                p = p.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+                
+                if (p.z > 0) {
+                    ctx.fillStyle = this.color;
+                    ctx.font = `${8 * p.z}px 'JetBrains Mono'`;
+                    ctx.fillText(this.symbol, p.x, p.y);
+                }
+            }
+        }
+
+        const particles = [];
+        let scanLineY = 0;
+        let scanDirection = 1;
+
+        class Point3D {
+            constructor(x, y, z) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            rotateX(angle) {
+                const rad = angle * Math.PI / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+                return new Point3D(this.x, this.y * cos - this.z * sin, this.y * sin + this.z * cos);
+            }
+            rotateY(angle) {
+                const rad = angle * Math.PI / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+                return new Point3D(this.x * cos + this.z * sin, this.y, -this.x * sin + this.z * cos);
+            }
+            project(w, h, f, d) {
+                const factor = f / (d + this.z);
+                return new Point3D(this.x * factor + w / 2, this.y * factor + h / 2, factor);
+            }
+        }
+
+        function drawDocSheet(offsetX, rotOffset, rx, ry, side) {
+            const numLines = 18;
+            const docWidth = 140;
+            const docHeight = 220;
+            
+            const corners = [
+                new Point3D(-docWidth/2, -docHeight/2, 0),
+                new Point3D(docWidth/2, -docHeight/2, 0),
+                new Point3D(docWidth/2, docHeight/2, 0),
+                new Point3D(-docWidth/2, docHeight/2, 0)
+            ];
+            
+            const projCorners = corners.map(c => {
+                let p = c.rotateY(rotOffset);
+                p.x += offsetX;
+                return p.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+            });
+            
+            ctx.beginPath();
+            ctx.moveTo(projCorners[0].x, projCorners[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(projCorners[i].x, projCorners[i].y);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(17, 24, 39, 0.45)";
+            ctx.fill();
+            ctx.strokeStyle = "rgba(59, 130, 246, 0.15)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            for (let i = 0; i < numLines; i++) {
+                const percentY = i / (numLines - 1);
+                const lineY = -docHeight/2 + percentY * docHeight * 0.9 + 10;
+                
+                let color = "rgba(255, 255, 255, 0.15)";
+                let isDiff = false;
+                
+                if (side === "left") {
+                    if (i === 4 || i === 9 || i === 13) {
+                        color = "rgba(239, 68, 68, 0.55)";
+                        isDiff = true;
+                    }
+                } else {
+                    if (i === 4 || i === 7 || i === 13 || i === 15) {
+                        color = "rgba(16, 185, 129, 0.55)";
+                        isDiff = true;
+                    }
+                }
+                
+                const p1 = new Point3D(-docWidth/2 + 15, lineY, 0);
+                const p2 = new Point3D(docWidth/2 - 15 - (isDiff ? 0 : Math.random() * 40), lineY, 0);
+                
+                let pt1 = p1.rotateY(rotOffset); pt1.x += offsetX;
+                let pt2 = p2.rotateY(rotOffset); pt2.x += offsetX;
+                
+                const proj1 = pt1.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+                const proj2 = pt2.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+                
+                ctx.beginPath();
+                ctx.moveTo(proj1.x, proj1.y);
+                ctx.lineTo(proj2.x, proj2.y);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4 * proj1.z;
+                ctx.stroke();
+                
+                const currentScanYWorld = -docHeight/2 + scanLineY * docHeight;
+                if (Math.abs(lineY - currentScanYWorld) < 8 && Math.random() < 0.15) {
+                    const symbol = isDiff ? (side === "left" ? "-" : "+") : (Math.random() < 0.5 ? "0" : "1");
+                    const pColor = isDiff ? (side === "left" ? "#ef4444" : "#10b981") : "#3b82f6";
+                    
+                    particles.push(new Particle(
+                        offsetX, lineY, 0,
+                        -offsetX, lineY, 0,
+                        symbol, pColor
+                    ));
+                }
+            }
+            
+            const scanYWorld = -docHeight/2 + scanLineY * docHeight;
+            const sp1 = new Point3D(-docWidth/2 - 10, scanYWorld, 0);
+            const sp2 = new Point3D(docWidth/2 + 10, scanYWorld, 0);
+            
+            let spt1 = sp1.rotateY(rotOffset); spt1.x += offsetX;
+            let spt2 = sp2.rotateY(rotOffset); spt2.x += offsetX;
+            
+            const sproj1 = spt1.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+            const sproj2 = spt2.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+            
+            ctx.beginPath();
+            ctx.moveTo(sproj1.x, sproj1.y);
+            ctx.lineTo(sproj2.x, sproj2.y);
+            ctx.strokeStyle = "rgba(59, 130, 246, 0.7)";
+            ctx.shadowColor = "#3b82f6";
+            ctx.shadowBlur = 15;
+            ctx.lineWidth = 3 * sproj1.z;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        function animate(t) {
+            ctx.clearRect(0, 0, width, height);
+            
+            currentRotX += (targetRotX - currentRotX) * 0.05;
+            currentRotY += (targetRotY - currentRotY) * 0.05;
+            
+            scanLineY += 0.0035 * scanDirection;
+            if (scanLineY >= 1 || scanLineY <= 0) {
+                scanDirection *= -1;
+            }
+            
+            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+            for (let i = 0; i < 50; i++) {
+                const seedX = (Math.sin(i * 123.45) + 1) * width / 2;
+                const seedY = (Math.cos(i * 456.78) + 1) * height / 2;
+                ctx.fillRect(seedX, seedY, 1.5, 1.5);
+            }
+            
+            drawDocSheet(-180, 15, currentRotX, currentRotY, "left");
+            drawDocSheet(180, -15, currentRotX, currentRotY, "right");
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                const done = p.update();
+                if (done) {
+                    particles.splice(i, 1);
+                } else {
+                    p.draw(currentRotX, currentRotY);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        requestAnimationFrame(animate);
+    </script>
     <script>
         if (localStorage.getItem('isAdmin') === 'true') {
             const adminLink = document.getElementById('adminLink');
