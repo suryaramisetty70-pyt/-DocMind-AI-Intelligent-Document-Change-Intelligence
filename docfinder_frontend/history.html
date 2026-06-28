@@ -78,8 +78,8 @@
     </div>
 
     <script>
-        // Use relative URLs - proxy server handles API routing
-        const API_URL = '';
+        // Auto-detect backend location
+        const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
         
         
         // Check auth (make optional)

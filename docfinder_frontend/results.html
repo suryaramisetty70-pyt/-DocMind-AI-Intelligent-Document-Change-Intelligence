@@ -218,6 +218,8 @@
 </div>
 
 <script>
+const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
+
 function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
@@ -566,7 +568,7 @@ async function sendChat() {
     if (token) {
       headers["Authorization"] = "Bearer " + token;
     }
-    const res = await fetch("/api/ai/chat", { method: "POST", headers: headers, body: form });
+    const res = await fetch(API_URL + "/api/ai/chat", { method: "POST", headers: headers, body: form });
     const data = await res.json();
     loadingDiv.textContent = data.reply || data.detail || "No response.";
   } catch (e) {
@@ -600,7 +602,7 @@ async function downloadReport(type) {
     if (token) {
       headers["Authorization"] = "Bearer " + token;
     }
-    const res = await fetch(`/api/report/${type}/${comparisonId}`, {
+    const res = await fetch(API_URL + `/api/report/${type}/${comparisonId}`, {
       method: "POST",
       headers: headers
     });
