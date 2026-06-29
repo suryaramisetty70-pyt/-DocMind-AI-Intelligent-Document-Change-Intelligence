@@ -403,5 +403,25 @@ Please provide a detailed, intelligent answer based ONLY on the documents provid
             
         return f"Based on the compared documents, the changes focus on refining the content. The documents are {similarity}% similar. You can browse specific changes line-by-line using the Side-by-Side or Granular tabs."
 
+    def translate_text(self, text: str, target_lang: str) -> Optional[str]:
+        """
+        Translate text into target language (English, Telugu, Tamil, Hindi).
+        """
+        system_prompt = f"You are a professional translator. Translate the user's text into {target_lang}. Preserve all formatting, markdown, list items, and spacing exactly. Return ONLY the translated output. Do not add any conversational remarks, notes, or intros."
+        prompt = f"Translate the following text into {target_lang}:\n\n{text}"
+        
+        # Try Groq
+        res = self.analyze_with_groq(prompt, system_prompt)
+        if res and "error" not in res.lower() and "unauthorized" not in res.lower():
+            return res
+            
+        # Try Gemini
+        res2 = self.analyze_with_gemini(f"{system_prompt}\n\n{prompt}")
+        if res2 and "error" not in res2.lower() and "unauthorized" not in res2.lower():
+            return res2
+            
+        # Local mock fallback
+        return f"[Translation to {target_lang} Fallback]: {text}"
+
 # Global AI service instance
 ai_service = AIService()

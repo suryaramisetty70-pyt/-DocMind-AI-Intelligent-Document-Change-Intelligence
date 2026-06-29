@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translate · DiffLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .main { padding: 2.5rem 3rem; background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+        .page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-head h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
+        .page-head p { color: var(--muted); margin-top: 0.25rem; font-size: 0.95rem; }
+
+        /* Two pane layout */
+        .translation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; flex: 1; margin-bottom: 1.5rem; }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 8px 24px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .pane-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .pane-header h3 { font-weight: 700; font-size: 1.05rem; color: #0f172a; }
+        
+        textarea.input-box {
+            width: 100%;
+            flex: 1;
+            min-height: 340px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 1.25rem;
+            font-family: inherit;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: #0f172a;
+            background: #fafafa;
+            transition: all 0.25s;
+            resize: none;
+        }
+        textarea.input-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+        }
+
+        .output-box {
+            width: 100%;
+            flex: 1;
+            min-height: 340px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 1.25rem;
+            font-family: inherit;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: #0f172a;
+            background: #f8fafc;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            user-select: text;
+        }
+
+        /* Controls */
+        .control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 2rem;
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 8px 24px rgba(15, 23, 42, 0.04);
+            margin-bottom: 2rem;
+        }
+        .lang-select-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .lang-select-group label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .lang-select {
+            padding: 0.6rem 1.25rem;
+            border-radius: 99px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            font-weight: 600;
+            font-size: 0.88rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+        }
+
+        .btn-copy {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                DiffLab
+            </div>
+            
+            <div class="s-section">Workspace</div>
+            <a href="dashboard.html" class="s-link">⚡ New Comparison</a>
+            <a href="history.html" class="s-link">🕓 History</a>
+            <a href="collab.html" class="s-link">👥 Live Collab</a>
+            <a href="translate.html" class="s-link active">🔄 Translation</a>
+            
+            <div id="adminMenu" style="display:none">
+                <div class="s-section">Admin Control</div>
+                <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            </div>
+            
+            <div class="s-section">Resources</div>
+            <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
+            <a href="index.html#enterprise" class="s-link">🏢 Enterprise Solutions</a>
+            <a href="index.html#desktop" class="s-link">💻 Desktop App</a>
+            <a href="index.html#legal" class="s-link">⚖️ Legal & Compliance</a>
+            
+            <div class="s-section">Account</div>
+            <a href="#" class="s-link">⚙️ Settings</a>
+            
+            <div class="s-user">
+                <div class="avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
+                    <div style="font-size:.8rem;opacity:.7" id="userPlan">Free plan</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>Translation Workspace</h1>
+                    <p>Translate topics, documents, or paragraphs across English, Telugu, Tamil, and Hindi.</p>
+                </div>
+            </div>
+
+            <div class="control-bar">
+                <div class="lang-select-group">
+                    <label>Target Language:</label>
+                    <select class="lang-select" id="targetLang">
+                        <option value="Telugu">Telugu (తెలుగు)</option>
+                        <option value="Tamil">Tamil (தமிழ்)</option>
+                        <option value="Hindi">Hindi (हिंदी)</option>
+                        <option value="English">English (English)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="performTranslation()">🔄 Translate Now</button>
+            </div>
+
+            <div class="translation-grid">
+                <!-- Source Pane -->
+                <div class="card animate-in">
+                    <div class="pane-header">
+                        <h3>Source Text</h3>
+                        <span id="charCount" style="font-size: 11px; color: var(--muted)">0 characters</span>
+                    </div>
+                    <textarea class="input-box" id="sourceText" placeholder="Type or paste text to translate..." oninput="updateCharCount()"></textarea>
+                </div>
+
+                <!-- Target Pane -->
+                <div class="card animate-in delay-1">
+                    <div class="pane-header">
+                        <h3>Translated Text</h3>
+                        <button class="btn-copy" onclick="copyTranslation()">📋 Copy</button>
+                    </div>
+                    <div class="output-box" id="translatedText">Translation will appear here...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading" class="loading" style="display:none">
+        <div class="spinner"></div>
+        <p id="loadingText">Translating...</p>
+    </div>
+    
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
+        
+        // Check auth (make optional)
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        
+        document.getElementById('userName').textContent = user || 'Guest';
+        document.getElementById('userAvatar').textContent = (user || 'Guest')[0].toUpperCase();
+        document.getElementById('userPlan').textContent = token ? 'Premium Plan' : 'Free Guest Mode';
+        
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminMenu = document.getElementById('adminMenu');
+            if (adminMenu) adminMenu.style.display = 'block';
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('sourceText').value;
+            document.getElementById('charCount').textContent = `${text.length} character${text.length === 1 ? '' : 's'}`;
+        }
+
+        async function performTranslation() {
+            const text = document.getElementById('sourceText').value;
+            const target_language = document.getElementById('targetLang').value;
+            
+            if (!text.trim()) {
+                return showToast('Please enter some text to translate', 'error');
+            }
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'flex';
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch(`${API_URL}/api/translate`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ text, target_language })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('translatedText').textContent = data.translated_text;
+                    showToast('Translation completed!', 'success');
+                } else {
+                    showToast(data.detail || 'Translation failed', 'error');
+                }
+            } catch (err) {
+                showToast('Connection error. Is the server running?', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function copyTranslation() {
+            const out = document.getElementById('translatedText').textContent;
+            if (out && out !== 'Translation will appear here...') {
+                navigator.clipboard.writeText(out);
+                showToast('Copied to clipboard!', 'success');
+            }
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+    </script>
+</body>
+</html>

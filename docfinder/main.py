@@ -1230,3 +1230,20 @@ async def delete_portal_app(app_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(app_entry)
     await db.commit()
     return {"message": "App deleted successfully"}
+
+
+# --- Translation Workspace API ---
+class TranslationRequest(BaseModel):
+    text: str
+    target_language: str
+
+@app.post("/api/translate")
+async def translate_document_text(req: TranslationRequest):
+    if not req.text.strip():
+        raise HTTPException(status_code=400, detail="Empty text input")
+        
+    translated = ai_service.translate_text(req.text, req.target_language)
+    if not translated:
+        raise HTTPException(status_code=500, detail="Translation failed")
+        
+    return {"translated_text": translated}
