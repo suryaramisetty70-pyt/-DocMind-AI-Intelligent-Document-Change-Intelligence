@@ -3,482 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DiffLab - Smart Document Comparison</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="shared.css">
+    <title>Vennila AI Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #030712; color: #f3f4f6; }
-        .nav { background: rgba(3, 7, 18, 0.8) !important; border-bottom-color: rgba(255, 255, 255, 0.08) !important; color: #f3f4f6; }
-        .btn-ghost { color: #e5e7eb; border-color: rgba(255, 255, 255, 0.15); }
-        .btn-ghost:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
-        .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 8rem 6vw 4rem 6vw; overflow: hidden; z-index: 1; }
-        .hero::before { content: ""; position: absolute; top: -20%; right: -10%; width: 600px; height: 600px; background: var(--grad-accent); filter: blur(120px); opacity: 0.18; border-radius: 50%; z-index: 0; }
-        .eyebrow { display: inline-flex; gap: 0.5rem; align-items: center; padding: 0.4rem 0.9rem; border-radius: 99px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.8rem; font-weight: 600; margin-bottom: 1.5rem; }
-        .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); animation: pulse-ring 1.5s infinite; }
-        .hero h1 { font-size: clamp(2.8rem, 6vw, 4.8rem); line-height: 1.05; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 1.5rem; position: relative; z-index: 1; max-width: 850px; color: #fff; }
-        .hero h1 .grad { background: var(--grad-accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .hero p { font-size: 1.25rem; color: #9ca3af; max-width: 640px; margin-bottom: 2.5rem; position: relative; z-index: 1; line-height: 1.6; }
-        .hero-cta { display: flex; gap: 1rem; position: relative; z-index: 1; justify-content: center; }
-        #canvas3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
-        .features { padding: 6rem 6vw; background: rgba(3, 7, 18, 0.82) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.08) !important; position: relative; z-index: 2; }
-        .section-head { text-align: center; margin-bottom: 3rem; }
-        .section-head h2 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
-        .section-head p { color: #9ca3af; margin-top: 0.75rem; }
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; perspective: 1200px; }
-        .f-card { padding: 2rem; border-radius: 20px; background: rgba(17, 24, 39, 0.45) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden; color: #f3f4f6; }
-        .f-card:hover { transform: translateY(-12px); border-color: rgba(59, 130, 246, 0.4) !important; box-shadow: var(--shadow-glow); }
-        .f-icon { width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-size: 1.5rem; margin-bottom: 1.25rem; color: #fff; }
-        .f-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; color: #fff; }
-        .f-card p { font-size: 0.9rem; color: #9ca3af; line-height: 1.6; }
-        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-        .nav-link { color: #9ca3af; font-weight: 600; font-size: 0.9rem; transition: color 0.2s; }
-        .nav-link:hover { color: #3b82f6; }
-        @media(max-width: 900px) { .hero { padding: 6rem 5vw 3rem 5vw; } #canvas3d { height: 100vh; } .nav-links { none; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #030712;
+            --blue-glow: rgba(59, 130, 246, 0.45);
+            --pink-glow: rgba(236, 72, 153, 0.45);
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text-light);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated grid background */
+        .grid-bg {
+            position: absolute;
+            inset: -20%;
+            background: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/60px 60px,
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/60px 60px;
+            transform: perspective(1000px) rotateX(60deg) translateZ(-100px);
+            mask-image: radial-gradient(ellipse at 50% 50%, #000 40%, transparent 80%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ambient glows */
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.25;
+            z-index: 1;
+            pointer-events: none;
+            transition: all 0.8s ease;
+        }
+        .glow-left {
+            width: 450px;
+            height: 450px;
+            background: #3b82f6;
+            top: 10%;
+            left: 5%;
+        }
+        .glow-right {
+            width: 450px;
+            height: 450px;
+            background: #ec4899;
+            bottom: 10%;
+            right: 5%;
+        }
+
+        /* Portal Content wrapper */
+        .portal-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1100px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .portal-header {
+            margin-bottom: 50px;
+        }
+        .portal-header h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .portal-header p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Cards Layout */
+        .cards-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .portal-card {
+            position: relative;
+            padding: 45px 35px;
+            border-radius: 28px;
+            background: rgba(17, 24, 39, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            text-align: left;
+            min-height: 380px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Inner light shine */
+        .portal-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.06), transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .portal-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Custom Hover Border Glows */
+        .card-left:hover {
+            transform: translateY(-8px);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 30px 60px -15px var(--blue-glow);
+        }
+        .card-right:hover {
+            transform: translateY(-8px);
+            border-color: rgba(236, 72, 153, 0.4);
+            box-shadow: 0 30px 60px -15px var(--pink-glow);
+        }
+
+        /* Card Content details */
+        .card-badge {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 6px 14px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .card-left:hover .card-badge {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+        }
+        .card-right:hover .card-badge {
+            background: rgba(236, 72, 153, 0.15);
+            border-color: rgba(236, 72, 153, 0.3);
+            color: #f472b6;
+        }
+
+        .portal-card h2 {
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        .portal-card p {
+            color: var(--text-muted);
+            font-size: 14.5px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .action-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 13.5px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #fff;
+            transition: all 0.3s;
+        }
+        .portal-card:hover .action-arrow {
+            gap: 15px;
+        }
+        .card-left:hover .action-arrow { color: #60a5fa; }
+        .card-right:hover .action-arrow { color: #f472b6; }
+
+        footer {
+            margin-top: 60px;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        @media(max-width: 768px) {
+            .cards-container { grid-template-columns: 1fr; }
+            .portal-card { min-height: 320px; }
+            body { padding: 40px 10px; }
+        }
     </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="brand">
-            <div class="brand-mark">D</div>
-            DiffLab
-        </div>
-        <div class="nav-links">
-            <a href="#features" class="nav-link">Features</a>
-            <a href="dashboard.html" class="nav-link">User Dashboard</a>
-            <a href="admin.html" class="nav-link" id="adminLink" style="display:none">Admin Panel</a>
-            <a href="#pricing" class="nav-link">Pricing</a>
-            <a href="#enterprise" class="nav-link">Enterprise</a>
-            <a href="#desktop" class="nav-link">Desktop</a>
-            <a href="#legal" class="nav-link">Legal</a>
-        </div>
-        <div style="display:flex;gap:1rem;align-items:center">
-            <a href="login.html"><button class="btn btn-ghost">Sign in</button></a>
-            <a href="register.html"><button class="btn btn-primary">Get started →</button></a>
-        </div>
-    </nav>
 
-    <canvas id="canvas3d"></canvas>
+    <div class="grid-bg"></div>
+    <div class="glow glow-left" id="glowLeft"></div>
+    <div class="glow glow-right" id="glowRight"></div>
 
-    <section class="hero">
-        <div class="eyebrow">✨ AI-Powered · v2.0</div>
-        <h1>Compare anything.<br><span class="grad">See every change.</span></h1>
-        <p>DiffLab analyzes text, PDFs, spreadsheets and CSVs side-by-side — surfacing every addition, deletion, and modification with AI-grade clarity.</p>
-        <div class="hero-cta">
-            <a href="register.html"><button class="btn btn-primary">Start comparing free</button></a>
-            <a href="#features"><button class="btn btn-ghost" style="backdrop-filter:blur(8px); background:rgba(255,255,255,0.45);">See how it works</button></a>
-        </div>
-    </section>
+    <div class="portal-wrapper">
+        <header class="portal-header">
+            <h1>Vennila AI Portal</h1>
+            <p>Select a platform workspace below to get started.</p>
+        </header>
 
-    <section class="features" id="features">
-        <div class="section-head">
-            <h2>Built for every format</h2>
-            <p>One workspace. Four powerful comparison engines.</p>
-        </div>
-        <div class="feature-grid">
-            <div class="f-card card-3d">
-                <div class="f-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">📝</div>
-                <h3>Text Comparison</h3>
-                <p>Line-by-line semantic diffing with word-level precision and syntax awareness.</p>
-            </div>
-            <div class="f-card card-3d">
-                <div class="f-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">📄</div>
-                <h3>PDF Documents</h3>
-                <p>Extract and compare PDFs preserving layout context, tables, and embedded text.</p>
-            </div>
-            <div class="f-card card-3d">
-                <div class="f-icon" style="background:linear-gradient(135deg,#10b981,#047857)">📊</div>
-                <h3>Excel Sheets</h3>
-                <p>Cell-level diffs across worksheets — formulas, values, and formatting tracked.</p>
-            </div>
-            <div class="f-card card-3d">
-                <div class="f-icon" style="background:linear-gradient(135deg,#f59e0b,#b45309)">📈</div>
-                <h3>CSV Data</h3>
-                <p>Row-aware comparison with schema detection and intelligent key matching.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="features" style="background:#f8fafc; border-top: 1px solid var(--border)">
-        <div class="section-head">
-            <h2>Sleek pricing plans</h2>
-            <p>Choose the level of intelligence your team needs.</p>
-        </div>
-        <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); max-width: 1000px; margin: 0 auto;">
-            <!-- Free Plan -->
-            <div class="f-card" style="display:flex; flex-direction:column; justify-content:space-between; min-height: 380px;">
+        <main class="cards-container">
+            <!-- Left Card: DocMind AI -->
+            <a href="/difflab.html" class="portal-card card-left">
                 <div>
-                    <h3 style="font-size:1.4rem;margin-bottom:0.5rem">Free</h3>
-                    <div style="font-size:2.2rem;font-weight:900;margin-bottom:1.5rem">$0<span style="font-size:0.9rem;color:var(--muted)">/mo</span></div>
-                    <p style="margin-bottom:1.5rem">Essential tools for individual builders.</p>
-                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;font-size:0.88rem;color:var(--muted);text-align:left;">
-                        <li>✓ 10 comparisons per day</li>
-                        <li>✓ Text and CSV diff checker</li>
-                        <li>✓ Standard side-by-side view</li>
-                        <li>✓ Local workspace folder</li>
-                    </ul>
+                    <span class="card-badge">Document Change Intelligence</span>
+                    <h2>DocMind AI</h2>
+                    <p>AI-powered document semantic difference engine. Audits, highlights, and compares PDFs, spreadsheets, and CSV folders in real time.</p>
                 </div>
-                <a href="register.html" style="margin-top:2rem"><button class="btn btn-ghost" style="width:100%;justify-content:center">Start Free</button></a>
-            </div>
+                <div class="action-arrow">
+                    Open Workspace <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </a>
 
-            <!-- Pro Plan -->
-            <div class="f-card" style="display:flex; flex-direction:column; justify-content:space-between; min-height: 380px; border-color: var(--accent); box-shadow: 0 10px 40px -10px rgba(59,130,246,0.2)">
-                <div style="position:absolute;top:1rem;right:1rem;background:var(--accent);color:#fff;padding:0.25rem 0.75rem;border-radius:99px;font-size:0.75rem;font-weight:700">POPULAR</div>
+            <!-- Right Card: Other Project -->
+            <a href="https://other-project.onrender.com" class="portal-card card-right">
                 <div>
-                    <h3 style="font-size:1.4rem;margin-bottom:0.5rem">Pro</h3>
-                    <div style="font-size:2.2rem;font-weight:900;margin-bottom:1.5rem">$19<span style="font-size:0.9rem;color:var(--muted)">/mo</span></div>
-                    <p style="margin-bottom:1.5rem">Unlock full AI intelligence and unlimited documents.</p>
-                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;font-size:0.88rem;color:var(--muted);text-align:left;">
-                        <li>✓ Unlimited PDF & Excel checks</li>
-                        <li>✓ Advanced AI semantic analysis</li>
-                        <li>✓ Real-time collaboration rooms</li>
-                        <li>✓ 24/7 Priority support</li>
-                    </ul>
+                    <span class="card-badge">Custom Services</span>
+                    <h2>Vennila Project</h2>
+                    <p>Interactive campaign workspace, active nodes tracker, and custom tool suites designed to elevate operations.</p>
                 </div>
-                <a href="register.html" style="margin-top:2rem"><button class="btn btn-primary" style="width:100%;justify-content:center">Go Pro →</button></a>
-            </div>
+                <div class="action-arrow">
+                    Open Platform <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </a>
+        </main>
 
-            <!-- Enterprise Plan -->
-            <div class="f-card" style="display:flex; flex-direction:column; justify-content:space-between; min-height: 380px;">
-                <div>
-                    <h3 style="font-size:1.4rem;margin-bottom:0.5rem">Enterprise</h3>
-                    <div style="font-size:2.2rem;font-weight:900;margin-bottom:1.5rem">Custom</div>
-                    <p style="margin-bottom:1.5rem">Enterprise security and legal compliance controls.</p>
-                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;font-size:0.88rem;color:var(--muted);text-align:left;">
-                        <li>✓ Unlimited custom folders</li>
-                        <li>✓ Strict compliance auditing</li>
-                        <li>✓ Custom API integration keys</li>
-                        <li>✓ Single Sign-On (SSO)</li>
-                    </ul>
-                </div>
-                <a href="register.html" style="margin-top:2rem"><button class="btn btn-dark" style="width:100%;justify-content:center">Contact Sales</button></a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Enterprise Section -->
-    <section id="enterprise" class="features" style="background:#fff; border-top: 1px solid var(--border)">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:4rem; align-items:center; max-width:1100px; margin: 0 auto;">
-            <div style="text-align:left;">
-                <div class="eyebrow" style="background:rgba(236,72,153,0.1); color:#ec4899">🏢 ENTERPRISE-GRADE</div>
-                <h2 style="font-size:2.5rem; font-weight:900; letter-spacing:-0.02em; line-height:1.1; margin-bottom:1.5rem">Built for legal and security teams</h2>
-                <p style="color:var(--muted); font-size:1rem; line-height:1.7; margin-bottom:1.5rem">
-                    DiffLab is trusted by corporate legal councils, financial services, and large enterprises to run strict compliance checks, identify subtle shifts in contract clauses, and organize files into workspaces.
-                </p>
-                <div style="display:flex; flex-direction:column; gap:1.25rem; margin-bottom:2rem; text-align:left;">
-                    <div style="display:flex; gap:1rem; align-items:center">
-                        <span style="font-size:1.25rem; color:#10b981">🛡️</span>
-                        <div><strong>Strict SOC2 Compliance:</strong> Encrypted data storage and zero model training on client documents.</div>
-                    </div>
-                    <div style="display:flex; gap:1rem; align-items:center">
-                        <span style="font-size:1.25rem; color:#3b82f6">📂</span>
-                        <div><strong>Multi-Folder Hierarchy:</strong> Group comparisons by client, contract type, or version folder.</div>
-                    </div>
-                </div>
-                <a href="register.html"><button class="btn btn-primary">Request a Demo</button></a>
-            </div>
-            <div style="background:var(--grad-dark); border-radius: 24px; padding: 2.5rem; color: #fff; box-shadow: var(--shadow-glow); text-align: left;">
-                <h3 style="font-size: 1.75rem; font-weight:800; margin-bottom:1rem">100% Privacy</h3>
-                <p style="opacity: 0.8; font-size: 0.9rem; margin-bottom: 2rem">Your data never leaves our secure nodes. Built to comply with CCPA, GDPR, and strict legal constraints.</p>
-                <div style="background: rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); font-family: monospace; font-size:0.8rem; text-align: left;">
-                    <div style="color:#10b981">// Compliance Handshake</div>
-                    <div>$ diff_engine --verify --compliance=strict</div>
-                    <div style="color:var(--accent)">✓ System checks pass (100% Secure)</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Desktop Section -->
-    <section id="desktop" class="features" style="background:#f8fafc; border-top: 1px solid var(--border)">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:4rem; align-items:center; max-width:1100px; margin: 0 auto;">
-            <div style="position:relative; width:100%;">
-                <div style="width:100%; height:300px; background:#0f172a; border-radius:20px; border:1px solid #30363d; overflow:hidden; box-shadow: var(--shadow-glow); padding: 1.5rem; color:#e6edf3; font-family:monospace; font-size:0.8rem; text-align:left;">
-                    <div style="display:flex; gap:6px; margin-bottom: 1.5rem;">
-                        <span style="width:10px; height:10px; border-radius:50%; background:#f85149"></span>
-                        <span style="width:10px; height:10px; border-radius:50%; background:#d29922"></span>
-                        <span style="width:10px; height:10px; border-radius:50%; background:#3fb950"></span>
-                    </div>
-                    <div style="color:#bc8cff">import difflib_engine</div>
-                    <div style="color:#79c0ff"># Running Desktop Offline Node</div>
-                    <div>diff_checker.compare("draft_v1.pdf", "draft_v2.pdf")</div>
-                    <div style="color:#58a6ff; margin-top:1.5rem">✓ Processed locally in 1.4s</div>
-                    <div style="color:#3fb950">✓ 99.18% Identical matching</div>
-                </div>
-            </div>
-            <div style="text-align:left;">
-                <div class="eyebrow" style="background:rgba(59,130,246,0.1); color:var(--accent)">💻 LOCAL DESKTOP NODE</div>
-                <h2 style="font-size:2.5rem; font-weight:900; letter-spacing:-0.02em; line-height:1.1; margin-bottom:1.5rem">Offline local diff engine</h2>
-                <p style="color:var(--muted); font-size:1rem; line-height:1.7; margin-bottom:1.5rem">
-                    Download the local desktop node for Windows, macOS, and Linux. Work completely offline with your local vector database and compare folders of files without uploading a single byte to the internet.
-                </p>
-                <button class="btn btn-dark" style="gap:0.75rem">📦 Download Desktop Client</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Legal Section -->
-    <section id="legal" class="features" style="background:#fff; border-top: 1px solid var(--border); padding-bottom:6rem;">
-        <div class="section-head" style="max-width:700px; margin: 0 auto 4rem;">
-            <div class="eyebrow" style="background:rgba(245,158,11,0.1); color:var(--warning)">⚖️ COMPLIANCE & LEGAL</div>
-            <h2 style="margin-top:1rem; font-size:2.5rem;">Legal grade safety, compliance, and privacy policies</h2>
-            <p>Read about our strict adherence to data processing policies designed for legal practitioners.</p>
-        </div>
-        <div class="feature-grid" style="max-width:1000px; margin:0 auto; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-            <div class="f-card" style="text-align:left;">
-                <h3>📜 Data Processing Addendum</h3>
-                <p>We sign custom DPAs with legal enterprises specifying that zero user documents are retained post-processing.</p>
-            </div>
-            <div class="f-card" style="text-align:left;">
-                <h3>🔒 End-to-End Encryption</h3>
-                <p>Your documents are encrypted using AES-256 during transit and at rest during RAG processing sessions.</p>
-            </div>
-            <div class="f-card" style="text-align:left;">
-                <h3>⚙️ Legal Compliance Audit</h3>
-                <p>We provide full audit trails of logins, document checks, and comparisons for compliance reviews.</p>
-            </div>
-        </div>
-    </section>
+        <footer>
+            Vennila AI © 2026. All rights reserved.
+        </footer>
+    </div>
 
     <script>
-        const canvas = document.getElementById('canvas3d');
-        const ctx = canvas.getContext('2d');
-        
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-        
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        });
-
-        // 3D camera parameters
-        const fov = 400;
-        const viewerDistance = 500;
-        
-        let mouseX = 0;
-        let mouseY = 0;
-        let targetRotX = 15;
-        let targetRotY = -25;
-        let currentRotX = 15;
-        let currentRotY = -25;
-        
-        window.addEventListener('mousemove', (e) => {
-            targetRotX = 15 + ((e.clientY / window.innerHeight) - 0.5) * -20;
-            targetRotY = -25 + ((e.clientX / window.innerWidth) - 0.5) * 30;
-        });
-
-        // Particle stream between documents
-        class Particle {
-            constructor(startX, startY, startZ, endX, endY, endZ, symbol, color) {
-                this.startX = startX;
-                this.startY = startY;
-                this.startZ = startZ;
-                this.endX = endX;
-                this.endY = endY;
-                this.endZ = endZ;
-                this.progress = 0;
-                this.speed = 0.015 + Math.random() * 0.02;
-                this.symbol = symbol;
-                this.color = color;
-                this.size = 1 + Math.random() * 2;
-                this.offsetY = (Math.random() - 0.5) * 40;
-            }
-            update() {
-                this.progress += this.speed;
-                return this.progress >= 1;
-            }
-            draw(rx, ry) {
-                const x = this.startX + (this.endX - this.startX) * this.progress;
-                const y = this.startY + (this.endY - this.startY) * this.progress + Math.sin(this.progress * Math.PI) * this.offsetY;
-                const z = this.startZ + (this.endZ - this.startZ) * this.progress;
-                
-                let p = new Point3D(x, y, z);
-                p = p.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
-                
-                if (p.z > 0) {
-                    ctx.fillStyle = this.color;
-                    ctx.font = `${8 * p.z}px 'JetBrains Mono'`;
-                    ctx.fillText(this.symbol, p.x, p.y);
-                }
-            }
-        }
-
-        const particles = [];
-        let scanLineY = 0;
-        let scanDirection = 1;
-
-        class Point3D {
-            constructor(x, y, z) {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-            }
-            rotateX(angle) {
-                const rad = angle * Math.PI / 180;
-                const cos = Math.cos(rad);
-                const sin = Math.sin(rad);
-                return new Point3D(this.x, this.y * cos - this.z * sin, this.y * sin + this.z * cos);
-            }
-            rotateY(angle) {
-                const rad = angle * Math.PI / 180;
-                const cos = Math.cos(rad);
-                const sin = Math.sin(rad);
-                return new Point3D(this.x * cos + this.z * sin, this.y, -this.x * sin + this.z * cos);
-            }
-            project(w, h, f, d) {
-                const factor = f / (d + this.z);
-                return new Point3D(this.x * factor + w / 2, this.y * factor + h / 2, factor);
-            }
-        }
-
-        function drawDocSheet(offsetX, rotOffset, rx, ry, side) {
-            const numLines = 18;
-            const docWidth = 140;
-            const docHeight = 220;
-            
-            const corners = [
-                new Point3D(-docWidth/2, -docHeight/2, 0),
-                new Point3D(docWidth/2, -docHeight/2, 0),
-                new Point3D(docWidth/2, docHeight/2, 0),
-                new Point3D(-docWidth/2, docHeight/2, 0)
-            ];
-            
-            const projCorners = corners.map(c => {
-                let p = c.rotateY(rotOffset);
-                p.x += offsetX;
-                return p.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
+        // Interactive mouse shine effect on cards
+        document.querySelectorAll('.portal-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--x', `${x}px`);
+                card.style.setProperty('--y', `${y}px`);
             });
-            
-            ctx.beginPath();
-            ctx.moveTo(projCorners[0].x, projCorners[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(projCorners[i].x, projCorners[i].y);
-            ctx.closePath();
-            ctx.fillStyle = "rgba(17, 24, 39, 0.45)";
-            ctx.fill();
-            ctx.strokeStyle = "rgba(59, 130, 246, 0.15)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            for (let i = 0; i < numLines; i++) {
-                const percentY = i / (numLines - 1);
-                const lineY = -docHeight/2 + percentY * docHeight * 0.9 + 10;
-                
-                let color = "rgba(255, 255, 255, 0.15)";
-                let isDiff = false;
-                
-                if (side === "left") {
-                    if (i === 4 || i === 9 || i === 13) {
-                        color = "rgba(239, 68, 68, 0.55)";
-                        isDiff = true;
-                    }
-                } else {
-                    if (i === 4 || i === 7 || i === 13 || i === 15) {
-                        color = "rgba(16, 185, 129, 0.55)";
-                        isDiff = true;
-                    }
-                }
-                
-                const p1 = new Point3D(-docWidth/2 + 15, lineY, 0);
-                const p2 = new Point3D(docWidth/2 - 15 - (isDiff ? 0 : Math.random() * 40), lineY, 0);
-                
-                let pt1 = p1.rotateY(rotOffset); pt1.x += offsetX;
-                let pt2 = p2.rotateY(rotOffset); pt2.x += offsetX;
-                
-                const proj1 = pt1.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
-                const proj2 = pt2.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
-                
-                ctx.beginPath();
-                ctx.moveTo(proj1.x, proj1.y);
-                ctx.lineTo(proj2.x, proj2.y);
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 4 * proj1.z;
-                ctx.stroke();
-                
-                const currentScanYWorld = -docHeight/2 + scanLineY * docHeight;
-                if (Math.abs(lineY - currentScanYWorld) < 8 && Math.random() < 0.15) {
-                    const symbol = isDiff ? (side === "left" ? "-" : "+") : (Math.random() < 0.5 ? "0" : "1");
-                    const pColor = isDiff ? (side === "left" ? "#ef4444" : "#10b981") : "#3b82f6";
-                    
-                    particles.push(new Particle(
-                        offsetX, lineY, 0,
-                        -offsetX, lineY, 0,
-                        symbol, pColor
-                    ));
-                }
-            }
-            
-            const scanYWorld = -docHeight/2 + scanLineY * docHeight;
-            const sp1 = new Point3D(-docWidth/2 - 10, scanYWorld, 0);
-            const sp2 = new Point3D(docWidth/2 + 10, scanYWorld, 0);
-            
-            let spt1 = sp1.rotateY(rotOffset); spt1.x += offsetX;
-            let spt2 = sp2.rotateY(rotOffset); spt2.x += offsetX;
-            
-            const sproj1 = spt1.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
-            const sproj2 = spt2.rotateX(rx).rotateY(ry).project(width, height, fov, viewerDistance);
-            
-            ctx.beginPath();
-            ctx.moveTo(sproj1.x, sproj1.y);
-            ctx.lineTo(sproj2.x, sproj2.y);
-            ctx.strokeStyle = "rgba(59, 130, 246, 0.7)";
-            ctx.shadowColor = "#3b82f6";
-            ctx.shadowBlur = 15;
-            ctx.lineWidth = 3 * sproj1.z;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-
-        function animate(t) {
-            ctx.clearRect(0, 0, width, height);
-            
-            currentRotX += (targetRotX - currentRotX) * 0.05;
-            currentRotY += (targetRotY - currentRotY) * 0.05;
-            
-            scanLineY += 0.0035 * scanDirection;
-            if (scanLineY >= 1 || scanLineY <= 0) {
-                scanDirection *= -1;
-            }
-            
-            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-            for (let i = 0; i < 50; i++) {
-                const seedX = (Math.sin(i * 123.45) + 1) * width / 2;
-                const seedY = (Math.cos(i * 456.78) + 1) * height / 2;
-                ctx.fillRect(seedX, seedY, 1.5, 1.5);
-            }
-            
-            drawDocSheet(-180, 15, currentRotX, currentRotY, "left");
-            drawDocSheet(180, -15, currentRotX, currentRotY, "right");
-            
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                const done = p.update();
-                if (done) {
-                    particles.splice(i, 1);
-                } else {
-                    p.draw(currentRotX, currentRotY);
-                }
-            }
-            
-            requestAnimationFrame(animate);
-        }
-        
-        requestAnimationFrame(animate);
-    </script>
-    <script>
-        if (localStorage.getItem('isAdmin') === 'true') {
-            const adminLink = document.getElementById('adminLink');
-            if (adminLink) adminLink.style.display = 'inline-block';
-        }
-    </script>
-    <script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
-    <script>
-        const lenis = new Lenis();
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
+        });
     </script>
 </body>
 </html>
