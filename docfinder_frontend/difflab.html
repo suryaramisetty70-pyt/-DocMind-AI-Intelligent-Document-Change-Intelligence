@@ -183,8 +183,42 @@
   @media(max-width:1024px){.fgrid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:560px){.fgrid{grid-template-columns:1fr}}
 
-  footer{position:relative;z-index:2;padding:50px 40px 36px;border-top:1px solid var(--line);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
-  footer b{color:var(--sky-2)}
+  /* social proof logo cloud */
+  .social-proof{text-align:center;padding:60px 40px 20px;z-index:2;position:relative}
+  .social-proof p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.25rem;margin-bottom:24px}
+  .logo-grid{display:flex;justify-content:center;align-items:center;gap:60px;flex-wrap:wrap;opacity:.65;font-weight:700;font-size:20px;letter-spacing:-0.03em;color:var(--ink-2)}
+
+  /* pricing section */
+  .pricing-sec{position:relative;z-index:2;padding:100px 40px;max-width:1280px;margin:0 auto}
+  .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:50px}
+  .price-card{position:relative;padding:36px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(245,250,255,.85));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;min-height:460px;backdrop-filter:blur(8px)}
+  .price-card.popular{border:2px solid var(--sky-2);box-shadow:0 30px 80px -15px rgba(58,160,255,.45)}
+  .price-card .badge{position:absolute;top:-12px;right:24px;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;padding:4px 12px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+  .plan-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:var(--ink);margin-bottom:8px}
+  .price{font-size:46px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:12px}
+  .price span{font-size:24px;vertical-align:top;margin-right:2px}
+  .desc{font-size:13.5px;color:var(--ink-2);line-height:1.5;margin-bottom:24px}
+  .features-list{list-style:none;display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--ink-2);text-align:left}
+  .features-list li{display:flex;align-items:center;gap:8px}
+  @media(max-width:900px){.price-grid{grid-template-columns:1fr}}
+
+  /* faq section */
+  .faq-sec{position:relative;z-index:2;padding:100px 40px;max-width:800px;margin:0 auto}
+  .faq-accordion{margin-top:50px;display:flex;flex-direction:column;gap:16px}
+  .faq-item{border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.65);backdrop-filter:blur(10px);overflow:hidden;transition:all .3s}
+  .faq-item[open]{background:#fff;box-shadow:var(--shadow)}
+  .faq-item summary{padding:20px 24px;font-weight:600;font-size:16px;color:var(--ink);cursor:pointer;user-select:none;outline:none;text-align:left}
+  .faq-content{padding:0 24px 24px;color:var(--ink-2);font-size:14px;line-height:1.6;text-align:left}
+
+  /* footer structure */
+  .footer-struct{position:relative;z-index:2;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.9));padding:80px 40px 40px;margin-top:100px}
+  .footer-grid{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:40px;max-width:1280px;margin:0 auto;text-align:left}
+  .footer-col h4{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.15em;color:var(--ink);margin-bottom:20px}
+  .footer-col a{display:block;font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:none;letter-spacing:0;transition:color .2s}
+  .footer-col a:hover{color:var(--sky-2)}
+  .footer-bottom{margin-top:60px;border-top:1px solid var(--line);padding-top:24px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+  .footer-bottom b{color:var(--sky-2)}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:30px}}
 
   /* HUD */
   .hud{position:fixed;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--muted);z-index:40;pointer-events:none}
@@ -384,6 +418,18 @@
   </div>
 </section>
 
+<!-- Social Proof / Logo Cloud -->
+<section class="social-proof">
+  <p>Trusted by industry leaders worldwide</p>
+  <div class="logo-grid">
+    <span>Stripe</span>
+    <span>Vercel</span>
+    <span>Linear</span>
+    <span>Retool</span>
+    <span>Figma</span>
+  </div>
+</section>
+
 <!-- Features section -->
 <section id="features" class="features">
   <div class="features-head">
@@ -434,8 +480,138 @@
   </div>
 </section>
 
-<footer>
-  DiffLab © 2026. Made with <b>WebGL</b>.
+<!-- Pricing Section -->
+<section id="pricing" class="pricing-sec">
+  <div class="features-head" style="text-align:center;justify-content:center;">
+    <h2 style="max-width:100%;">Pricing plans for <em>every team</em></h2>
+    <p style="margin: 12px auto 0; max-width:540px; color:var(--ink-2)">Get sub-second difference comparisons with secure storage and AI intelligence.</p>
+  </div>
+  <div class="price-grid">
+    <!-- Free Card -->
+    <div class="price-card">
+      <div>
+        <div class="plan-name">Free</div>
+        <div class="price"><span>$</span>0</div>
+        <div class="desc">Essential tools for individual builders.</div>
+        <ul class="features-list">
+          <li>✓ 10 comparisons / day</li>
+          <li>✓ Text & CSV checkers</li>
+          <li>✓ Standard side-by-side diff</li>
+          <li>✓ Local workspace folder</li>
+        </ul>
+      </div>
+      <a href="register.html" class="btn btn-s" style="margin-top:28px; justify-content:center;"><span>Get Started</span></a>
+    </div>
+    
+    <!-- Pro Card -->
+    <div class="price-card popular">
+      <div class="badge">Popular</div>
+      <div>
+        <div class="plan-name">Pro</div>
+        <div class="price"><span>$</span>19</div>
+        <div class="desc">Unlock full AI intelligence and unlimited documents.</div>
+        <ul class="features-list">
+          <li>✓ Unlimited PDF & Excel checks</li>
+          <li>✓ Advanced AI semantic analysis</li>
+          <li>✓ Real-time collaboration rooms</li>
+          <li>✓ 24/7 Priority support</li>
+        </ul>
+      </div>
+      <a href="register.html" class="btn btn-p" style="margin-top:28px; justify-content:center;"><span>Go Pro</span></a>
+    </div>
+
+    <!-- Enterprise Card -->
+    <div class="price-card">
+      <div>
+        <div class="plan-name">Enterprise</div>
+        <div class="price">Custom</div>
+        <div class="desc">Compliance, custom hosting, and team workspace controls.</div>
+        <ul class="features-list">
+          <li>✓ Unlimited custom folders</li>
+          <li>✓ Strict compliance auditing</li>
+          <li>✓ Custom API integration keys</li>
+          <li>✓ Single Sign-On (SSO)</li>
+        </ul>
+      </div>
+      <a href="register.html" class="btn btn-s" style="margin-top:28px; justify-content:center;"><span>Contact Sales</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-sec">
+  <div class="features-head" style="text-align:center;justify-content:center;">
+    <h2>Frequently Asked <em>Questions</em></h2>
+  </div>
+  <div class="faq-accordion">
+    <details class="faq-item" open>
+      <summary>What file formats does DiffLab support?</summary>
+      <div class="faq-content">
+        <p>DiffLab supports plain text files (.txt, .md, code files), PDF documents (.pdf), Excel spreadsheets (.xlsx, .xls), and CSV tables (.csv). All comparisons are fully optimized for their respective schemas.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>How secure is my data on DiffLab?</summary>
+      <div class="faq-content">
+        <p>Extremely secure. All uploads are fully encrypted using AES-256 both in transit and at rest. If you are using our local desktop node, your files never leave your computer, processing everything locally offline.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>How does the AI semantic compare work?</summary>
+      <div class="faq-content">
+        <p>Instead of just comparing text characters, our AI parses the meaning and context of the changes. For example, it detects if a clause was rephrased, if terms were shifted, or if elements in an image/PDF were visually rearranged.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>Can I collaborate with my team in real time?</summary>
+      <div class="faq-content">
+        <p>Yes. Our Live Collaboration rooms let you create workspace rooms and sync text checks in real-time, complete with a live similarity indicator and active participant counter.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- Structured Footer -->
+<footer class="footer-struct">
+  <div class="footer-grid">
+    <div class="footer-col brand-col">
+      <div class="logo" style="margin-bottom:12px">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" stroke="url(#g1)" stroke-width="1.5"/>
+            <path d="M16 4v24M4 16h24" stroke="#3aa0ff" stroke-width="1" stroke-dasharray="2 3"/>
+            <circle cx="16" cy="16" r="4" fill="url(#g1)"/>
+          </svg>
+        </div>
+        DiffLab
+      </div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted);text-transform:none;letter-spacing:0;text-align:left;">AI-powered change intelligence for modern legal and enterprise teams.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="collab.html">Live Collab</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="#">Documentation</a>
+      <a href="#">Guides</a>
+      <a href="#">API Status</a>
+      <a href="#">Support Center</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">GDPR DPA</a>
+      <a href="#">Security Audit</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    DiffLab © 2026. Made with <b>WebGL</b>. All rights reserved.
+  </div>
 </footer>
 
 <!-- Performance Panel HUD -->
