@@ -178,22 +178,13 @@
             <div class="page-head">
                 <div>
                     <h1>New comparison</h1>
-                    <p>Choose a format and upload your documents.</p>
+                    <p>Upload your documents to compare them side-by-side.</p>
                 </div>
             </div>
 
             <div class="mode-toggles">
                 <button class="mode-btn active" id="normalModeBtn" onclick="setMode('normal')">⚡ Normal Mode</button>
                 <button class="mode-btn" id="aiModeBtn" onclick="setMode('ai')">✨ AI Mode</button>
-            </div>
-            
-            <div class="type-tabs" id="tabs">
-                <button class="type-tab active" data-type="text">📝 Text</button>
-                <button class="type-tab" data-type="pdf">📄 PDF</button>
-                <button class="type-tab" data-type="excel">📊 Excel</button>
-                <button class="type-tab" data-type="csv">📈 CSV</button>
-                <button class="type-tab" data-type="image">🖼️ Image</button>
-                <button class="type-tab" data-type="folder">📂 Folder</button>
             </div>
             
             <div class="compare-grid">
@@ -203,19 +194,11 @@
                         <h3 style="font-weight:700">Source A</h3>
                         <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.7rem;font-weight:700">ORIGINAL</span>
                     </div>
-                    <textarea class="drop" id="text1" placeholder="Paste your original text here..."></textarea>
                     
-                    <div class="file-upload-overlay hidden" id="fileOverlay1" onclick="document.getElementById('file1').click()">
+                    <div class="file-upload-overlay" id="fileOverlay1" onclick="document.getElementById('file1').click()">
                         <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
                         <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
                         <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
-                        <div style="margin-top: 1rem; text-align: center;">
-                            <select id="versionSelect" style="padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); width: 80%; font-size: 0.85rem;" onchange="loadVersion()" onclick="event.stopPropagation()">
-                                <option value="">-- Or select past version --</option>
-                                <option value="v1">Version 1 (Initial Draft)</option>
-                                <option value="v2">Version 2 (Legal Review)</option>
-                            </select>
-                        </div>
                     </div>
                     <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
                     
@@ -231,12 +214,11 @@
                         <h3 style="font-weight:700">Source B</h3>
                         <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(236,72,153,.1);color:#ec4899;font-size:.7rem;font-weight:700">MODIFIED</span>
                     </div>
-                    <textarea class="drop" id="text2" placeholder="Paste your modified text here..."></textarea>
                     
-                    <div class="file-upload-overlay hidden" id="fileOverlay2" onclick="document.getElementById('file2').click()">
+                    <div class="file-upload-overlay" id="fileOverlay2" onclick="document.getElementById('file2').click()">
                         <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
                         <span style="font-weight:600;color:var(--text)">Click to upload Source B</span>
-                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF, Excel, CSV, Images</span>
+                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF, Word, Excel, CSV, Images</span>
                     </div>
                     <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
                     
@@ -248,10 +230,7 @@
             </div>
             
             <div class="action-bar animate-in delay-2">
-                <div class="opts" id="textOpts">
-                    <label><input type="checkbox" id="ignoreWs" checked> Ignore whitespace</label>
-                    <label><input type="checkbox" id="caseSens" checked> Case sensitive</label>
-                </div>
+                <div></div>
                 <button class="btn btn-primary" onclick="compareFiles()">⚡ Compare now</button>
             </div>
         </main>
@@ -266,13 +245,11 @@
     
     <script>
         const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
-        let currentType = 'text';
+        let currentType = 'auto';
         let currentMode = 'normal'; // 'normal' or 'ai'
         
         let selectedFile1 = null;
         let selectedFile2 = null;
-        let selectedFiles1 = [];
-        let selectedFiles2 = [];
 
         // Check auth (make optional)
         const token = localStorage.getItem('token');
@@ -293,150 +270,46 @@
             document.getElementById('aiModeBtn').className = `mode-btn ${mode === 'ai' ? 'active' : ''}`;
         }
 
-        // Tab logic
-        document.querySelectorAll('.type-tab').forEach(tab => {
-            tab.onclick = () => {
-                document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentType = tab.dataset.type;
-                updateUIForType();
-            };
-        });
-
-        function updateUIForType() {
-            const isText = currentType === 'text';
-            const isFolder = currentType === 'folder';
-            
-            // Toggle textareas vs file overlays
-            document.getElementById('text1').style.display = isText ? 'block' : 'none';
-            document.getElementById('text2').style.display = isText ? 'block' : 'none';
-            document.getElementById('textOpts').style.display = isText ? 'flex' : 'none';
-            
-            if (isText) {
-                document.getElementById('fileOverlay1').classList.add('hidden');
-                document.getElementById('fileOverlay2').classList.add('hidden');
-            } else {
-                document.getElementById('fileOverlay1').classList.remove('hidden');
-                document.getElementById('fileOverlay2').classList.remove('hidden');
-                
-                // Clear existing files
-                clearFile(1);
-                clearFile(2);
-                
-                let accepts = "";
-                if (currentType === 'pdf') accepts = ".pdf";
-                else if (currentType === 'excel') accepts = ".xlsx,.xls";
-                else if (currentType === 'csv') accepts = ".csv";
-                else if (currentType === 'image') accepts = "image/*";
-                else if (currentType === 'folder') accepts = "*";
-                
-                document.getElementById('file1').accept = accepts;
-                document.getElementById('file2').accept = accepts;
-                document.getElementById('file1').multiple = isFolder;
-                document.getElementById('file2').multiple = isFolder;
-                
-                if (isFolder) {
-                    document.getElementById('file1').setAttribute('webkitdirectory', '');
-                    document.getElementById('file2').setAttribute('webkitdirectory', '');
-                    document.getElementById('fileDesc2').textContent = `Upload Folder B files`;
-                } else {
-                    document.getElementById('file1').removeAttribute('webkitdirectory');
-                    document.getElementById('file2').removeAttribute('webkitdirectory');
-                    document.getElementById('fileDesc2').textContent = `Upload ${currentType.toUpperCase()} file`;
-                }
-            }
-        }
-
         function handleFile(input, n) {
             if (input.files && input.files[0]) {
-                if (currentType === 'folder') {
-                    const files = Array.from(input.files);
-                    if (n === 1) selectedFiles1 = files;
-                    if (n === 2) selectedFiles2 = files;
-                    
-                    document.getElementById(`fileOverlay${n}`).classList.add('hidden');
-                    document.getElementById(`file${n}Preview`).style.display = 'block';
-                    document.getElementById(`file${n}Name`).textContent = `${files.length} files selected in Folder ${n === 1 ? 'A' : 'B'}`;
-                } else {
-                    const file = input.files[0];
-                    if (n === 1) selectedFile1 = file;
-                    if (n === 2) selectedFile2 = file;
-                    
-                    document.getElementById(`fileOverlay${n}`).classList.add('hidden');
-                    document.getElementById(`file${n}Preview`).style.display = 'block';
-                    document.getElementById(`file${n}Name`).textContent = file.name;
-                }
+                const file = input.files[0];
+                if (n === 1) selectedFile1 = file;
+                if (n === 2) selectedFile2 = file;
+                
+                document.getElementById(`fileOverlay${n}`).classList.add('hidden');
+                document.getElementById(`file${n}Preview`).style.display = 'block';
+                document.getElementById(`file${n}Name`).textContent = file.name;
             }
         }
 
         function clearFile(n) {
             document.getElementById(`file${n}`).value = '';
             document.getElementById(`file${n}Preview`).style.display = 'none';
-            if (!document.getElementById(`text${n}`).style.display || document.getElementById(`text${n}`).style.display === 'none') {
-                 document.getElementById(`fileOverlay${n}`).classList.remove('hidden');
-            }
-            if (n === 1) { selectedFile1 = null; selectedFiles1 = []; }
-            if (n === 2) { selectedFile2 = null; selectedFiles2 = []; }
-        }
-        
-        // Version Tracking Logic
-        function loadVersion() {
-            const select = document.getElementById('versionSelect');
-            if(select.value) {
-                document.getElementById('text1').value = `This is the auto-loaded content of ${select.options[select.selectedIndex].text}.\n\nIt is acting as your Base Version.`;
-                showToast(`Loaded ${select.options[select.selectedIndex].text}`, 'success');
-            }
+            document.getElementById(`fileOverlay${n}`).classList.remove('hidden');
+            if (n === 1) { selectedFile1 = null; }
+            if (n === 2) { selectedFile2 = null; }
         }
         
         async function compareFiles() {
-            if (currentType === 'text') {
-                const text1 = document.getElementById('text1').value;
-                const text2 = document.getElementById('text2').value;
-                if (!text1 || !text2) return showToast('Please enter both texts', 'error');
-                
-                const formData = new FormData();
-                formData.append('text1', text1);
-                formData.append('text2', text2);
-                formData.append('level', 'word');
-                formData.append('to_lowercase', String(!document.getElementById('caseSens').checked));
-                formData.append('sort_lines', 'false');
-                formData.append('remove_extra_spaces', String(document.getElementById('ignoreWs').checked));
-                formData.append('use_ai', String(currentMode === 'ai'));
-                
-                await doFetch(`${API_URL}/api/compare/text`, formData);
-            } else if (currentType === 'folder') {
-                if (selectedFiles1.length === 0 || selectedFiles2.length === 0) {
-                    return showToast('Please upload files for both folders', 'error');
-                }
-                
-                const formData = new FormData();
-                selectedFiles1.forEach(file => {
-                    const path = file.webkitRelativePath || file.name;
-                    formData.append('files1', file, path);
-                });
-                selectedFiles2.forEach(file => {
-                    const path = file.webkitRelativePath || file.name;
-                    formData.append('files2', file, path);
-                });
-                formData.append('use_ai', String(currentMode === 'ai'));
-                
-                await doFetch(`${API_URL}/api/compare/folder`, formData);
-            } else {
-                if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
-                
-                const formData = new FormData();
-                formData.append('file1', selectedFile1);
-                formData.append('file2', selectedFile2);
-                formData.append('use_ai', String(currentMode === 'ai'));
-                
-                if (currentType === 'image') {
-                    const toBase64 = f => new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(f); });
-                    sessionStorage.setItem("imgSrc1", await toBase64(selectedFile1));
-                    sessionStorage.setItem("imgSrc2", await toBase64(selectedFile2));
-                }
-                
-                await doFetch(`${API_URL}/api/compare/${currentType}`, formData);
+            if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
+            
+            const formData = new FormData();
+            formData.append('file1', selectedFile1);
+            formData.append('file2', selectedFile2);
+            formData.append('use_ai', String(currentMode === 'ai'));
+            
+            // Check if both files are images to store in session preview
+            const ext1 = selectedFile1.name.split('.').pop().toLowerCase();
+            const ext2 = selectedFile2.name.split('.').pop().toLowerCase();
+            const isImg = ['png', 'jpg', 'jpeg', 'webp'].includes(ext1) && ['png', 'jpg', 'jpeg', 'webp'].includes(ext2);
+            
+            if (isImg) {
+                const toBase64 = f => new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(f); });
+                sessionStorage.setItem("imgSrc1", await toBase64(selectedFile1));
+                sessionStorage.setItem("imgSrc2", await toBase64(selectedFile2));
             }
+            
+            await doFetch(`${API_URL}/api/compare/auto`, formData);
         }
         
         async function doFetch(url, formData) {
@@ -460,9 +333,8 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    // Record mode so results page knows how to render
                     data.mode = currentMode;
-                    data.fileType = currentType;
+                    data.fileType = 'auto';
                     
                     localStorage.setItem('lastResult', JSON.stringify(data));
                     sessionStorage.setItem('diffResult', JSON.stringify(data));

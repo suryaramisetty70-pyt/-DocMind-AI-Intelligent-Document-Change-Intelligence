@@ -124,13 +124,8 @@ async def lifespan(app: FastAPI):
             res_web = await session.execute(select(Folder).where(Folder.name == "Web Services"))
             f_web = res_web.scalar_one()
             
-            default_apps = [
-                AppEntry(title="Docsy", url="/difflab.html", icon_emoji="📄", description="AI document semantic difference engine.", folder_id=f_ai.id),
-                AppEntry(title="Call Dialer", url="https://menmozhicallcampaign-1.onrender.com", icon_emoji="📞", description="Campaign dialer and call logs viewer.", folder_id=f_web.id)
-            ]
-            session.add_all(default_apps)
-            await session.commit()
-            print("Database seeded: Default portal folders and apps initialized.")
+            # No default apps seeded automatically - user will add them manually
+            pass
     
     yield
 
@@ -731,6 +726,64 @@ async def compare_image(
         await db.commit()
         await db.refresh(comparison)
 
+        report["comparison_id"] = comparison.id
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/compare/auto")
+async def compare_auto(
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...),
+    use_ai: str = Form("false"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    uid = current_user.id if current_user else 0
+    filename1 = file1.filename or "SourceA"
+    filename2 = file2.filename or "SourceB"
+    
+    ext1 = os.path.splitext(filename1)[1].lower()
+    ext2 = os.path.splitext(filename2)[1].lower()
+    
+    # Check if both are images
+    is_img1 = ext1 in [".png", ".jpg", ".jpeg", ".webp"]
+    is_img2 = ext2 in [".png", ".jpg", ".jpeg", ".webp"]
+    
+    if is_img1 and is_img2:
+        return await compare_image(file1, file2, use_ai, current_user, db)
+        
+    t1_path = await save_uploaded_file(file1, "auto", db, uid)
+    t2_path = await save_uploaded_file(file2, "auto", db, uid)
+    
+    try:
+        text1 = await extract_file_text(file1)
+        text2 = await extract_file_text(file2)
+        
+        report = compute_diff_report(text1, text2)
+        
+        display_type = ext1.replace(".", "").upper() if ext1 else "TXT"
+        report["file_type"] = display_type
+        report["type"] = display_type
+        
+        if use_ai.lower() == "true":
+            report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
+            
+        comparison = Comparison(
+            user_id=uid,
+            file1_name=filename1,
+            file2_name=filename2,
+            file1_type=display_type,
+            file2_type=display_type,
+            comparison_type="auto",
+            similarity_score=report["stats"]["similarity_percent"],
+            status="completed",
+            results=report
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+        
         report["comparison_id"] = comparison.id
         return report
     except Exception as e:
