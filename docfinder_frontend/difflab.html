@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DocDiffFinder-AI — See every change. Instantly.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#eaf3ff; --bg-2:#f7fbff;
+    --ink:#0b1a2b; --ink-2:#33506e; --muted:#6f8aa6;
+    --line:rgba(11,26,43,.08);
+    --sky:#7cc6ff; --sky-2:#3aa0ff; --indigo:#5a78ff;
+    --mint:#19c39a; --rose:#ff5d7a;
+    --shadow:0 30px 80px -30px rgba(35,80,150,.35),0 10px 30px -10px rgba(35,80,150,.18);
+  }
+  html,body{
+    background:
+      radial-gradient(1200px 700px at 80% -10%,#d2eaff 0%,transparent 60%),
+      radial-gradient(900px 700px at -10% 30%,#e6e9ff 0%,transparent 60%),
+      linear-gradient(180deg,var(--bg-2),var(--bg));
+    color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;
+    overflow-x:hidden;min-height:100vh;
+  }
+  ::selection{background:var(--sky-2);color:#fff}
+  a{color:inherit;text-decoration:none}
+  body{cursor:none}
+  body.q-low{cursor:auto}
+  body.q-low .cur,body.q-low .cur-ring,body.q-low .cur-glow{display:none}
+
+  /* cursor */
+  .cur,.cur-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;border-radius:50%;will-change:transform;contain:layout style paint}
+  .cur{width:8px;height:8px;background:var(--ink);transform:translate3d(-50%,-50%,0)}
+  .cur-ring{width:38px;height:38px;border:1.5px solid rgba(58,160,255,.55);transform:translate3d(-50%,-50%,0);transition:width .22s,height .22s,border-color .22s}
+  .cur-ring.hot{width:64px;height:64px;border-color:var(--sky-2);background:rgba(58,160,255,.08)}
+  .cur-glow{position:fixed;top:0;left:0;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:1;transform:translate3d(-50%,-50%,0);background:radial-gradient(circle,rgba(124,198,255,.35),rgba(90,120,255,.12) 45%,transparent 70%);filter:blur(40px);will-change:transform;contain:layout style paint}
+
+  /* bg */
+  .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .grid{position:absolute;inset:-20%;
+    background:
+      linear-gradient(rgba(58,160,255,.08) 1px,transparent 1px) 0 0/72px 72px,
+      linear-gradient(90deg,rgba(58,160,255,.08) 1px,transparent 1px) 0 0/72px 72px;
+    transform:perspective(1100px) rotateX(60deg) translateZ(-120px);
+    transform-origin:50% 30%;
+    mask-image:radial-gradient(ellipse at 50% 35%,#000 30%,transparent 75%);
+    animation:gridDrift 26s linear infinite;will-change:background-position;
+  }
+  @keyframes gridDrift{from{background-position:0 0,0 0}to{background-position:0 72px,72px 0}}
+  .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.7;will-change:transform;contain:layout style paint}
+  .o1{width:560px;height:560px;background:radial-gradient(circle,#9ed3ff,#7cc6ff 50%,transparent 70%);top:-10%;left:-8%}
+  .o2{width:520px;height:520px;background:radial-gradient(circle,#c8d0ff,#8b9bff 50%,transparent 70%);bottom:-10%;right:-8%}
+  .o3{width:420px;height:420px;background:radial-gradient(circle,#ffd9e3,#ffaec0 50%,transparent 70%);top:50%;left:55%;opacity:.45}
+  body.q-low .orb{filter:blur(50px);opacity:.5}
+  body.reduced .grid,body.reduced .orb{animation:none}
+
+  /* nav */
+  nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:18px 36px;backdrop-filter:saturate(160%) blur(18px);background:linear-gradient(180deg,rgba(247,251,255,.8),rgba(247,251,255,.35));border-bottom:1px solid var(--line)}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:17px}
+  .logo-mark{width:30px;height:30px}
+  .logo-mark svg{width:100%;height:100%;animation:spin 14s linear infinite}
+  body.reduced .logo-mark svg{animation:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .navlinks{display:flex;gap:30px;font-size:13px;color:var(--ink-2);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em}
+  .navlinks a{position:relative;padding:6px 0}
+  .navlinks a:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1.5px;background:var(--sky-2);transform:scaleX(0);transform-origin:right;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .navlinks a:hover:after{transform:scaleX(1);transform-origin:left}
+  .nav-cta{padding:10px 18px;border-radius:999px;font-size:12px;font-family:'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;box-shadow:0 8px 24px -8px rgba(58,160,255,.6);transition:transform .25s}
+  .nav-cta:hover{transform:translateY(-2px)}
+
+  /* hero */
+  .hero{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:110px 40px 40px;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:10px;padding:7px 14px;border:1px solid rgba(58,160,255,.3);border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--sky-2);background:rgba(255,255,255,.65);backdrop-filter:blur(8px);margin-bottom:28px;animation:pillIn .9s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes pillIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--sky-2);box-shadow:0 0 12px var(--sky-2);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  body.reduced .pill .dot{animation:none}
+
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(46px,8vw,124px);line-height:.93;letter-spacing:-.045em;max-width:1100px;perspective:1200px;color:var(--ink)}
+  h1 .word{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .06em}
+  h1 .char{display:inline-block;transform:translate3d(0,110%,0) rotateX(-90deg);transform-origin:50% 100%;animation:charIn .85s cubic-bezier(.2,.85,.25,1) both}
+  body.reduced h1 .char{transform:none;animation:none}
+  @keyframes charIn{to{transform:translate3d(0,0,0) rotateX(0)}}
+  h1 .ital{font-family:'Instrument Serif',serif;font-weight:400;font-style:italic;background:linear-gradient(120deg,var(--sky-2),var(--indigo) 50%,#a78bff);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 200%;animation:gradShift 8s ease-in-out infinite}
+  body.reduced h1 .ital{animation:none}
+  @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  .sub{margin-top:26px;max-width:640px;font-size:18px;line-height:1.55;color:var(--ink-2);font-weight:400;animation:fade 1.1s .4s both}
+  @keyframes fade{from{opacity:0;transform:translate3d(0,12px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+  .sub b{color:var(--ink);font-weight:500}
+  .ctas{display:flex;gap:14px;margin-top:36px;animation:fade 1.1s .6s both}
+  .btn{position:relative;padding:15px 28px;border-radius:999px;font-weight:500;font-size:14px;letter-spacing:.02em;cursor:none;overflow:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+  body.q-low .btn{cursor:auto}
+  .btn-p{background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;box-shadow:0 14px 40px -10px rgba(58,160,255,.6)}
+  .btn-p:hover{transform:translateY(-3px);box-shadow:0 22px 50px -10px rgba(58,160,255,.7)}
+  .btn-p span{position:relative;z-index:1;display:inline-flex;align-items:center;gap:10px}
+  .btn-s{background:rgba(255,255,255,.7);color:var(--ink);border:1px solid var(--line);backdrop-filter:blur(10px)}
+  .btn-s:hover{background:#fff;border-color:rgba(58,160,255,.5)}
+  .btn-s span{display:inline-flex;align-items:center;gap:10px}
+  .play{width:18px;height:18px;border-radius:50%;background:var(--sky-2);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px}
+
+  /* stage */
+  .stage{position:relative;width:min(1200px,94vw);height:clamp(360px,46vh,500px);margin-top:50px;perspective:1800px;perspective-origin:50% 50%;animation:fade 1.3s .8s both;contain:layout paint}
+  .stage-inner{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+  .doc{position:absolute;top:50%;width:340px;height:440px;border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(245,250,255,.85));border:1px solid rgba(255,255,255,.8);box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.6);padding:28px;transform-style:preserve-3d;backdrop-filter:blur(8px);will-change:transform}
+  .doc-a{left:8%;transform:translate3d(0,-50%,0) rotateY(22deg) rotateX(2deg);animation:floatA 8s ease-in-out infinite}
+  .doc-b{right:8%;transform:translate3d(0,-50%,0) rotateY(-22deg) rotateX(2deg);animation:floatB 9s ease-in-out infinite}
+  body.reduced .doc-a,body.reduced .doc-b{animation:none}
+  @keyframes floatA{0%,100%{transform:translate3d(0,-50%,0) rotateY(22deg) rotateX(2deg)}50%{transform:translate3d(0,-54%,20px) rotateY(20deg) rotateX(4deg)}}
+  @keyframes floatB{0%,100%{transform:translate3d(0,-50%,0) rotateY(-22deg) rotateX(2deg)}50%{transform:translate3d(0,-46%,20px) rotateY(-20deg) rotateX(0deg)}}
+  .doc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+  .doc-dots{display:flex;gap:5px}
+  .doc-dots i{width:8px;height:8px;border-radius:50%;background:rgba(11,26,43,.08)}
+  .doc-line{height:9px;border-radius:3px;margin-bottom:11px;background:rgba(11,26,43,.06);position:relative;overflow:hidden;contain:layout paint}
+  .doc-line.short{width:65%}.doc-line.mid{width:85%}
+  .doc-line.add{background:linear-gradient(90deg,rgba(25,195,154,.22),rgba(25,195,154,.1));border:1px solid rgba(25,195,154,.5)}
+  .doc-line.add:after{content:"+";position:absolute;left:-14px;top:-3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mint);font-weight:700}
+  .doc-line.del{background:linear-gradient(90deg,rgba(255,93,122,.2),rgba(255,93,122,.08));border:1px solid rgba(255,93,122,.5)}
+  .doc-line.del:after{content:"−";position:absolute;left:-14px;top:-3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--rose);font-weight:700}
+  .doc-line.mod{background:linear-gradient(90deg,rgba(58,160,255,.22),rgba(90,120,255,.1));border:1px solid rgba(58,160,255,.4)}
+  .doc-line .shimmer{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:translate3d(-100%,0,0);animation:shimmer 2.4s linear infinite;will-change:transform}
+  body.q-low .doc-line .shimmer,body.reduced .doc-line .shimmer{display:none}
+  @keyframes shimmer{to{transform:translate3d(200%,0,0)}}
+
+  .doc-badge{position:absolute;top:-14px;right:-14px;padding:6px 12px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;backdrop-filter:blur(10px);transform:translateZ(40px)}
+  .doc-a .doc-badge{background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--muted)}
+  .doc-b .doc-badge{background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;box-shadow:0 8px 24px -6px rgba(58,160,255,.6)}
+
+  .engine{position:absolute;top:50%;left:50%;transform:translate3d(-50%,-50%,0);width:180px;height:180px;display:flex;align-items:center;justify-content:center;z-index:5}
+  .engine .ring{position:absolute;border-radius:50%;border:1.5px solid rgba(58,160,255,.4)}
+  .r1{width:100%;height:100%;animation:spin 12s linear infinite}
+  .r2{width:78%;height:78%;border-color:rgba(90,120,255,.45);animation:spin 8s linear infinite reverse;border-style:dashed}
+  .r3{width:56%;height:56%;border-color:rgba(255,93,122,.4);animation:spin 6s linear infinite}
+  body.reduced .ring{animation:none}
+  .core{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#7cc6ff 40%,#5a78ff);box-shadow:0 0 60px rgba(124,198,255,.7),0 0 110px rgba(90,120,255,.45);animation:corePulse 2.4s ease-in-out infinite;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.1em}
+  body.reduced .core{animation:none}
+  @keyframes corePulse{50%{transform:scale(1.08)}}
+  .engine .tick{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--sky-2);box-shadow:0 0 12px var(--sky-2);animation:orbit 4s linear infinite}
+  .engine .tick:nth-child(5){animation-delay:-1s;background:var(--indigo);box-shadow:0 0 12px var(--indigo)}
+  .engine .tick:nth-child(6){animation-delay:-2s;background:var(--rose);box-shadow:0 0 12px var(--rose)}
+  .engine .tick:nth-child(7){animation-delay:-3s;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+  body.reduced .tick{display:none}
+  @keyframes orbit{from{transform:rotate(0) translate3d(86px,0,0) rotate(0)}to{transform:rotate(360deg) translate3d(86px,0,0) rotate(-360deg)}}
+
+  .threads{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .threads path{fill:none;stroke-width:1.5;stroke-linecap:round;filter:drop-shadow(0 0 4px currentColor)}
+  .t-add{stroke:var(--mint);stroke-dasharray:4 6;animation:march 1.6s linear infinite}
+  .t-del{stroke:var(--rose);stroke-dasharray:4 6;animation:march 1.6s linear infinite reverse}
+  .t-mod{stroke:var(--sky-2);stroke-dasharray:2 8;animation:march 2.2s linear infinite}
+  body.reduced .threads path{animation:none}
+  @keyframes march{to{stroke-dashoffset:-100}}
+
+  #gl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border-radius:24px;opacity:.85}
+
+  /* marquee */
+  .marquee{position:relative;z-index:2;margin-top:90px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.3));backdrop-filter:blur(10px)}
+  .marquee-track{display:flex;gap:60px;padding:22px 0;white-space:nowrap;animation:marq 30s linear infinite;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);will-change:transform}
+  body.reduced .marquee-track{animation:none}
+  .marquee-track span{display:inline-flex;align-items:center;gap:60px}
+  .marquee-track b{color:var(--sky-2);font-weight:500}
+  .marquee-track i{display:inline-block;width:6px;height:6px;background:rgba(11,26,43,.15);border-radius:50%}
+  @keyframes marq{to{transform:translate3d(-50%,0,0)}}
+
+  /* features */
+  .features{position:relative;z-index:2;padding:120px 40px;max-width:1280px;margin:0 auto}
+  .features-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:50px;gap:50px;flex-wrap:wrap}
+  .features-head h2{font-size:clamp(36px,5vw,72px);line-height:1;letter-spacing:-.03em;font-weight:600;max-width:680px}
+  .features-head h2 em{font-family:'Instrument Serif',serif;font-weight:400;font-style:italic;background:linear-gradient(120deg,var(--sky-2),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .features-head p{max-width:380px;color:var(--ink-2);line-height:1.55}
+  .fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{position:relative;padding:28px;border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(247,251,255,.7));border:1px solid rgba(255,255,255,.9);box-shadow:0 20px 50px -25px rgba(35,80,150,.25);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;min-height:280px;display:flex;flex-direction:column;justify-content:space-between;backdrop-filter:blur(8px)}
+  .card:hover{transform:translate3d(0,-6px,0);box-shadow:0 30px 70px -20px rgba(58,160,255,.35)}
+  .card .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.2em}
+  .card h3{font-size:22px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin-top:12px;color:var(--ink)}
+  .card p{margin-top:10px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+  .card .ic{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,rgba(124,198,255,.25),rgba(90,120,255,.15));border:1px solid rgba(58,160,255,.25);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;overflow:hidden}
+  .card .ic svg{width:22px;height:22px;color:var(--sky-2)}
+  .card .ic:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.8),transparent);transform:translate3d(-100%,0,0);transition:transform .8s}
+  .card:hover .ic:after{transform:translate3d(100%,0,0)}
+  @media(max-width:1024px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.fgrid{grid-template-columns:1fr}}
+
+  footer{position:relative;z-index:2;padding:50px 40px 36px;border-top:1px solid var(--line);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  footer b{color:var(--sky-2)}
+
+  /* HUD */
+  .hud{position:fixed;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--muted);z-index:40;pointer-events:none}
+  .hud.tl{top:84px;left:36px}
+  .hud.tr{top:84px;right:36px;text-align:right}
+  .hud.bl{bottom:24px;left:36px}
+  .hud b{color:var(--sky-2);font-weight:600}
+
+  /* perf HUD */
+  #perfChip{position:fixed;bottom:22px;right:24px;z-index:60;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border:1px solid var(--line);padding:8px 12px;border-radius:999px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 10px 30px -10px rgba(35,80,150,.25);user-select:none;transition:transform .2s}
+  #perfChip:hover{transform:translateY(-2px)}
+  #perfChip .pdot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint)}
+  #perfChip.warn .pdot{background:#ffb547;box-shadow:0 0 8px #ffb547}
+  #perfChip.bad .pdot{background:var(--rose);box-shadow:0 0 8px var(--rose)}
+  #perfChip kbd{font-size:9px;padding:2px 5px;border-radius:4px;background:rgba(11,26,43,.08);color:var(--ink-2);margin-left:4px}
+  #perfPanel{position:fixed;bottom:64px;right:24px;z-index:60;width:240px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:14px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2);box-shadow:0 30px 60px -20px rgba(35,80,150,.35);display:none;transform-origin:bottom right;animation:popIn .25s cubic-bezier(.2,.8,.2,1)}
+  #perfPanel.show{display:block}
+  @keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+  #perfPanel h4{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  #perfPanel h4 .tag{padding:2px 7px;border-radius:999px;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;font-weight:600;letter-spacing:.1em}
+  #perfPanel .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed rgba(11,26,43,.07)}
+  #perfPanel .row:last-of-type{border-bottom:none}
+  #perfPanel .row span:last-child{color:var(--ink);font-weight:600}
+  #perfPanel .bar{height:6px;border-radius:3px;background:rgba(11,26,43,.08);overflow:hidden;margin:8px 0 4px}
+  #perfPanel .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--sky-2));transition:width .15s,background .25s;border-radius:3px}
+  #perfPanel.warn .bar i{background:linear-gradient(90deg,var(--sky-2),#ffb547)}
+  #perfPanel.bad .bar i{background:linear-gradient(90deg,#ffb547,var(--rose))}
+  #perfPanel .legend{font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:6px}
+  #perfPanel .qrow{display:flex;gap:4px;margin-top:10px}
+  #perfPanel .qrow button{flex:1;font:inherit;font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:6px 0;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--ink-2);border-radius:6px;cursor:pointer;transition:all .2s}
+  #perfPanel .qrow button.active{background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;border-color:transparent}
+  #perfPanel .toggle{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(11,26,43,.07);font-size:10px}
+  #perfPanel .toggle label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  #perfPanel .toggle input{accent-color:var(--sky-2)}
+
+  @media(max-width:768px){
+    body{cursor:auto}.cur,.cur-ring,.cur-glow{display:none}
+    .stage{height:420px}.doc{width:240px;height:340px;padding:18px}
+    .hud{display:none}nav{padding:16px 18px}.navlinks{display:none}
+    .hero{padding:120px 20px 60px}.features{padding:80px 20px}
+    #perfChip{bottom:14px;right:14px}#perfPanel{right:14px;bottom:56px;width:220px}
+    .modal-card{width:96vw!important;height:88vh!important}
+    .diff-body{grid-template-columns:1fr!important}
+  }
+
+  /* ===== Modal (real working diff) ===== */
+  .modal-back{position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse at 50% 30%,rgba(58,160,255,.25),rgba(11,26,43,.55) 60%);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .35s ease}
+  .modal-back.on{display:flex;opacity:1}
+  .modal-card{width:min(1100px,94vw);height:min(720px,88vh);background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(247,251,255,.92));border:1px solid rgba(255,255,255,.9);border-radius:24px;box-shadow:0 60px 140px -30px rgba(35,80,150,.55),0 0 0 1px rgba(58,160,255,.15);overflow:hidden;display:flex;flex-direction:column;transform:translateY(30px) scale(.94) rotateX(8deg);opacity:0;transition:transform .55s cubic-bezier(.2,.85,.25,1),opacity .35s;transform-origin:50% 100%}
+  .modal-back.on .modal-card{transform:translateY(0) scale(1) rotateX(0);opacity:1}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(247,251,255,.6))}
+  .modal-title{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:-.01em}
+  .modal-title .live{width:9px;height:9px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint);animation:pulse 1.4s infinite}
+  .modal-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.8);cursor:pointer;font-size:18px;color:var(--ink-2);display:flex;align-items:center;justify-content:center;transition:all .25s}
+  .modal-close:hover{transform:rotate(90deg);background:var(--rose);color:#fff;border-color:transparent}
+  .diff-body{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);min-height:0}
+  .diff-pane{display:flex;flex-direction:column;background:rgba(255,255,255,.85);min-height:0}
+  .diff-pane h5{padding:12px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .diff-pane h5 b{color:var(--sky-2);font-weight:600}
+  .diff-pane textarea{flex:1;border:0;outline:0;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.55;color:var(--ink);background:transparent;resize:none}
+  .diff-out{padding:0;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6}
+  .diff-row{display:flex;padding:2px 18px;border-left:3px solid transparent;animation:rowIn .35s cubic-bezier(.2,.85,.25,1) both;white-space:pre-wrap;word-break:break-word}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+  .diff-row .n{flex:0 0 34px;color:var(--muted);font-size:11px;user-select:none;padding-top:1px}
+  .diff-row .s{flex:0 0 18px;font-weight:700;padding-top:1px}
+  .diff-row .c{flex:1;min-width:0}
+  .diff-row.eq{color:var(--ink-2)}
+  .diff-row.add{background:rgba(25,195,154,.1);border-left-color:var(--mint)}
+  .diff-row.add .s{color:var(--mint)}
+  .diff-row.del{background:rgba(255,93,122,.1);border-left-color:var(--rose)}
+  .diff-row.del .s{color:var(--rose)}
+  .modal-foot{display:flex;gap:16px;padding:14px 24px;border-top:1px solid var(--line);background:rgba(247,251,255,.7);align-items:center;flex-wrap:wrap}
+  .modal-foot .stat{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .modal-foot .stat b{font-size:14px;letter-spacing:0}
+  .stat.add b{color:var(--mint)} .stat.del b{color:var(--rose)} .stat.eq b{color:var(--sky-2)}
+  .modal-foot .grow{flex:1}
+  .mini-btn{padding:9px 16px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.8);color:var(--ink-2);transition:all .25s}
+  .mini-btn:hover{border-color:var(--sky-2);color:var(--sky-2)}
+  .mini-btn.primary{background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;border-color:transparent;box-shadow:0 8px 24px -8px rgba(58,160,255,.6)}
+  .mini-btn.primary:hover{transform:translateY(-2px);color:#fff}
+
+  /* How it works panel */
+  .how-card{width:min(640px,92vw);padding:34px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(247,251,255,.92));border:1px solid rgba(255,255,255,.9);box-shadow:0 60px 140px -30px rgba(35,80,150,.55);transform:scale(.9) rotateY(-12deg);opacity:0;transition:transform .5s cubic-bezier(.2,.85,.25,1),opacity .35s}
+  .modal-back.on .how-card{transform:scale(1) rotateY(0);opacity:1}
+  .how-card h3{font-size:32px;letter-spacing:-.03em;font-weight:600;margin-bottom:8px}
+  .how-card h3 em{font-family:'Instrument Serif',serif;font-style:italic;background:linear-gradient(120deg,var(--sky-2),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .how-card > p{color:var(--ink-2);margin-bottom:22px;line-height:1.55}
+  .how-step{display:flex;gap:16px;padding:14px 0;border-top:1px dashed rgba(11,26,43,.08);opacity:0;transform:translateX(-14px);animation:stepIn .5s cubic-bezier(.2,.85,.25,1) forwards}
+  .modal-back:not(.on) .how-step{animation:none;opacity:0}
+  @keyframes stepIn{to{opacity:1;transform:translateX(0)}}
+  .how-step .num{flex:0 0 38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 8px 20px -6px rgba(58,160,255,.6)}
+  .how-step h4{font-size:15px;font-weight:600;margin-bottom:3px}
+  .how-step p{font-size:13px;color:var(--ink-2);line-height:1.5}
+
+</style>
+</head>
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-ring" id="curRing"></div>
+<div class="cur-glow" id="curGlow"></div>
+
+<div class="bg">
+  <div class="orb o1" id="o1"></div>
+  <div class="orb o2" id="o2"></div>
+  <div class="orb o3" id="o3"></div>
+  <div class="grid"></div>
+</div>
+
+<div class="hud tl">SYS / DiffLab<br><b>v2.0</b> · ENGINE ONLINE</div>
+<div class="hud tr">LATENCY · <b>12ms</b><br>NODES · GLOBAL-01</div>
+<div class="hud bl">SCAN · <b id="scanCount">000142</b><br>DIFFS / SECOND</div>
+
+<nav>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="url(#g1)" stroke-width="1.5"/>
+        <path d="M16 4v24M4 16h24" stroke="#3aa0ff" stroke-width="1" stroke-dasharray="2 3"/>
+        <circle cx="16" cy="16" r="4" fill="url(#g1)"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#3aa0ff"/><stop offset="1" stop-color="#5a78ff"/></linearGradient></defs>
+      </svg>
+    </div>
+    DiffLab
+  </div>
+  <div class="navlinks">
+    <a href="#features">Features</a>
+    <a href="dashboard.html">User Dashboard</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#enterprise">Enterprise</a>
+    <a href="#desktop">Desktop</a>
+    <a href="#legal">Legal</a>
+  </div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <a href="login.html" style="font-size:13px;color:var(--ink-2);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Sign in</a>
+    <a class="nav-cta" href="register.html">Get started →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="pill"><span class="dot"></span>✨ AI-Powered · v2.0</div>
+
+  <h1 id="head">
+    <span class="word"><span class="char">C</span><span class="char">o</span><span class="char">m</span><span class="char">p</span><span class="char">a</span><span class="char">r</span><span class="char">e</span></span>
+    <span class="word"><span class="char">a</span><span class="char">n</span><span class="char">y</span><span class="char">t</span><span class="char">h</span><span class="char">i</span><span class="char">n</span><span class="char">g</span><span class="char">.</span></span><br>
+    <span class="word ital"><span class="char">S</span><span class="char">e</span><span class="char">e</span></span>
+    <span class="word ital"><span class="char">e</span><span class="char">v</span><span class="char">e</span><span class="char">r</span><span class="char">y</span></span>
+    <span class="word ital"><span class="char">c</span><span class="char">h</span><span class="char">a</span><span class="char">n</span><span class="char">g</span><span class="char">e</span><span class="char">.</span></span>
+  </h1>
+
+  <p class="sub">DiffLab analyzes <b>text, PDFs, spreadsheets and CSVs</b> side-by-side — surfacing every addition, deletion, and modification with <b>AI-grade clarity</b>.</p>
+
+  <div class="ctas">
+    <button class="btn btn-p" id="ctaStart"><span>Start comparing free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span></button>
+    <button class="btn btn-s" id="ctaHow"><span><span class="play">▶</span> See how it works</span></button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="stage-inner" id="stageInner">
+
+      <canvas id="gl"></canvas>
+
+      <svg class="threads" viewBox="0 0 1200 520" preserveAspectRatio="none">
+        <path class="t-add" d="M 290 140 C 480 140, 720 200, 910 200"/>
+        <path class="t-mod" d="M 290 210 C 480 210, 720 270, 910 270"/>
+        <path class="t-del" d="M 290 280 C 480 280, 720 220, 910 220"/>
+        <path class="t-add" d="M 290 350 C 480 350, 720 340, 910 340"/>
+        <path class="t-mod" d="M 290 410 C 480 410, 720 400, 910 400"/>
+      </svg>
+
+      <div class="doc doc-a">
+        <div class="doc-badge">Original</div>
+        <div class="doc-head"><span>contract.v1.pdf</span><div class="doc-dots"><i></i><i></i><i></i></div></div>
+        <div class="doc-line mid"></div><div class="doc-line"></div><div class="doc-line short"></div>
+        <div class="doc-line del"><div class="shimmer"></div></div>
+        <div class="doc-line mid"></div><div class="doc-line"></div><div class="doc-line short"></div>
+        <div class="doc-line mid"></div><div class="doc-line"></div>
+      </div>
+
+      <div class="doc doc-b">
+        <div class="doc-badge">+ 28 diffs</div>
+        <div class="doc-head"><span>contract.v2.pdf</span><div class="doc-dots"><i></i><i></i><i></i></div></div>
+        <div class="doc-line mid"></div><div class="doc-line"></div><div class="doc-line short"></div>
+        <div class="doc-line add"><div class="shimmer"></div></div>
+        <div class="doc-line mod"><div class="shimmer"></div></div>
+        <div class="doc-line"></div>
+        <div class="doc-line add"><div class="shimmer"></div></div>
+        <div class="doc-line short"></div><div class="doc-line"></div>
+      </div>
+
+      <div class="engine">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="core">DIFF</div>
+        <span class="tick"></span><span class="tick"></span><span class="tick"></span><span class="tick"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features section -->
+<section id="features" class="features">
+  <div class="features-head">
+    <h2>Built for every format, designed for <em>absolute clarity</em></h2>
+    <p>Surfacing changes in contracts, text files, and spreadsheets in seconds.</p>
+  </div>
+  <div class="fgrid">
+    <div class="card">
+      <div>
+        <div class="num">01</div>
+        <h3>Text Compare</h3>
+        <p>Diff raw text line-by-line with sub-character accuracy.</p>
+      </div>
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+      </div>
+    </div>
+    <div class="card">
+      <div>
+        <div class="num">02</div>
+        <h3>PDF Documents</h3>
+        <p>Automated visual and text extraction for complex PDF comparisons.</p>
+      </div>
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+      </div>
+    </div>
+    <div class="card">
+      <div>
+        <div class="num">03</div>
+        <h3>Excel Sheets</h3>
+        <p>Cell-by-cell spreadsheet audits across workbook tabs.</p>
+      </div>
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM21 9H3M21 15H3M12 3v18"/></svg>
+      </div>
+    </div>
+    <div class="card">
+      <div>
+        <div class="num">04</div>
+        <h3>CSV Tables</h3>
+        <p>Schema-aware row matching and structure audits for tabular data.</p>
+      </div>
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  DiffLab © 2026. Made with <b>WebGL</b>.
+</footer>
+
+<!-- Performance Panel HUD -->
+<div id="perfChip">
+  <span class="pdot"></span>
+  <span><b id="chipFps">60</b> FPS</span>
+  <kbd>P</kbd>
+</div>
+
+<div id="perfPanel">
+  <h4>PERFORMANCE <span class="tag" id="qTag">HIGH</span></h4>
+  <div class="row"><span>FPS (avg 1s)</span><span id="pFps">—</span></div>
+  <div class="row"><span>Frame time</span><span id="pFt">— ms</span></div>
+  <div class="row"><span>Budget (16.67ms)</span><span id="pBudget">— %</span></div>
+  <div class="bar"><i id="pBar"></i></div>
+  <div class="legend">animation budget · target ≤ 16.67ms / frame</div>
+  <div class="row" style="margin-top:8px"><span>DPR · particles</span><span><span id="pDpr">1</span>× · <span id="pCount">0</span></span></div>
+  <div class="row"><span>Mode</span><span id="pMode">auto</span></div>
+  <div class="qrow">
+    <button data-q="auto" class="active">AUTO</button>
+    <button data-q="high">HIGH</button>
+    <button data-q="med">MED</button>
+    <button data-q="low">LOW</button>
+  </div>
+  <div class="toggle">
+    <label><input type="checkbox" id="rmToggle"> Reduce motion</label>
+    <span style="color:var(--muted)">press <kbd>P</kbd> to close</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const sysReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobile = matchMedia('(max-width: 768px)').matches;
+
+  // ---------- Pointer ----------
+  const ptr = { x: innerWidth/2, y: innerHeight/2 };
+  addEventListener('pointermove', e => { ptr.x = e.clientX; ptr.y = e.clientY; }, { passive:true });
+
+  // ---------- Quality controller ----------
+  const TIERS = {
+    high: { dpr:Math.min(devicePixelRatio||1,2), particles:mobile?40:90, shaderIters:5, shimmer:true, parallax:true },
+    med:  { dpr:1.25, particles:mobile?20:50, shaderIters:4, shimmer:true,  parallax:true },
+    low:  { dpr:1,    particles:0,            shaderIters:3, shimmer:false, parallax:false },
+  };
+  let mode = 'auto';
+  let tier = mobile ? 'med' : 'high';
+  let reducedUser = false;
+  const reduced = () => sysReduced || reducedUser;
+
+  const qTag = document.getElementById('qTag');
+  const pDpr = document.getElementById('pDpr');
+  const pCount = document.getElementById('pCount');
+  const pMode = document.getElementById('pMode');
+
+  function applyTier() {
+    const t = TIERS[tier];
+    document.body.classList.toggle('q-low', tier === 'low');
+    document.body.classList.toggle('reduced', reduced());
+    if (reduced()) { document.body.classList.add('q-low'); }
+    if (gl) { resizeGL(); rebuildParts(); }
+    qTag.textContent = reduced() ? 'REDUCED' : tier.toUpperCase();
+    pDpr.textContent = TIERS[tier].dpr.toFixed(2);
+    pCount.textContent = reduced() ? 0 : TIERS[tier].particles;
+    pMode.textContent = mode;
+    panelTier();
+    document.querySelectorAll('#perfPanel .qrow button').forEach(b => b.classList.toggle('active', b.dataset.q === mode));
+  }
+
+  // ---------- Cursor ----------
+  const cur = document.getElementById('cur'), ring = document.getElementById('curRing'), glow = document.getElementById('curGlow');
+  let cx=ptr.x,cy=ptr.y,rx=ptr.x,ry=ptr.y,gx=ptr.x,gy=ptr.y;
+  if (!mobile) {
+    document.querySelectorAll('a,.btn,.card').forEach(el => {
+      el.addEventListener('pointerenter', () => ring.classList.add('hot'), { passive:true });
+      el.addEventListener('pointerleave', () => ring.classList.remove('hot'), { passive:true });
+    });
+  }
+
+  // ---------- Stage / parallax ----------
+  const stage = document.getElementById('stage'), inner = document.getElementById('stageInner');
+  const stageState = { active:false, tx:0, ty:0, cx:0, cy:0 };
+  let stageRect = stage.getBoundingClientRect();
+  const updateRect = () => stageRect = stage.getBoundingClientRect();
+  addEventListener('resize', updateRect, { passive:true });
+  addEventListener('scroll', updateRect, { passive:true });
+  stage.addEventListener('pointerenter', () => stageState.active = true, { passive:true });
+  stage.addEventListener('pointerleave', () => { stageState.active = false; stageState.tx = 0; stageState.ty = 0; }, { passive:true });
+
+  // ---------- Orbs ----------
+  const o1=document.getElementById('o1'), o2=document.getElementById('o2'), o3=document.getElementById('o3');
+  const orb = { tx:0, ty:0 };
+
+  // ---------- WebGL displacement shader ----------
+  const canvas = document.getElementById('gl');
+  let gl = null, glProg = null, glLoc = {}, glPts = null;
+  function initGL() {
+    gl = canvas.getContext('webgl', { alpha:true, antialias:false, premultipliedAlpha:true, powerPreference:'low-power' });
+    if (!gl) return false;
+    const vs = `attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+    const fs = `precision mediump float;
+      uniform vec2 uRes; uniform float uTime; uniform vec2 uMouse; uniform float uIters;
+      float h(vec2 n){ return fract(sin(dot(n,vec2(12.9898,78.233)))*43758.5453); }
+      float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+        return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+      float fbm(vec2 p){ float v=0., a=.5; for(float i=0.;i<6.;i++){ if(i>=uIters) break; v+=a*n(p); p*=2.03; a*=.5; } return v; }
+      void main(){
+        vec2 uv = gl_FragCoord.xy / uRes.xy;
+        vec2 m = uMouse;
+        vec2 d = uv - m;
+        float r = length(d);
+        float disp = 0.08 / (r*r*8. + 0.25);
+        vec2 q = uv + d * disp * 0.06;
+        float t = uTime * 0.08;
+        float a = fbm(q*3.2 + vec2(t, -t*0.7));
+        float b = fbm(q*2.1 - vec2(t*0.6, t));
+        float m1 = smoothstep(0.35, 0.85, a);
+        float m2 = smoothstep(0.40, 0.90, b);
+        vec3 sky    = vec3(0.486, 0.776, 1.000);
+        vec3 indigo = vec3(0.353, 0.471, 1.000);
+        vec3 white  = vec3(1.0);
+        vec3 col = mix(white, sky, m1*0.55);
+        col = mix(col, indigo, m2*0.32);
+        col += vec3(0.18,0.28,0.45) * smoothstep(0.35, 0.0, r);
+        float alpha = 0.55 * (0.4 + 0.6*max(m1,m2));
+        gl_FragColor = vec4(col, alpha);
+      }`;
+    function sh(t,src){ const s=gl.createShader(t); gl.shaderSource(s,src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){ console.warn(gl.getShaderInfoLog(s)); return null; } return s; }
+    const v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs);
+    if (!v||!f) return false;
+    glProg = gl.createProgram(); gl.attachShader(glProg,v); gl.attachShader(glProg,f); gl.linkProgram(glProg);
+    if (!gl.getProgramParameter(glProg,gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(glProg)); return false; }
+    gl.useProgram(glProg);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(glProg, 'p');
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    glLoc.res = gl.getUniformLocation(glProg, 'uRes');
+    glLoc.time = gl.getUniformLocation(glProg, 'uTime');
+    glLoc.mouse = gl.getUniformLocation(glProg, 'uMouse');
+    glLoc.iters = gl.getUniformLocation(glProg, 'uIters');
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    return true;
+  }
+  function resizeGL() {
+    if (!gl) return;
+    const r = stage.getBoundingClientRect();
+    const dpr = TIERS[tier].dpr;
+    const w = Math.max(1, Math.floor(r.width * dpr));
+    const h = Math.max(1, Math.floor(r.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w; canvas.height = h;
+      canvas.style.width = r.width+'px'; canvas.style.height = r.height+'px';
+      gl.viewport(0,0,w,h);
+    }
+  }
+  let parts = [];
+  function rebuildParts() {
+    const n = reduced() ? 0 : TIERS[tier].particles;
+    if (parts.length === n) return;
+    glPts = glPts || (() => {
+      const c = document.createElement('canvas');
+      c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen';
+      stage.querySelector('.stage-inner').appendChild(c);
+      return c;
+    })();
+    const r = stage.getBoundingClientRect();
+    const dpr = TIERS[tier].dpr;
+    glPts.width = Math.floor(r.width*dpr); glPts.height = Math.floor(r.height*dpr);
+    glPts.style.width = r.width+'px'; glPts.style.height = r.height+'px';
+    parts = [];
+    const W = glPts.width, H = glPts.height;
+    for (let i=0;i<n;i++) {
+      parts.push({ x:Math.random()*W, y:Math.random()*H,
+        vx:(Math.random()-.5)*0.03, vy:(Math.random()-.5)*0.03,
+        r:(0.6+Math.random()*1.6)*dpr, a:0.2+Math.random()*0.55 });
+    }
+  }
+
+  const ok = initGL();
+  if (ok) { resizeGL(); addEventListener('resize', resizeGL, { passive:true }); }
+  rebuildParts();
+
+  // ---------- Visibility ----------
+  let visible = true, docVisible = !document.hidden;
+  new IntersectionObserver(es => visible = es[0].isIntersecting, { threshold:0 }).observe(stage);
+  document.addEventListener('visibilitychange', () => docVisible = !document.hidden);
+
+  // ---------- HUD ----------
+  const chip = document.getElementById('perfChip'), panel = document.getElementById('perfPanel');
+  const chipFps = document.getElementById('chipFps');
+  const pFps = document.getElementById('pFps'), pFt = document.getElementById('pFt'),
+        pBudget = document.getElementById('pBudget'), pBar = document.getElementById('pBar'),
+        pDpr = document.getElementById('pDpr'),
+        pCount = document.getElementById('pCount'), pMode = document.getElementById('pMode');
+  const rmToggle = document.getElementById('rmToggle');
+  rmToggle.checked = sysReduced;
+  rmToggle.addEventListener('change', () => { reducedUser = rmToggle.checked; applyTier(); });
+
+  const togglePanel = () => panel.classList.toggle('show');
+  chip.addEventListener('click', togglePanel);
+  addEventListener('keydown', e => { if (e.key === 'p' || e.key === 'P') togglePanel(); });
+  document.querySelectorAll('#perfPanel .qrow button').forEach(b => {
+    b.addEventListener('click', () => { mode = b.dataset.q;
+      if (mode !== 'auto') tier = mode;
+      applyTier();
+    });
+  });
+  function panelTier() {
+    const cls = (fpsAvg >= 50) ? '' : (fpsAvg >= 35 ? 'warn' : 'bad');
+    chip.className = ''; panel.classList.remove('warn','bad');
+    if (cls) { chip.classList.add(cls); panel.classList.add(cls); }
+  }
+
+  const sc = document.getElementById('scanCount'); let scN=142, scAcc=0;
+
+  // ---------- Frame budgeter / adaptive ----------
+  let fpsAvg = 60, ftAvg = 16.6;
+  let fpsAccTime = 0, fpsAccFrames = 0;
+  let downSince = 0, upSince = 0;
+
+  function adapt(dt) {
+    if (mode !== 'auto') return;
+    if (fpsAvg < 42) { downSince += dt; upSince = 0; } else { downSince = 0; }
+    if (fpsAvg > 55) { upSince += dt; } else { upSince = 0; }
+    if (downSince > 1500 && tier !== 'low') {
+      tier = (tier === 'high') ? 'med' : 'low';
+      downSince = 0; applyTier();
+    } else if (upSince > 4000 && tier !== 'high') {
+      tier = (tier === 'low') ? 'med' : 'high';
+      upSince = 0; applyTier();
+    }
+  }
+
+  // ---------- Main rAF ----------
+  let last = performance.now(), startT = last;
+  function frame(now) {
+    const dt = Math.min(64, now - last);
+    last = now;
+    const t = (now - startT) / 1000;
+
+    const k1 = 1 - Math.pow(0.001, dt/1000);
+    const k2 = 1 - Math.pow(0.02,  dt/1000);
+    const k3 = 1 - Math.pow(0.2,   dt/1000);
+    cx += (ptr.x-cx)*k1; cy += (ptr.y-cy)*k1;
+    rx += (ptr.x-rx)*k2; ry += (ptr.y-ry)*k2;
+    gx += (ptr.x-gx)*k3; gy += (ptr.y-gy)*k3;
+    cur.style.transform  = `translate3d(${cx}px,${cy}px,0) translate(-50%,-50%)`;
+    ring.style.transform = `translate3d(${rx}px,${ry}px,0) translate(-50%,-50%)`;
+    glow.style.transform = `translate3d(${gx}px,${gy}px,0) translate(-50%,-50%)`;
+
+    // Parallax Stage rotation
+    if (stageState.active && TIERS[tier].parallax && !reduced()) {
+      const rect = stageRect;
+      const x = (ptr.x - rect.left) - rect.width/2;
+      const y = (ptr.y - rect.top) - rect.height/2;
+      stageState.tx = x * 0.08;
+      stageState.ty = y * -0.08;
+    } else {
+      stageState.tx = 0; stageState.ty = 0;
+    }
+    stageState.cx += (stageState.tx - stageState.cx)*k2;
+    stageState.cy += (stageState.ty - stageState.cy)*k2;
+    inner.style.transform = `rotateY(${stageState.cx}deg) rotateX(${stageState.cy}deg)`;
+
+    // Orb Drift
+    if (!reduced()) {
+      orb.tx += (ptr.x - innerWidth/2 - orb.tx)*0.015;
+      orb.ty += (ptr.y - innerHeight/2 - orb.ty)*0.015;
+      o1.style.transform = `translate3d(${orb.tx*0.1}px, ${orb.ty*0.1}px, 0)`;
+      o2.style.transform = `translate3d(${orb.tx*-0.1}px, ${orb.ty*-0.1}px, 0)`;
+      o3.style.transform = `translate3d(${orb.tx*0.05}px, ${orb.ty*-0.05}px, 0)`;
+    }
+
+    // WebGL Displacement Draw
+    if (gl && ok && visible && docVisible) {
+      gl.uniform2f(glLoc.res, canvas.width, canvas.height);
+      gl.uniform1f(glLoc.time, t);
+      gl.uniform2f(glLoc.mouse, rx / width, 1 - ry / height);
+      gl.uniform1f(glLoc.iters, TIERS[tier].shaderIters);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    // 2D Canvas particles
+    if (glPts && !reduced() && visible && docVisible) {
+      const pCtx = glPts.getContext('2d');
+      pCtx.clearRect(0,0,glPts.width,glPts.height);
+      const W = glPts.width, H = glPts.height;
+      for (let i=0;i<parts.length;i++) {
+        const p = parts[i];
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        pCtx.fillStyle = `rgba(124,198,255,${p.a})`;
+        pCtx.fill();
+      }
+    }
+
+    // Performance Profiler HUD stats
+    fpsAccFrames++;
+    fpsAccTime += dt;
+    if (fpsAccTime >= 1000) {
+      fpsAvg = Math.round((fpsAccFrames * 1000) / fpsAccTime);
+      fpsAccFrames = 0; fpsAccTime = 0;
+      
+      chipFps.textContent = fpsAvg;
+      pFps.textContent = fpsAvg;
+      ftAvg = dt;
+      pFt.textContent = ftAvg.toFixed(1) + ' ms';
+      const budgetPercent = Math.min(100, Math.round((ftAvg / 16.67) * 100));
+      pBudget.textContent = budgetPercent + ' %';
+      pBar.style.width = budgetPercent + '%';
+
+      adapt(1000);
+      panelTier();
+
+      // Scan HUD simulation counter
+      scN += Math.floor(Math.random()*4 + 1);
+      sc.textContent = String(scN).padStart(6, '0');
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  applyTier();
+
+  // ---------- Live Diff Modal Logic ----------
+  const dModal = document.getElementById('diffModal');
+  const dClose = document.getElementById('diffClose');
+  const ctaStart = document.getElementById('ctaStart');
+  const ctaHow = document.getElementById('ctaHow');
+  const hModal = document.getElementById('howModal');
+  const hClose = document.getElementById('howClose');
+  const howStart = document.getElementById('howStart');
+  const inA = document.getElementById('inA'), inB = document.getElementById('inB');
+  const diffOut = document.getElementById('diffOut');
+
+  function showModal(m) { m.classList.add('on'); }
+  function hideModal(m) { m.classList.remove('on'); }
+
+  ctaStart.addEventListener('click', () => showModal(dModal));
+  dClose.addEventListener('click', () => hideModal(dModal));
+  ctaHow.addEventListener('click', () => showModal(hModal));
+  hClose.addEventListener('click', () => hideModal(hModal));
+  howStart.addEventListener('click', () => { hideModal(hModal); showModal(dModal); });
+
+  // Close modals on clicking outside card
+  window.addEventListener('click', e => {
+    if (e.target === dModal) hideModal(dModal);
+    if (e.target === hModal) hideModal(hModal);
+  });
+
+  // Client Side Diff Checker Engine
+  function runDiff() {
+    const valA = inA.value;
+    const valB = inB.value;
+    const linesA = valA.split('\n');
+    const linesB = valB.split('\n');
+    
+    document.getElementById('aLines').textContent = `${linesA.length} lines`;
+    document.getElementById('bLines').textContent = `${linesB.length} lines`;
+
+    diffOut.innerHTML = '';
+    let i = 0, j = 0;
+    let add = 0, del = 0, eq = 0;
+
+    while (i < linesA.length || j < linesB.length) {
+      if (i < linesA.length && j < linesB.length) {
+        if (linesA[i] === linesB[j]) {
+          diffOut.innerHTML += `<div class="diff-row eq"><span class="n">${i+1}</span><span class="s"> </span><span class="c">${esc(linesA[i])}</span></div>`;
+          i++; j++; eq++;
+        } else {
+          // Lookahead for simple matches
+          if (linesA.slice(i).indexOf(linesB[j]) > -1) {
+            diffOut.innerHTML += `<div class="diff-row del"><span class="n">${i+1}</span><span class="s">−</span><span class="c">${esc(linesA[i])}</span></div>`;
+            i++; del++;
+          } else {
+            diffOut.innerHTML += `<div class="diff-row add"><span class="n">${j+1}</span><span class="s">+</span><span class="c">${esc(linesB[j])}</span></div>`;
+            j++; add++;
+          }
+        }
+      } else if (i < linesA.length) {
+        diffOut.innerHTML += `<div class="diff-row del"><span class="n">${i+1}</span><span class="s">−</span><span class="c">${esc(linesA[i])}</span></div>`;
+        i++; del++;
+      } else {
+        diffOut.innerHTML += `<div class="diff-row add"><span class="n">${j+1}</span><span class="s">+</span><span class="c">${esc(linesB[j])}</span></div>`;
+        j++; add++;
+      }
+    }
+
+    document.getElementById('sAdd').textContent = `+${add}`;
+    document.getElementById('sDel').textContent = `−${del}`;
+    document.getElementById('sEq').textContent = `=${eq}`;
+    document.getElementById('fAdd').textContent = add;
+    document.getElementById('fDel').textContent = del;
+    document.getElementById('fEq').textContent = eq;
+  }
+
+  function esc(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  inA.addEventListener('input', runDiff);
+  inB.addEventListener('input', runDiff);
+
+  // Clear & sample inputs
+  document.getElementById('clearAll').addEventListener('click', () => {
+    inA.value = ''; inB.value = ''; runDiff();
+  });
+
+  const sampleA = `// Welcome to DiffLab\nconst a = 10;\nconst b = 20;\nconsole.log(a + b);`;
+  const sampleB = `// Welcome to DiffLab\nconst a = 12; // Edited\nconst b = 20;\nconsole.log(a + b);\nconsole.log("Diff Complete!"); // Added`;
+  
+  document.getElementById('loadSample').addEventListener('click', () => {
+    inA.value = sampleA; inB.value = sampleB; runDiff();
+  });
+
+  document.getElementById('copyDiff').addEventListener('click', () => {
+    const textLines = [];
+    document.querySelectorAll('#diffOut .diff-row').forEach(row => {
+      const sign = row.querySelector('.s').textContent;
+      const content = row.querySelector('.c').textContent;
+      textLines.push((sign ? sign + ' ' : '') + content);
+    });
+    navigator.clipboard.writeText(textLines.join('\n')).then(() => {
+      alert('Diff output copied to clipboard!');
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
