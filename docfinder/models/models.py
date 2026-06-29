@@ -1,6 +1,6 @@
 """Database models."""
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, Text, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, Text, JSON, ForeignKey
 from database.config import Base
 
 
@@ -73,4 +73,26 @@ class UploadedFile(Base):
     file_size = Column(Integer)
     file_path = Column(String(500), nullable=True)
     ocr_applied = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Folder(Base):
+    """Folder category for apps."""
+    __tablename__ = "portal_folders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    icon = Column(String(10), default="📁")
+
+
+class AppEntry(Base):
+    """Submitted application entries."""
+    __tablename__ = "portal_apps"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(100), nullable=False)
+    url = Column(String(500), nullable=False)
+    icon_emoji = Column(String(10), default="🤖")
+    description = Column(String(500), nullable=True)
+    folder_id = Column(Integer, ForeignKey("portal_folders.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from database.config import get_db, init_db, async_session_maker
-from models.models import User, Comparison, Report, LoginActivity, UploadedFile
+from models.models import User, Comparison, Report, LoginActivity, UploadedFile, Folder, AppEntry
 from auth.utils import verify_password, get_password_hash, create_access_token, decode_token
 from services.text_comparison import TextComparisonEngine
 from services.pdf_comparison import PDFComparisonEngine
@@ -105,6 +105,32 @@ async def lifespan(app: FastAPI):
             )
             session.add(admin)
             await session.commit()
+            
+        # Seed default workspace folders and apps if none exist
+        result_folders = await session.execute(select(Folder))
+        has_folders = result_folders.scalars().first()
+        if not has_folders:
+            folders = [
+                Folder(name="AI Agents", icon="🤖"),
+                Folder(name="Web Services", icon="🌐"),
+                Folder(name="Utility Tools", icon="🛠️")
+            ]
+            session.add_all(folders)
+            await session.commit()
+            
+            # Add default apps for these folders
+            res_ai = await session.execute(select(Folder).where(Folder.name == "AI Agents"))
+            f_ai = res_ai.scalar_one()
+            res_web = await session.execute(select(Folder).where(Folder.name == "Web Services"))
+            f_web = res_web.scalar_one()
+            
+            default_apps = [
+                AppEntry(title="DocMind AI", url="/difflab.html", icon_emoji="📄", description="AI document semantic difference engine.", folder_id=f_ai.id),
+                AppEntry(title="Call Dialer", url="https://menmozhicallcampaign-1.onrender.com", icon_emoji="📞", description="Campaign dialer and call logs viewer.", folder_id=f_web.id)
+            ]
+            session.add_all(default_apps)
+            await session.commit()
+            print("Database seeded: Default portal folders and apps initialized.")
     
     yield
 
@@ -1114,3 +1140,93 @@ async def websocket_collab(websocket: WebSocket, room_id: str):
             await manager.broadcast(data, room_id, websocket)
     except WebSocketDisconnect:
         manager.disconnect(websocket, room_id)
+
+
+# --- Portal API Endpoints ---
+class FolderCreate(BaseModel):
+    name: str
+    icon: str = "📁"
+
+class AppCreate(BaseModel):
+    title: str
+    url: str
+    icon_emoji: str = "🤖"
+    description: Optional[str] = None
+    folder_id: int
+
+@app.get("/api/portal/workspaces")
+async def get_portal_workspaces(db: AsyncSession = Depends(get_db)):
+    # Retrieve all folders
+    res_folders = await db.execute(select(Folder))
+    folders = res_folders.scalars().all()
+    
+    # Retrieve all apps
+    res_apps = await db.execute(select(AppEntry))
+    apps = res_apps.scalars().all()
+    
+    # Group apps by folder
+    data = []
+    for folder in folders:
+        folder_apps = [
+            {
+                "id": app.id,
+                "title": app.title,
+                "url": app.url,
+                "icon_emoji": app.icon_emoji,
+                "description": app.description
+            }
+            for app in apps if app.folder_id == folder.id
+        ]
+        data.append({
+            "id": folder.id,
+            "name": folder.name,
+            "icon": folder.icon,
+            "apps": folder_apps
+        })
+    return data
+
+@app.post("/api/portal/apps")
+async def create_portal_app(app_data: AppCreate, db: AsyncSession = Depends(get_db)):
+    res_folder = await db.execute(select(Folder).where(Folder.id == app_data.folder_id))
+    folder = res_folder.scalar_one_or_none()
+    if not folder:
+        raise HTTPException(status_code=404, detail="Category folder not found")
+    
+    new_app = AppEntry(
+        title=app_data.title,
+        url=app_data.url,
+        icon_emoji=app_data.icon_emoji,
+        description=app_data.description,
+        folder_id=app_data.folder_id
+    )
+    db.add(new_app)
+    await db.commit()
+    await db.refresh(new_app)
+    return new_app
+
+@app.post("/api/portal/folders")
+async def create_portal_folder(folder_data: FolderCreate, db: AsyncSession = Depends(get_db)):
+    res_existing = await db.execute(select(Folder).where(Folder.name == folder_data.name))
+    existing = res_existing.scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="Folder category already exists")
+        
+    new_folder = Folder(
+        name=folder_data.name,
+        icon=folder_data.icon
+    )
+    db.add(new_folder)
+    await db.commit()
+    await db.refresh(new_folder)
+    return new_folder
+
+@app.delete("/api/portal/apps/{app_id}")
+async def delete_portal_app(app_id: int, db: AsyncSession = Depends(get_db)):
+    res_app = await db.execute(select(AppEntry).where(AppEntry.id == app_id))
+    app_entry = res_app.scalar_one_or_none()
+    if not app_entry:
+        raise HTTPException(status_code=404, detail="App entry not found")
+        
+    await db.delete(app_entry)
+    await db.commit()
+    return {"message": "App deleted successfully"}
