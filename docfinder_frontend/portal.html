@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vennila AI Studio Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #030712;
+            --card-bg: rgba(17, 24, 39, 0.65);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-light: #f3f4f6;
+            --text-muted: #9ca3af;
+            --blue-glow: rgba(59, 130, 246, 0.4);
+            --purple-glow: rgba(139, 92, 246, 0.4);
+        }
+        body {
+            background: var(--bg);
+            color: var(--text-light);
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Ambient Glows */
+        .glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 { width: 500px; height: 500px; background: #3b82f6; top: -10%; left: -10%; }
+        .glow-2 { width: 500px; height: 500px; background: #ec4899; bottom: -10%; right: -10%; }
+
+        /* Grid lines background */
+        .grid-bg {
+            position: absolute;
+            inset: -20%;
+            background: 
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px) 0 0/60px 60px,
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px) 0 0/60px 60px;
+            transform: perspective(1000px) rotateX(60deg) translateZ(-100px);
+            mask-image: radial-gradient(ellipse at 50% 50%, #000 40%, transparent 80%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Top Header Control Bar */
+        header {
+            height: 70px;
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+            cursor: pointer;
+        }
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3b82f6;
+            box-shadow: 0 0 12px #3b82f6;
+        }
+
+        /* Dynamic Switcher Tabs inside header */
+        .tabs-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 50%;
+            overflow-x: auto;
+        }
+        .tabs-wrapper::-webkit-scrollbar { display: none; }
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .tab-btn {
+            padding: 7px 16px;
+            border-radius: 99px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 15px -4px rgba(59, 130, 246, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: #f3f4f6;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: 0;
+            box-shadow: 0 4px 12px -3px rgba(59, 130, 246, 0.4);
+        }
+        .btn-primary:hover { opacity: 0.95; }
+
+        /* Launchpad Portal screen styling */
+        .launchpad {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            z-index: 10;
+            position: relative;
+        }
+        .launchpad-active {
+            display: flex !important;
+        }
+        .launchpad.hidden {
+            display: none !important;
+        }
+
+        .launchpad-head {
+            margin-bottom: 50px;
+            text-align: center;
+        }
+        .launchpad-head h1 {
+            font-size: clamp(2.5rem, 5vw, 3.8rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+        }
+        .launchpad-head p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        /* Folders layout */
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* iPad Style Folder styling */
+        .folder-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px;
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .folder-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 40px -15px var(--blue-glow);
+        }
+
+        /* Folder icons preview thumbnail grid (iPad Style) */
+        .folder-preview-grid {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 8px;
+            margin-bottom: 16px;
+        }
+        .folder-preview-item {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .folder-info h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .folder-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Expanded Folder Overlay (iOS/Google folder screen style) */
+        .folder-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .folder-expanded-card {
+            width: min(540px, 94vw);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 36px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 70px -10px rgba(0,0,0,0.6);
+            animation: folderPop 0.35s cubic-bezier(0.2, 0.85, 0.25, 1);
+            position: relative;
+        }
+        @keyframes folderPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .folder-expanded-card h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .app-icons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .app-icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 16px;
+            transition: all 0.2s;
+        }
+        .app-icon-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.05);
+        }
+        .app-icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px -8px rgba(0,0,0,0.3);
+            transition: box-shadow 0.2s;
+        }
+        .app-icon-item:hover .app-icon-circle {
+            box-shadow: 0 10px 25px -4px rgba(59, 130, 246, 0.4);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        .app-icon-label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-align: center;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Workspace Player Screen */
+        .workspace {
+            flex: 1;
+            position: relative;
+            background: #030712;
+            display: none;
+        }
+        .workspace-active {
+            display: block !important;
+        }
+        iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        iframe.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* Loader */
+        .loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #030712;
+            z-index: 5;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-card {
+            width: min(460px, 94vw);
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: modalIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-close {
+            background: transparent;
+            border: 0;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: #3b82f6;
+        }
+
+        .manage-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .manage-row:last-child { border-bottom: 0; }
+        .manage-row span { font-size: 14.5px; }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+
+    <header>
+        <div class="logo" onclick="showLaunchpad()">
+            <div class="logo-dot"></div>
+            Vennila AI Studio
+        </div>
+        
+        <div class="tabs-wrapper">
+            <div class="tabs" id="tabList">
+                <!-- Dynamically opened tabs show here -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="openModal('manageModal')">⚙️ Manage Apps</button>
+            <button class="btn btn-primary" onclick="openModal('submitModal')">➕ Submit App</button>
+        </div>
+    </header>
+
+    <!-- 1. LAUNCHPAD PORTAL (FOLDER VIEW) -->
+    <div class="launchpad launchpad-active" id="launchpadView">
+        <header class="launchpad-head">
+            <h1>Vennila AI Launcher</h1>
+            <p>Access and run all your digital projects directly inside a single webpage.</p>
+        </header>
+
+        <main class="folders-grid" id="folderGrid">
+            <!-- Folders rendered dynamically -->
+        </main>
+    </div>
+
+    <!-- 2. WORKSPACE PLAYER VIEW -->
+    <div class="workspace" id="workspaceView">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p style="font-size: 13px; color: #9ca3af; letter-spacing: 0.05em;">LOADING APP...</p>
+        </div>
+        <div id="iframeContainer">
+            <!-- Dynamically generated iframes -->
+        </div>
+    </div>
+
+    <!-- FOLDER POPUP DIALOG -->
+    <div class="folder-overlay" id="folderOverlay" onclick="closeFolderOverlay(event)">
+        <div class="folder-expanded-card">
+            <h2 id="folderTitle">AI Assistants</h2>
+            <div class="app-icons-grid" id="appGrid">
+                <!-- App icons show here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBMIT APP MODAL -->
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3>Submit Project Link</h3>
+                <button class="modal-close" onclick="closeModal('submitModal')">×</button>
+            </div>
+            <form id="submitForm" onsubmit="submitNewApp(event)">
+                <div class="form-group">
+                    <label>Project Title</label>
+                    <input type="text" id="appName" required placeholder="e.g. WhatsApp Auto-Agent">
+                </div>
+                <div class="form-group">
+                    <label>Render / Deployment URL</label>
+                    <input type="url" id="appUrl" required placeholder="https://whatsapp-agent.onrender.com">
+                </div>
+                <div class="form-group">
+                    <label>Emoji Icon</label>
+                    <input type="text" id="appEmoji" placeholder="🤖" value="🤖" maxlength="2">
+                </div>
+                <div class="form-group">
+                    <label>Folder / Category</label>
+                    <select id="appFolder" required>
+                        <!-- Categories filled dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="appDesc" placeholder="Brief summary of the application..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; margin-top:10px;">
+                    Submit Project
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MANAGE APPS MODAL -->
+    <div class="modal-overlay" id="manageModal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3>Manage Apps</h3>
+                <button class="modal-close" onclick="closeModal('manageModal')">×</button>
+            </div>
+            <div id="manageAppList" style="max-height:300px; overflow-y:auto; padding-right:6px;">
+                <!-- List of deletion hooks -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let workspaceData = [];
+        let openTabs = [];
+        let activeTabId = null;
+
+        // Fetch workspaces/folders from PostgreSQL backend
+        async function fetchWorkspaces() {
+            try {
+                const response = await fetch('/api/portal/workspaces');
+                workspaceData = await response.json();
+                
+                renderFolders();
+                populateCategoryDropdown();
+            } catch (err) {
+                console.error("Error fetching workspace portal data:", err);
+            }
+        }
+
+        // Render Launchpad Folder list
+        function renderFolders() {
+            const grid = document.getElementById('folderGrid');
+            grid.innerHTML = '';
+
+            workspaceData.forEach(folder => {
+                const card = document.createElement('div');
+                card.className = 'folder-card';
+                card.onclick = () => openFolder(folder.id);
+
+                // Build iPad-style folder icons preview
+                let previewHTML = '<div class="folder-preview-grid">';
+                for (let i = 0; i < 9; i++) {
+                    const app = folder.apps[i];
+                    previewHTML += `<div class="folder-preview-item">${app ? app.icon_emoji : ''}</div>`;
+                }
+                previewHTML += '</div>';
+
+                card.innerHTML = `
+                    <div>
+                        ${previewHTML}
+                        <div class="folder-info">
+                            <h3>${folder.icon} ${folder.name}</h3>
+                            <p>${folder.apps.length} project${folder.apps.length === 1 ? '' : 's'} linked</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Open expanded folder popover
+        function openFolder(folderId) {
+            const folder = workspaceData.find(f => f.id === folderId);
+            if (!folder) return;
+
+            document.getElementById('folderTitle').textContent = `${folder.icon} ${folder.name}`;
+            const grid = document.getElementById('appGrid');
+            grid.innerHTML = '';
+
+            if (folder.apps.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-muted); padding:30px 0;">No apps in this folder yet.</div>';
+            } else {
+                folder.apps.forEach(app => {
+                    const item = document.createElement('div');
+                    item.className = 'app-icon-item';
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        closeFolderOverlay(null, true);
+                        launchApp(app);
+                    };
+
+                    item.innerHTML = `
+                        <div class="app-icon-circle">${app.icon_emoji}</div>
+                        <div class="app-icon-label" title="${app.title}">${app.title}</div>
+                    `;
+                    grid.appendChild(item);
+                });
+            }
+
+            document.getElementById('folderOverlay').style.display = 'flex';
+        }
+
+        function closeFolderOverlay(e, force = false) {
+            if (force || e.target === document.getElementById('folderOverlay')) {
+                document.getElementById('folderOverlay').style.display = 'none';
+            }
+        }
+
+        // Launch app into target iframe and register a tab in header
+        function launchApp(app) {
+            showWorkspace();
+            
+            // Check if tab is already open
+            if (!openTabs.some(t => t.id === app.id)) {
+                openTabs.push(app);
+                
+                // Add iframe container
+                const container = document.getElementById('iframeContainer');
+                const iframe = document.createElement('iframe');
+                iframe.id = `iframe-${app.id}`;
+                iframe.onload = () => hideLoader();
+                container.appendChild(iframe);
+            }
+
+            activeTabId = app.id;
+            renderTabs();
+            activateIframe(app);
+        }
+
+        // Set active iframe src and toggle CSS classes
+        function activateIframe(app) {
+            document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
+            
+            const frame = document.getElementById(`iframe-${app.id}`);
+            if (frame) {
+                if (!frame.src || frame.src === window.location.href || frame.src === "") {
+                    document.getElementById('loader').style.display = 'flex';
+                    frame.src = app.url;
+                }
+                frame.classList.add('active');
+            }
+        }
+
+        // Render header tab list
+        function renderTabs() {
+            const list = document.getElementById('tabList');
+            list.innerHTML = '';
+
+            openTabs.forEach(tab => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${tab.id === activeTabId ? 'active' : ''}`;
+                btn.onclick = () => selectTab(tab.id);
+                btn.innerHTML = `
+                    <span>${tab.icon_emoji} ${tab.title}</span>
+                    <span style="font-size:12px; font-weight:700; margin-left:6px;" onclick="closeTab(event, '${tab.id}')">×</span>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function selectTab(id) {
+            activeTabId = id;
+            showWorkspace();
+            renderTabs();
+            
+            const app = openTabs.find(t => t.id === id);
+            if (app) activateIframe(app);
+        }
+
+        function closeTab(e, id) {
+            e.stopPropagation();
+            
+            // Close iframe
+            const frame = document.getElementById(`iframe-${id}`);
+            if (frame) frame.remove();
+
+            // Filter openTabs
+            openTabs = openTabs.filter(t => t.id !== id);
+
+            if (openTabs.length === 0) {
+                showLaunchpad();
+            } else if (activeTabId === id) {
+                selectTab(openTabs[openTabs.length - 1].id);
+            } else {
+                renderTabs();
+            }
+        }
+
+        // Toggle Screen Views
+        function showWorkspace() {
+            document.getElementById('launchpadView').classList.add('hidden');
+            document.getElementById('workspaceView').classList.add('workspace-active');
+        }
+
+        function showLaunchpad() {
+            document.getElementById('workspaceView').classList.remove('workspace-active');
+            document.getElementById('launchpadView').classList.remove('hidden');
+            activeTabId = null;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
+        }
+
+        // Submit New App to PostgreSQL
+        async function submitNewApp(e) {
+            e.preventDefault();
+            const title = document.getElementById('appName').value;
+            const url = document.getElementById('appUrl').value;
+            const icon_emoji = document.getElementById('appEmoji').value || '🤖';
+            const folder_id = parseInt(document.getElementById('appFolder').value);
+            const description = document.getElementById('appDesc').value;
+
+            try {
+                const response = await fetch('/api/portal/apps', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: json = JSON.stringify({ title, url, icon_emoji, folder_id, description })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('submitForm').reset();
+                    closeModal('submitModal');
+                    await fetchWorkspaces();
+                } else {
+                    const err = await response.json();
+                    alert("Error submitting project: " + err.detail);
+                }
+            } catch (err) {
+                console.error("Submission failed:", err);
+            }
+        }
+
+        // Dropdown list population
+        function populateCategoryDropdown() {
+            const dropdown = document.getElementById('appFolder');
+            dropdown.innerHTML = '';
+            workspaceData.forEach(folder => {
+                const opt = document.createElement('option');
+                opt.value = folder.id;
+                opt.textContent = `${folder.icon} ${folder.name}`;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        // Render deletion list for custom apps
+        function renderManageAppList() {
+            const list = document.getElementById('manageAppList');
+            list.innerHTML = '';
+            
+            let count = 0;
+            workspaceData.forEach(folder => {
+                folder.apps.forEach(app => {
+                    count++;
+                    const row = document.createElement('div');
+                    row.className = 'manage-row';
+                    row.innerHTML = `
+                        <span>${app.icon_emoji} <b>${app.title}</b> <span style="font-size:11px; color:var(--text-muted)">(${folder.name})</span></span>
+                        <button class="btn-danger" onclick="deleteApp(${app.id})">Delete</button>
+                    `;
+                    list.appendChild(row);
+                });
+            });
+
+            if (count === 0) {
+                list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">No applications found.</p>';
+            }
+        }
+
+        async function deleteApp(appId) {
+            if (!confirm("Are you sure you want to delete this app entry?")) return;
+            try {
+                const response = await fetch(`/api/portal/apps/${appId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    await fetchWorkspaces();
+                    renderManageAppList();
+                }
+            } catch (err) {
+                console.error("Delete app failed:", err);
+            }
+        }
+
+        // Modal triggers
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'manageModal') renderManageAppList();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Close on escape key
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal('submitModal');
+                closeModal('manageModal');
+                closeFolderOverlay(null, true);
+            }
+        });
+
+        // Initialize Launchpad
+        fetchWorkspaces();
+    </script>
+</body>
+</html>

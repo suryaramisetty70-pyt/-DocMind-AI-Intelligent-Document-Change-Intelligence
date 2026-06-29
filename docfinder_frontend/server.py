@@ -110,6 +110,8 @@ class DocFinderHandler(http.server.SimpleHTTPRequestHandler):
         # Serve index.html for root
         if self.path == '/':
             self.path = '/index.html'
+        elif self.path == '/portal':
+            self.path = '/portal.html'
             
         # Call super, but we need to inject cache headers
         super().do_GET()
