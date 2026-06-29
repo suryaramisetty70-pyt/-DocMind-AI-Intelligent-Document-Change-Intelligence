@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DocDiffFinder-AI — See every change. Instantly.</title>
+<title>Docsy — See every change. Instantly.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -64,10 +64,6 @@
   .logo-mark svg{width:100%;height:100%;animation:spin 14s linear infinite}
   body.reduced .logo-mark svg{animation:none}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .navlinks{display:flex;gap:30px;font-size:13px;color:var(--ink-2);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em}
-  .navlinks a{position:relative;padding:6px 0}
-  .navlinks a:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1.5px;background:var(--sky-2);transform:scaleX(0);transform-origin:right;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-  .navlinks a:hover:after{transform:scaleX(1);transform-origin:left}
   .nav-cta{padding:10px 18px;border-radius:999px;font-size:12px;font-family:'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;box-shadow:0 8px 24px -8px rgba(58,160,255,.6);transition:transform .25s}
   .nav-cta:hover{transform:translateY(-2px)}
 
@@ -97,10 +93,6 @@
   .btn-p{background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;box-shadow:0 14px 40px -10px rgba(58,160,255,.6)}
   .btn-p:hover{transform:translateY(-3px);box-shadow:0 22px 50px -10px rgba(58,160,255,.7)}
   .btn-p span{position:relative;z-index:1;display:inline-flex;align-items:center;gap:10px}
-  .btn-s{background:rgba(255,255,255,.7);color:var(--ink);border:1px solid var(--line);backdrop-filter:blur(10px)}
-  .btn-s:hover{background:#fff;border-color:rgba(58,160,255,.5)}
-  .btn-s span{display:inline-flex;align-items:center;gap:10px}
-  .play{width:18px;height:18px;border-radius:50%;background:var(--sky-2);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px}
 
   /* stage */
   .stage{position:relative;width:min(1200px,94vw);height:clamp(360px,46vh,500px);margin-top:50px;perspective:1800px;perspective-origin:50% 50%;animation:fade 1.3s .8s both;contain:layout paint}
@@ -155,27 +147,18 @@
 
   #gl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border-radius:24px;opacity:.85}
 
-  /* marquee */
-  .marquee{position:relative;z-index:2;margin-top:90px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.3));backdrop-filter:blur(10px)}
-  .marquee-track{display:flex;gap:60px;padding:22px 0;white-space:nowrap;animation:marq 30s linear infinite;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);will-change:transform}
-  body.reduced .marquee-track{animation:none}
-  .marquee-track span{display:inline-flex;align-items:center;gap:60px}
-  .marquee-track b{color:var(--sky-2);font-weight:500}
-  .marquee-track i{display:inline-block;width:6px;height:6px;background:rgba(11,26,43,.15);border-radius:50%}
-  @keyframes marq{to{transform:translate3d(-50%,0,0)}}
-
   /* features */
   .features{position:relative;z-index:2;padding:120px 40px;max-width:1280px;margin:0 auto}
   .features-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:50px;gap:50px;flex-wrap:wrap}
   .features-head h2{font-size:clamp(36px,5vw,72px);line-height:1;letter-spacing:-.03em;font-weight:600;max-width:680px}
   .features-head h2 em{font-family:'Instrument Serif',serif;font-weight:400;font-style:italic;background:linear-gradient(120deg,var(--sky-2),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
   .features-head p{max-width:380px;color:var(--ink-2);line-height:1.55}
-  .fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .fgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
   .card{position:relative;padding:28px;border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(247,251,255,.7));border:1px solid rgba(255,255,255,.9);box-shadow:0 20px 50px -25px rgba(35,80,150,.25);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;min-height:280px;display:flex;flex-direction:column;justify-content:space-between;backdrop-filter:blur(8px)}
   .card:hover{transform:translate3d(0,-6px,0);box-shadow:0 30px 70px -20px rgba(58,160,255,.35)}
   .card .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.2em}
-  .card h3{font-size:22px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin-top:12px;color:var(--ink)}
-  .card p{margin-top:10px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+  .card h3{font-size:20px;line-height:1.15;font-weight:600;letter-spacing:-.02em;margin-top:12px;color:var(--ink)}
+  .card p{margin-top:10px;font-size:13px;color:var(--ink-2);line-height:1.55}
   .card .ic{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,rgba(124,198,255,.25),rgba(90,120,255,.15));border:1px solid rgba(58,160,255,.25);display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;overflow:hidden}
   .card .ic svg{width:22px;height:22px;color:var(--sky-2)}
   .card .ic:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.8),transparent);transform:translate3d(-100%,0,0);transition:transform .8s}
@@ -183,62 +166,42 @@
   @media(max-width:1024px){.fgrid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:560px){.fgrid{grid-template-columns:1fr}}
 
-  /* social proof logo cloud */
-  .social-proof{text-align:center;padding:60px 40px 20px;z-index:2;position:relative}
-  .social-proof p{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.25rem;margin-bottom:24px}
-  .logo-grid{display:flex;justify-content:center;align-items:center;gap:60px;flex-wrap:wrap;opacity:.65;font-weight:700;font-size:20px;letter-spacing:-0.03em;color:var(--ink-2)}
+  /* footer */
+  footer{position:relative;z-index:10;border-top:1px solid var(--line);padding:40px 20px;text-align:center;font-size:12px;color:var(--muted);letter-spacing:0.05em;margin-top:100px}
 
-  /* pricing section */
-  .pricing-sec{position:relative;z-index:2;padding:100px 40px;max-width:1280px;margin:0 auto}
-  .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:50px}
-  .price-card{position:relative;padding:36px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(245,250,255,.85));border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;min-height:460px;backdrop-filter:blur(8px)}
-  .price-card.popular{border:2px solid var(--sky-2);box-shadow:0 30px 80px -15px rgba(58,160,255,.45)}
-  .price-card .badge{position:absolute;top:-12px;right:24px;background:linear-gradient(135deg,var(--sky-2),var(--indigo));color:#fff;padding:4px 12px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
-  .plan-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:var(--ink);margin-bottom:8px}
-  .price{font-size:46px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:12px}
-  .price span{font-size:24px;vertical-align:top;margin-right:2px}
-  .desc{font-size:13.5px;color:var(--ink-2);line-height:1.5;margin-bottom:24px}
-  .features-list{list-style:none;display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--ink-2);text-align:left}
-  .features-list li{display:flex;align-items:center;gap:8px}
-  @media(max-width:900px){.price-grid{grid-template-columns:1fr}}
+  /* Performance HUD */
+  #perfChip{position:fixed;bottom:24px;left:24px;z-index:9999;background:rgba(255,255,255,.8);backdrop-filter:blur(10px);border:1px solid var(--line);padding:6px 14px;border-radius:999px;font-size:11px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:8px;box-shadow:0 6px 20px rgba(0,0,0,.05);user-select:none;cursor:pointer}
+  #perfChip .pdot{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint)}
+  #perfChip.warn .pdot{background:var(--warning);box-shadow:0 0 8px var(--warning)}
+  #perfChip.bad .pdot{background:var(--rose);box-shadow:0 0 8px var(--rose)}
+  #perfChip kbd{background:rgba(11,26,43,.05);padding:1px 5px;border-radius:4px;font-size:9px;border:1px solid rgba(11,26,43,.08)}
+  
+  #perfPanel{position:fixed;bottom:24px;left:24px;width:280px;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:18px;padding:20px;z-index:9998;box-shadow:var(--shadow);font-size:11.5px;font-family:'JetBrains Mono',monospace;transform:scale(.92) translate3d(-10px,10px,0);transform-origin:0 100%;opacity:0;pointer-events:none;transition:transform .25s,opacity .25s}
+  #perfPanel.show{transform:scale(1) translate3d(0,0,0);opacity:1;pointer-events:auto}
+  #perfPanel h4{font-size:10px;letter-spacing:.08em;margin-bottom:14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+  #perfPanel h4 .tag{padding:2px 6px;border-radius:4px;font-size:8.5px;font-weight:700}
+  #perfPanel.warn h4 .tag{background:rgba(245,158,11,.1);color:var(--warning)}
+  #perfPanel.bad h4 .tag{background:rgba(255,93,122,.1);color:var(--rose)}
+  #perfPanel .row{display:flex;justify-content:space-between;margin-bottom:6px;color:var(--ink-2)}
+  #perfPanel .bar{height:4px;background:rgba(11,26,43,.06);border-radius:2px;overflow:hidden;margin:10px 0}
+  #perfPanel .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sky-2),var(--indigo));width:0;transition:width .2s}
+  #perfPanel.warn .bar i{background:var(--warning)}
+  #perfPanel.bad .bar i{background:var(--rose)}
+  #perfPanel .legend{font-size:9px;color:var(--muted);margin-bottom:12px}
+  #perfPanel .qrow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:10px}
+  #perfPanel .qrow button{border:1px solid var(--line);padding:5px 0;font-size:9px;font-weight:700;border-radius:4px;background:#fff;cursor:pointer}
+  #perfPanel .qrow button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #perfPanel .toggle{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:10px}
+  
+  .hud{position:fixed;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--muted);z-index:10;text-transform:uppercase;line-height:1.55;user-select:none;pointer-events:none}
+  .hud.tl{top:120px;left:36px}
+  .hud.tr{top:120px;right:36px;text-align:right}
+  .hud.bl{bottom:36px;right:36px;text-align:right}
 
-  /* faq section */
-  .faq-sec{position:relative;z-index:2;padding:100px 40px;max-width:800px;margin:0 auto}
-  .faq-accordion{margin-top:50px;display:flex;flex-direction:column;gap:16px}
-  .faq-item{border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.65);backdrop-filter:blur(10px);overflow:hidden;transition:all .3s}
-  .faq-item[open]{background:#fff;box-shadow:var(--shadow)}
-  .faq-item summary{padding:20px 24px;font-weight:600;font-size:16px;color:var(--ink);cursor:pointer;user-select:none;outline:none;text-align:left}
-  .faq-content{padding:0 24px 24px;color:var(--ink-2);font-size:14px;line-height:1.6;text-align:left}
+  .hud b{color:var(--ink)}
 
-  /* footer structure */
-  .footer-struct{position:relative;z-index:2;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.9));padding:80px 40px 40px;margin-top:100px}
-  .footer-grid{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:40px;max-width:1280px;margin:0 auto;text-align:left}
-  .footer-col h4{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.15em;color:var(--ink);margin-bottom:20px}
-  .footer-col a{display:block;font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:none;letter-spacing:0;transition:color .2s}
-  .footer-col a:hover{color:var(--sky-2)}
-  .footer-bottom{margin-top:60px;border-top:1px solid var(--line);padding-top:24px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
-  .footer-bottom b{color:var(--sky-2)}
-  @media(max-width:768px){.footer-grid{grid-template-columns:1fr;gap:30px}}
-
-  /* Checkout Modal Styling */
-  .checkout-card{width:min(480px,94vw);padding:34px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(247,251,255,.92));border:1px solid rgba(255,255,255,.9);box-shadow:0 60px 140px -30px rgba(35,80,150,.55);transform:scale(.9) rotateY(-10deg);opacity:0;transition:transform .5s cubic-bezier(.2,.85,.25,1),opacity .35s}
-  .modal-back.on .checkout-card{transform:scale(1) rotateY(0);opacity:1}
-  .checkout-head{margin-bottom:20px;text-align:left}
-  .checkout-head h3{font-size:26px;font-weight:700;color:var(--ink)}
-  .checkout-head p{font-size:14px;color:var(--sky-2);font-family:'JetBrains Mono',monospace}
-  .official-contact-banner{display:flex;flex-direction:column;gap:6px;padding:12px 18px;border-radius:12px;background:rgba(58,160,255,.06);border:1px solid rgba(58,160,255,.15);font-size:12px;color:var(--ink-2);margin-bottom:20px;text-align:left}
-  .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;text-align:left}
-  .form-group label{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-  .form-group input{padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.8);color:var(--ink);font-size:14px;outline:none;transition:border-color .2s}
-  .form-group input:focus{border-color:var(--sky-2)}
-  .input-card-icon{position:relative}
-  .input-card-icon input{width:100%;padding-right:45px}
-  .card-brand{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .checkout-success{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 0;text-align:center;animation:fade .5s forwards}
-  .success-icon{width:64px;height:64px;border-radius:50%;background:var(--mint);color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px -6px rgba(25,195,154,.5);margin-bottom:20px}
-  .checkout-success h4{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px}
-  .checkout-success p{color:var(--ink-2);font-size:14px}
+  /* helper class */
+  .hidden{display:none !important}
 </style>
 </head>
 <body>
@@ -254,7 +217,7 @@
   <div class="grid"></div>
 </div>
 
-<div class="hud tl">SYS / DiffLab<br><b>v2.0</b> · ENGINE ONLINE</div>
+<div class="hud tl">SYS / Docsy<br><b>v2.0</b> · ENGINE ONLINE</div>
 <div class="hud tr">LATENCY · <b>12ms</b><br>NODES · GLOBAL-01</div>
 <div class="hud bl">SCAN · <b id="scanCount">000142</b><br>DIFFS / SECOND</div>
 
@@ -268,18 +231,10 @@
         <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#3aa0ff"/><stop offset="1" stop-color="#5a78ff"/></linearGradient></defs>
       </svg>
     </div>
-    DiffLab
+    Docsy
   </div>
-  <div class="navlinks">
-    <a href="#features">Features</a>
-    <a href="dashboard.html">User Dashboard</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#enterprise">Enterprise</a>
-    <a href="#desktop">Desktop</a>
-    <a href="#legal">Legal</a>
-  </div>
-  <div style="display:flex;gap:14px;align-items:center">
-    <a href="login.html" style="font-size:13px;color:var(--ink-2);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase">Sign in</a>
+  <div style="display:flex;gap:24px;align-items:center">
+    <a href="login.html" style="font-size:13px;color:var(--ink-2);font-family:'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Sign in</a>
     <a class="nav-cta" href="register.html">Get started →</a>
   </div>
 </nav>
@@ -295,11 +250,12 @@
     <span class="word ital"><span class="char">c</span><span class="char">h</span><span class="char">a</span><span class="char">n</span><span class="char">g</span><span class="char">e</span><span class="char">.</span></span>
   </h1>
 
-  <p class="sub">DiffLab analyzes <b>text, PDFs, spreadsheets and CSVs</b> side-by-side — surfacing every addition, deletion, and modification with <b>AI-grade clarity</b>.</p>
+  <p class="sub">Docsy analyzes <b>text, PDFs, spreadsheets and CSVs</b> side-by-side — surfacing every addition, deletion, and modification with <b>AI-grade clarity</b>.</p>
 
   <div class="ctas">
-    <button class="btn btn-p" id="ctaStart"><span>Start comparing free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span></button>
-    <button class="btn btn-s" id="ctaHow"><span><span class="play">▶</span> See how it works</span></button>
+    <a href="register.html" class="btn btn-p" style="text-decoration:none">
+      <span>Start comparing free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+    </a>
   </div>
 
   <div class="stage" id="stage">
@@ -344,18 +300,6 @@
   </div>
 </section>
 
-<!-- Social Proof / Logo Cloud -->
-<section class="social-proof">
-  <p>Trusted by industry leaders worldwide</p>
-  <div class="logo-grid">
-    <span>Stripe</span>
-    <span>Vercel</span>
-    <span>Linear</span>
-    <span>Retool</span>
-    <span>Figma</span>
-  </div>
-</section>
-
 <!-- Features section -->
 <section id="features" class="features">
   <div class="features-head">
@@ -363,6 +307,7 @@
     <p>Surfacing changes in contracts, text files, and spreadsheets in seconds.</p>
   </div>
   <div class="fgrid">
+    <!-- Card 1 -->
     <div class="card">
       <div>
         <div class="num">01</div>
@@ -373,6 +318,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
       </div>
     </div>
+    <!-- Card 2 -->
     <div class="card">
       <div>
         <div class="num">02</div>
@@ -383,6 +329,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
       </div>
     </div>
+    <!-- Card 3 -->
     <div class="card">
       <div>
         <div class="num">03</div>
@@ -393,6 +340,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3zM21 9H3M21 15H3M12 3v18"/></svg>
       </div>
     </div>
+    <!-- Card 4 -->
     <div class="card">
       <div>
         <div class="num">04</div>
@@ -403,249 +351,23 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- Pricing Section -->
-<section id="pricing" class="pricing-sec">
-  <div class="features-head" style="text-align:center;justify-content:center;">
-    <h2 style="max-width:100%;">Pricing plans for <em>every team</em></h2>
-    <p style="margin: 12px auto 0; max-width:540px; color:var(--ink-2)">Get sub-second difference comparisons with secure storage and AI intelligence.</p>
-  </div>
-  <div class="price-grid">
-    <!-- Free Card -->
-    <div class="price-card">
+    <!-- Card 5 -->
+    <div class="card">
       <div>
-        <div class="plan-name">Free</div>
-        <div class="price"><span>$</span>0</div>
-        <div class="desc">Essential tools for individual builders.</div>
-        <ul class="features-list">
-          <li>✓ 10 comparisons / day</li>
-          <li>✓ Text & CSV checkers</li>
-          <li>✓ Standard side-by-side diff</li>
-          <li>✓ Local workspace folder</li>
-        </ul>
+        <div class="num">05</div>
+        <h3>Multilingual Translation</h3>
+        <p>Translate and compare files side-by-side in English, Telugu, Tamil, and Hindi.</p>
       </div>
-      <button class="btn btn-s checkout-btn" data-plan="Free" data-price="$0" style="margin-top:28px; justify-content:center; width:100%;"><span>Get Started</span></button>
-    </div>
-    
-    <!-- Pro Card -->
-    <div class="price-card popular">
-      <div class="badge">Popular</div>
-      <div>
-        <div class="plan-name">Pro</div>
-        <div class="price"><span>$</span>19</div>
-        <div class="desc">Unlock full AI intelligence and unlimited documents.</div>
-        <ul class="features-list">
-          <li>✓ Unlimited PDF & Excel checks</li>
-          <li>✓ Advanced AI semantic analysis</li>
-          <li>✓ Real-time collaboration rooms</li>
-          <li>✓ 24/7 Priority support</li>
-        </ul>
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
       </div>
-      <button class="btn btn-p checkout-btn" data-plan="Pro" data-price="$19/mo" style="margin-top:28px; justify-content:center; width:100%;"><span>Go Pro</span></button>
-    </div>
-
-    <!-- Enterprise Card -->
-    <div class="price-card">
-      <div>
-        <div class="plan-name">Enterprise</div>
-        <div class="price">Custom</div>
-        <div class="desc">Compliance, custom hosting, and team workspace controls.</div>
-        <ul class="features-list">
-          <li>✓ Unlimited custom folders</li>
-          <li>✓ Strict compliance auditing</li>
-          <li>✓ Custom API integration keys</li>
-          <li>✓ Single Sign-On (SSO)</li>
-        </ul>
-      </div>
-      <button class="btn btn-s checkout-btn" data-plan="Enterprise" data-price="Custom" style="margin-top:28px; justify-content:center; width:100%;"><span>Contact Sales</span></button>
     </div>
   </div>
 </section>
 
-<!-- FAQ Section -->
-<section class="faq-sec">
-  <div class="features-head" style="text-align:center;justify-content:center;">
-    <h2>Frequently Asked <em>Questions</em></h2>
-  </div>
-  <div class="faq-accordion">
-    <details class="faq-item" open>
-      <summary>What file formats does DiffLab support?</summary>
-      <div class="faq-content">
-        <p>DiffLab supports plain text files (.txt, .md, code files), PDF documents (.pdf), Excel spreadsheets (.xlsx, .xls), and CSV tables (.csv). All comparisons are fully optimized for their respective schemas.</p>
-      </div>
-    </details>
-    <details class="faq-item">
-      <summary>How secure is my data on DiffLab?</summary>
-      <div class="faq-content">
-        <p>Extremely secure. All uploads are fully encrypted using AES-256 both in transit and at rest. If you are using our local desktop node, your files never leave your computer, processing everything locally offline.</p>
-      </div>
-    </details>
-    <details class="faq-item">
-      <summary>How does the AI semantic compare work?</summary>
-      <div class="faq-content">
-        <p>Instead of just comparing text characters, our AI parses the meaning and context of the changes. For example, it detects if a clause was rephrased, if terms were shifted, or if elements in an image/PDF were visually rearranged.</p>
-      </div>
-    </details>
-    <details class="faq-item">
-      <summary>Can I collaborate with my team in real time?</summary>
-      <div class="faq-content">
-        <p>Yes. Our Live Collaboration rooms let you create workspace rooms and sync text checks in real-time, complete with a live similarity indicator and active participant counter.</p>
-      </div>
-    </details>
-  </div>
-</section>
-
-<!-- Diff Modal -->
-<div class="modal-back" id="diffModal" role="dialog" aria-modal="true" aria-label="DiffLab comparison">
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title"><span class="live"></span> Live Diff Engine · <span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em">REAL-TIME</span></div>
-      <button class="modal-close" id="diffClose" aria-label="Close">×</button>
-    </div>
-    <div class="diff-body">
-      <div class="diff-pane">
-        <h5>ORIGINAL <b id="aLines">0 lines</b></h5>
-        <textarea id="inA" spellcheck="false" placeholder="Paste original text..."></textarea>
-      </div>
-      <div class="diff-pane">
-        <h5>REVISED <b id="bLines">0 lines</b></h5>
-        <textarea id="inB" spellcheck="false" placeholder="Paste revised text..."></textarea>
-      </div>
-    </div>
-    <div class="diff-body" style="border-top:1px solid var(--line)">
-      <div class="diff-pane" style="grid-column:1/-1">
-        <h5>DIFF OUTPUT <b><span id="sAdd" style="color:var(--mint)">+0</span> · <span id="sDel" style="color:var(--rose)">−0</span> · <span id="sEq" style="color:var(--sky-2)">=0</span></b></h5>
-        <div class="diff-out" id="diffOut"></div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <div class="stat add"><b id="fAdd">0</b> added</div>
-      <div class="stat del"><b id="fDel">0</b> removed</div>
-      <div class="stat eq"><b id="fEq">0</b> unchanged</div>
-      <div class="grow"></div>
-      <button class="mini-btn" id="loadSample">Load sample</button>
-      <button class="mini-btn" id="clearAll">Clear</button>
-      <button class="mini-btn primary" id="copyDiff">Copy diff</button>
-    </div>
-  </div>
-</div>
-
-<!-- How it works -->
-<div class="modal-back" id="howModal" role="dialog" aria-modal="true" aria-label="How DiffLab works">
-  <div class="how-card">
-    <button class="modal-close" id="howClose" style="float:right" aria-label="Close">×</button>
-    <h3>How <em>DiffLab</em> works</h3>
-    <p>Three steps. Sub-second results. Pixel-perfect clarity.</p>
-    <div class="how-step" style="animation-delay:.15s"><div class="num">01</div><div><h4>Drop in your files</h4><p>Text, PDFs, spreadsheets, CSV — anything with content.</p></div></div>
-    <div class="how-step" style="animation-delay:.3s"><div class="num">02</div><div><h4>AI analyzes structure</h4><p>Our engine maps every line, cell, and paragraph in milliseconds.</p></div></div>
-    <div class="how-step" style="animation-delay:.45s"><div class="num">03</div><div><h4>See every change</h4><p>Additions, deletions, modifications — color-coded and exportable.</p></div></div>
-    <div style="margin-top:24px;text-align:center"><button class="mini-btn primary" id="howStart">Try it now →</button></div>
-  </div>
-</div>
-
-<!-- Checkout Modal -->
-<div class="modal-back" id="checkoutModal" role="dialog" aria-modal="true" aria-label="Secure checkout">
-  <div class="checkout-card">
-    <button class="modal-close" id="checkoutClose" style="float:right" aria-label="Close">×</button>
-    <div class="checkout-head">
-      <h3>Secure Checkout</h3>
-      <p id="checkoutPlanName">Plan: Pro - $19/mo</p>
-    </div>
-    
-    <div class="checkout-body">
-      <!-- Contact details banner -->
-      <div class="official-contact-banner">
-        <div>📞 Billing Line: <b>+1 (800) 555-DIFF</b></div>
-        <div>✉️ Support: <b>billing@difflab.ai</b></div>
-      </div>
-
-      <form id="paymentForm" onsubmit="return false;">
-        <div class="form-group">
-          <label>Cardholder Name</label>
-          <input type="text" id="cardName" required placeholder="John Doe">
-        </div>
-        
-        <div class="form-group">
-          <label>Card Number</label>
-          <div class="input-card-icon">
-            <input type="text" id="cardNumber" required placeholder="4111 2222 3333 4444" maxlength="19">
-            <span class="card-brand" id="cardBrand">💳</span>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Expiry Date</label>
-            <input type="text" id="cardExpiry" required placeholder="MM/YY" maxlength="5">
-          </div>
-          <div class="form-group">
-            <label>CVV</label>
-            <input type="password" id="cardCvv" required placeholder="***" maxlength="3">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Phone Number</label>
-          <input type="tel" id="checkoutPhone" required placeholder="+1 (555) 019-2834">
-        </div>
-
-        <button type="submit" class="btn btn-p" id="btnPayNow" style="width:100%; padding:14px; margin-top:20px; font-size:12px;">
-          <span>Submit Payment</span>
-        </button>
-      </form>
-      
-      <!-- Success View -->
-      <div class="checkout-success" id="checkoutSuccess">
-        <div class="success-icon">✓</div>
-        <h4>Payment Completed!</h4>
-        <p>Your subscription is active. Welcome to the Pro tier.</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Structured Footer -->
-<footer class="footer-struct">
-  <div class="footer-grid">
-    <div class="footer-col brand-col">
-      <div class="logo" style="margin-bottom:12px">
-        <div class="logo-mark">
-          <svg viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="url(#g1)" stroke-width="1.5"/>
-            <path d="M16 4v24M4 16h24" stroke="#3aa0ff" stroke-width="1" stroke-dasharray="2 3"/>
-            <circle cx="16" cy="16" r="4" fill="url(#g1)"/>
-          </svg>
-        </div>
-        DiffLab
-      </div>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted);text-transform:none;letter-spacing:0;text-align:left;">AI-powered change intelligence for modern legal and enterprise teams.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Product</h4>
-      <a href="#features">Features</a>
-      <a href="#pricing">Pricing</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="collab.html">Live Collab</a>
-    </div>
-    <div class="footer-col">
-      <h4>Resources</h4>
-      <a href="#">Documentation</a>
-      <a href="#">Guides</a>
-      <a href="#">API Status</a>
-      <a href="#">Support Center</a>
-    </div>
-    <div class="footer-col">
-      <h4>Legal</h4>
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Service</a>
-      <a href="#">GDPR DPA</a>
-      <a href="#">Security Audit</a>
-    </div>
-  </div>
+<footer>
   <div class="footer-bottom">
-    DiffLab © 2026. All rights reserved.
+    Docsy © 2026. All rights reserved.
   </div>
 </footer>
 
@@ -929,7 +651,7 @@
     if (gl && ok && visible && docVisible) {
       gl.uniform2f(glLoc.res, canvas.width, canvas.height);
       gl.uniform1f(glLoc.time, t);
-      gl.uniform2f(glLoc.mouse, rx / width, 1 - ry / height);
+      gl.uniform2f(glLoc.mouse, rx / innerWidth, 1 - ry / innerHeight);
       gl.uniform1f(glLoc.iters, TIERS[tier].shaderIters);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
@@ -978,176 +700,6 @@
   }
   requestAnimationFrame(frame);
   applyTier();
-
-  // ---------- Live Diff Modal Logic ----------
-  const dModal = document.getElementById('diffModal');
-  const dClose = document.getElementById('diffClose');
-  const ctaStart = document.getElementById('ctaStart');
-  const ctaHow = document.getElementById('ctaHow');
-  const hModal = document.getElementById('howModal');
-  const hClose = document.getElementById('howClose');
-  const howStart = document.getElementById('howStart');
-  const inA = document.getElementById('inA'), inB = document.getElementById('inB');
-  const diffOut = document.getElementById('diffOut');
-
-  // ---------- Checkout Modal Logic ----------
-  const cModal = document.getElementById('checkoutModal');
-  const cClose = document.getElementById('checkoutClose');
-  const checkoutPlanName = document.getElementById('checkoutPlanName');
-  const paymentForm = document.getElementById('paymentForm');
-  const checkoutSuccess = document.getElementById('checkoutSuccess');
-  const btnPayNow = document.getElementById('btnPayNow');
-
-  function showModal(m) { m.classList.add('on'); }
-  function hideModal(m) { m.classList.remove('on'); }
-
-  ctaStart.addEventListener('click', () => showModal(dModal));
-  dClose.addEventListener('click', () => hideModal(dModal));
-  ctaHow.addEventListener('click', () => showModal(hModal));
-  hClose.addEventListener('click', () => hideModal(hModal));
-  howStart.addEventListener('click', () => { hideModal(hModal); showModal(dModal); });
-
-  // Handle pricing button clicks
-  document.querySelectorAll('.checkout-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const plan = btn.getAttribute('data-plan');
-      const price = btn.getAttribute('data-price');
-      checkoutPlanName.textContent = `Plan: ${plan} - ${price}`;
-      
-      // Reset form view
-      paymentForm.style.display = 'block';
-      checkoutSuccess.style.display = 'none';
-      btnPayNow.disabled = false;
-      btnPayNow.querySelector('span').textContent = 'Submit Payment';
-      
-      showModal(cModal);
-    });
-  });
-
-  cClose.addEventListener('click', () => hideModal(cModal));
-
-  // Card details formatting
-  const cardInput = document.getElementById('cardNumber');
-  const cardBrand = document.getElementById('cardBrand');
-  cardInput.addEventListener('input', e => {
-    let val = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    let formatted = '';
-    for (let i = 0; i < val.length; i++) {
-      if (i > 0 && i % 4 === 0) formatted += ' ';
-      formatted += val[i];
-    }
-    e.target.value = formatted;
-    
-    if (val.startsWith('4')) cardBrand.textContent = '💳 Visa';
-    else if (val.startsWith('5')) cardBrand.textContent = '💳 MasterCard';
-    else if (val.startsWith('3')) cardBrand.textContent = '💳 AmEx';
-    else cardBrand.textContent = '💳';
-  });
-
-  const expiryInput = document.getElementById('cardExpiry');
-  expiryInput.addEventListener('input', e => {
-    let val = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    if (val.length >= 2) {
-      e.target.value = val.substring(0,2) + '/' + val.substring(2,4);
-    } else {
-      e.target.value = val;
-    }
-  });
-
-  paymentForm.addEventListener('submit', () => {
-    btnPayNow.disabled = true;
-    btnPayNow.querySelector('span').textContent = 'Processing Secure Payment...';
-    
-    setTimeout(() => {
-      paymentForm.style.display = 'none';
-      checkoutSuccess.style.display = 'flex';
-    }, 2000);
-  });
-
-  // Close modals on clicking outside card
-  window.addEventListener('click', e => {
-    if (e.target === dModal) hideModal(dModal);
-    if (e.target === hModal) hideModal(hModal);
-    if (e.target === cModal) hideModal(cModal);
-  });
-
-  // Client Side Diff Checker Engine
-  function runDiff() {
-    const valA = inA.value;
-    const valB = inB.value;
-    const linesA = valA.split('\n');
-    const linesB = valB.split('\n');
-    
-    document.getElementById('aLines').textContent = `${linesA.length} lines`;
-    document.getElementById('bLines').textContent = `${linesB.length} lines`;
-
-    diffOut.innerHTML = '';
-    let i = 0, j = 0;
-    let add = 0, del = 0, eq = 0;
-
-    while (i < linesA.length || j < linesB.length) {
-      if (i < linesA.length && j < linesB.length) {
-        if (linesA[i] === linesB[j]) {
-          diffOut.innerHTML += `<div class="diff-row eq"><span class="n">${i+1}</span><span class="s"> </span><span class="c">${esc(linesA[i])}</span></div>`;
-          i++; j++; eq++;
-        } else {
-          // Lookahead for simple matches
-          if (linesA.slice(i).indexOf(linesB[j]) > -1) {
-            diffOut.innerHTML += `<div class="diff-row del"><span class="n">${i+1}</span><span class="s">−</span><span class="c">${esc(linesA[i])}</span></div>`;
-            i++; del++;
-          } else {
-            diffOut.innerHTML += `<div class="diff-row add"><span class="n">${j+1}</span><span class="s">+</span><span class="c">${esc(linesB[j])}</span></div>`;
-            j++; add++;
-          }
-        }
-      } else if (i < linesA.length) {
-        diffOut.innerHTML += `<div class="diff-row del"><span class="n">${i+1}</span><span class="s">−</span><span class="c">${esc(linesA[i])}</span></div>`;
-        i++; del++;
-      } else {
-        diffOut.innerHTML += `<div class="diff-row add"><span class="n">${j+1}</span><span class="s">+</span><span class="c">${esc(linesB[j])}</span></div>`;
-        j++; add++;
-      }
-    }
-
-    document.getElementById('sAdd').textContent = `+${add}`;
-    document.getElementById('sDel').textContent = `−${del}`;
-    document.getElementById('sEq').textContent = `=${eq}`;
-    document.getElementById('fAdd').textContent = add;
-    document.getElementById('fDel').textContent = del;
-    document.getElementById('fEq').textContent = eq;
-  }
-
-  function esc(s) {
-    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  inA.addEventListener('input', runDiff);
-  inB.addEventListener('input', runDiff);
-
-  // Clear & sample inputs
-  document.getElementById('clearAll').addEventListener('click', () => {
-    inA.value = ''; inB.value = ''; runDiff();
-  });
-
-  const sampleA = `// Welcome to DiffLab\nconst a = 10;\nconst b = 20;\nconsole.log(a + b);`;
-  const sampleB = `// Welcome to DiffLab\nconst a = 12; // Edited\nconst b = 20;\nconsole.log(a + b);\nconsole.log("Diff Complete!"); // Added`;
-  
-  document.getElementById('loadSample').addEventListener('click', () => {
-    inA.value = sampleA; inB.value = sampleB; runDiff();
-  });
-
-  document.getElementById('copyDiff').addEventListener('click', () => {
-    const textLines = [];
-    document.querySelectorAll('#diffOut .diff-row').forEach(row => {
-      const sign = row.querySelector('.s').textContent;
-      const content = row.querySelector('.c').textContent;
-      textLines.push((sign ? sign + ' ' : '') + content);
-    });
-    navigator.clipboard.writeText(textLines.join('\n')).then(() => {
-      alert('Diff output copied to clipboard!');
-    });
-  });
-
 })();
 </script>
 </body>

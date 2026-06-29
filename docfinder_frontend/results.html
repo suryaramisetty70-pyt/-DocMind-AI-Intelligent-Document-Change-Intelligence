@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>DocMind AI — Diff Results</title>
+<title>Docsy — Diff Results</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -173,7 +173,7 @@
 <body>
 
 <header class="header">
-  <div class="logo">DocMind <span>AI</span></div>
+  <div class="logo">Docsy</div>
   <div style="display:flex; gap:10px;">
     <button class="back-btn" id="downloadPdfBtn" onclick="downloadReport('pdf')" style="background:var(--accent); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export PDF Report</button>
     <button class="back-btn" id="downloadExcelBtn" onclick="downloadReport('excel')" style="background:var(--green); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export Excel Report</button>
@@ -611,7 +611,7 @@ async function downloadReport(type) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `DocMind_Report_${comparisonId}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
+    a.download = `Docsy_Report_${comparisonId}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
     document.body.appendChild(a);
     a.click();
     a.remove();

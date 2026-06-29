@@ -125,7 +125,7 @@ async def lifespan(app: FastAPI):
             f_web = res_web.scalar_one()
             
             default_apps = [
-                AppEntry(title="DocMind AI", url="/difflab.html", icon_emoji="📄", description="AI document semantic difference engine.", folder_id=f_ai.id),
+                AppEntry(title="Docsy", url="/difflab.html", icon_emoji="📄", description="AI document semantic difference engine.", folder_id=f_ai.id),
                 AppEntry(title="Call Dialer", url="https://menmozhicallcampaign-1.onrender.com", icon_emoji="📞", description="Campaign dialer and call logs viewer.", folder_id=f_web.id)
             ]
             session.add_all(default_apps)
