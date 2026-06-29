@@ -3,330 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vennila AI Studio Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Vennila AI — Projects</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #030712;
-            --card-bg: rgba(17, 24, 39, 0.65);
-            --border: rgba(255, 255, 255, 0.08);
-            --text-light: #f3f4f6;
-            --text-muted: #9ca3af;
-            --blue-glow: rgba(59, 130, 246, 0.4);
-            --purple-glow: rgba(139, 92, 246, 0.4);
-        }
         body {
             background: var(--bg);
-            color: var(--text-light);
-            font-family: 'Space Grotesk', system-ui, sans-serif;
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
             min-height: 100vh;
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
-        /* Ambient Glows */
-        .glow {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(140px);
-            opacity: 0.18;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .glow-1 { width: 500px; height: 500px; background: #3b82f6; top: -10%; left: -10%; }
-        .glow-2 { width: 500px; height: 500px; background: #ec4899; bottom: -10%; right: -10%; }
-
-        /* Grid lines background */
-        .grid-bg {
-            position: absolute;
-            inset: -20%;
-            background: 
-                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px) 0 0/60px 60px,
-                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px) 0 0/60px 60px;
-            transform: perspective(1000px) rotateX(60deg) translateZ(-100px);
-            mask-image: radial-gradient(ellipse at 50% 50%, #000 40%, transparent 80%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* Top Header Control Bar */
+        /* ─── Top Header ─── */
         header {
-            height: 70px;
-            background: rgba(17, 24, 39, 0.95);
+            height: 64px;
+            background: #fff;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 1.5rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
             z-index: 100;
-            backdrop-filter: blur(12px);
         }
-
         .logo {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: -0.02em;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #0f172a;
+            letter-spacing: -0.03em;
             cursor: pointer;
         }
-        .logo-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #3b82f6;
-            box-shadow: 0 0 12px #3b82f6;
+        .logo-mark {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 8px;
         }
 
-        /* Dynamic Switcher Tabs inside header */
+        /* Dynamic tabs in header */
         .tabs-wrapper {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             max-width: 50%;
             overflow-x: auto;
         }
         .tabs-wrapper::-webkit-scrollbar { display: none; }
         .tabs {
             display: flex;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.04);
-            padding: 4px;
+            gap: 4px;
+            background: var(--bg);
+            padding: 3px;
             border-radius: 99px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
         }
         .tab-btn {
-            padding: 7px 16px;
+            padding: 6px 14px;
             border-radius: 99px;
-            font-size: 12.5px;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: var(--text-muted);
+            color: var(--muted);
             background: transparent;
             border: 0;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             white-space: nowrap;
         }
-        .tab-btn:hover { color: #fff; }
+        .tab-btn:hover { color: var(--text); }
         .tab-btn.active {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background: var(--accent);
             color: #fff;
-            box-shadow: 0 4px 15px -4px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 2px 8px -2px rgba(59, 130, 246, 0.35);
         }
 
         .controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
-        .btn {
-            padding: 8px 16px;
+        .hdr-btn {
+            padding: 7px 14px;
             border-radius: 10px;
-            font-size: 12.5px;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.05);
-            color: #f3f4f6;
+            background: #fff;
+            color: var(--text);
             display: inline-flex;
             align-items: center;
             gap: 6px;
             transition: all 0.2s;
         }
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
+        .hdr-btn:hover {
+            background: var(--bg);
+            border-color: var(--accent);
+            color: var(--accent);
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border: 0;
-            box-shadow: 0 4px 12px -3px rgba(59, 130, 246, 0.4);
+        .hdr-btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
         }
-        .btn-primary:hover { opacity: 0.95; }
+        .hdr-btn-primary:hover {
+            opacity: 0.9;
+        }
 
-        /* Launchpad Portal screen styling */
+        /* ─── Launchpad (Folder Grid View) ─── */
         .launchpad {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 80px 20px;
-            z-index: 10;
-            position: relative;
+            padding: 3rem 1.5rem 4rem;
         }
-        .launchpad-active {
-            display: flex !important;
-        }
-        .launchpad.hidden {
-            display: none !important;
-        }
+        .launchpad.hidden { display: none !important; }
 
         .launchpad-head {
-            margin-bottom: 50px;
+            margin-bottom: 2.5rem;
             text-align: center;
         }
         .launchpad-head h1 {
-            font-size: clamp(2.5rem, 5vw, 3.8rem);
-            font-weight: 700;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
             letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #fff, #9ca3af);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
         .launchpad-head p {
-            color: var(--text-muted);
-            font-size: 16px;
+            color: var(--muted);
+            font-size: 0.95rem;
         }
 
-        /* Folders layout */
+        /* Folder grid */
         .folders-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.25rem;
             width: 100%;
-            max-width: 1100px;
+            max-width: 960px;
         }
 
-        /* iPad Style Folder styling */
         .folder-card {
-            background: var(--card-bg);
+            background: #fff;
             border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 24px;
+            border-radius: 16px;
+            padding: 1.5rem;
             cursor: pointer;
-            backdrop-filter: blur(16px);
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
-            min-height: 220px;
+            transition: all 0.25s;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            gap: 1rem;
         }
         .folder-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 20px 40px -15px var(--blue-glow);
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.25);
+            box-shadow: 0 8px 24px -8px rgba(59, 130, 246, 0.12);
         }
 
-        /* Folder icons preview thumbnail grid (iPad Style) */
+        /* Mini icon preview grid inside folder card */
         .folder-preview-grid {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 64px;
+            height: 64px;
+            background: var(--bg);
+            border-radius: 14px;
+            border: 1px solid var(--border);
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            padding: 8px;
-            margin-bottom: 16px;
+            gap: 3px;
+            padding: 6px;
         }
         .folder-preview-item {
-            font-size: 12px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            background: rgba(59, 130, 246, 0.04);
         }
 
         .folder-info h3 {
-            font-size: 20px;
+            font-size: 1rem;
             font-weight: 700;
-            color: #fff;
-            margin-bottom: 6px;
+            color: #0f172a;
+            margin-bottom: 2px;
         }
         .folder-info p {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.4;
+            font-size: 0.8rem;
+            color: var(--muted);
         }
 
-        /* Expanded Folder Overlay (iOS/Google folder screen style) */
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            grid-column: 1 / -1;
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state h3 { font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+        .empty-state p { color: var(--muted); font-size: 0.9rem; }
+
+        /* ─── Folder Popup Overlay ─── */
         .folder-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(3, 7, 18, 0.92);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(6px);
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
         }
         .folder-expanded-card {
-            width: min(540px, 94vw);
-            background: var(--card-bg);
+            width: min(480px, 92vw);
+            background: #fff;
             border: 1px solid var(--border);
-            border-radius: 36px;
-            padding: 40px;
+            border-radius: 24px;
+            padding: 2rem;
             text-align: center;
-            box-shadow: 0 25px 70px -10px rgba(0,0,0,0.6);
-            animation: folderPop 0.35s cubic-bezier(0.2, 0.85, 0.25, 1);
-            position: relative;
+            box-shadow: 0 20px 60px -15px rgba(15, 23, 42, 0.2);
+            animation: modalIn 0.3s cubic-bezier(0.2, 0.85, 0.25, 1);
         }
-        @keyframes folderPop {
-            from { transform: scale(0.92); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
         .folder-expanded-card h2 {
-            font-size: 28px;
+            font-size: 1.35rem;
             font-weight: 700;
-            margin-bottom: 30px;
-            color: #fff;
+            margin-bottom: 1.5rem;
+            color: #0f172a;
         }
         .app-icons-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            max-height: 380px;
+            gap: 1rem;
+            max-height: 340px;
             overflow-y: auto;
-            padding: 10px;
+            padding: 8px;
         }
         .app-icon-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            padding: 12px;
-            border-radius: 16px;
+            padding: 12px 8px;
+            border-radius: 14px;
             transition: all 0.2s;
         }
         .app-icon-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: scale(1.05);
+            background: var(--bg);
         }
         .app-icon-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            font-size: 28px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 20px -8px rgba(0,0,0,0.3);
-            transition: box-shadow 0.2s;
+            transition: all 0.2s;
         }
         .app-icon-item:hover .app-icon-circle {
-            box-shadow: 0 10px 25px -4px rgba(59, 130, 246, 0.4);
-            border-color: rgba(59, 130, 246, 0.4);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.2);
         }
         .app-icon-label {
-            font-size: 12.5px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: var(--text-light);
+            color: var(--text);
             text-align: center;
             max-width: 80px;
             overflow: hidden;
@@ -334,16 +290,14 @@
             white-space: nowrap;
         }
 
-        /* Workspace Player Screen */
+        /* ─── Workspace Player ─── */
         .workspace {
             flex: 1;
             position: relative;
-            background: #030712;
+            background: var(--bg);
             display: none;
         }
-        .workspace-active {
-            display: block !important;
-        }
+        .workspace-active { display: block !important; }
         iframe {
             position: absolute;
             inset: 0;
@@ -359,121 +313,142 @@
             pointer-events: auto;
             z-index: 10;
         }
-
-        /* Loader */
         .loader {
             position: absolute;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #030712;
+            background: var(--bg);
             z-index: 5;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-top-color: #3b82f6;
+        .load-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Modals */
+        /* ─── Modals ─── */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(6px);
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
         }
         .modal-card {
-            width: min(460px, 94vw);
-            background: #0f172a;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: min(440px, 92vw);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            box-shadow: 0 20px 60px -15px rgba(15, 23, 42, 0.2);
             animation: modalIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
         }
         .modal-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 1.25rem;
+        }
+        .modal-head h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
         }
         .modal-close {
             background: transparent;
             border: 0;
-            color: var(--text-muted);
-            font-size: 24px;
+            color: var(--muted);
+            font-size: 1.5rem;
             cursor: pointer;
+            line-height: 1;
         }
+        .modal-close:hover { color: var(--error); }
+
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            margin-bottom: 16px;
-            text-align: left;
+            gap: 5px;
+            margin-bottom: 1rem;
         }
         .form-group label {
-            font-size: 12px;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: var(--text-muted);
+            color: var(--muted);
         }
-        .form-group input, .form-group select, .form-group textarea {
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.6rem 0.85rem;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: var(--text);
+            font-size: 0.88rem;
             outline: none;
-            font-size: 14px;
+            transition: border-color 0.2s;
         }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: #3b82f6;
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
         }
 
         .manage-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
         }
         .manage-row:last-child { border-bottom: 0; }
-        .manage-row span { font-size: 14.5px; }
+        .manage-row span { font-size: 0.88rem; }
         .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 11px;
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.12); }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            background: var(--accent);
+            color: #fff;
+            border: 0;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .submit-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
-    <div class="grid-bg"></div>
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
-
     <header>
         <div class="logo" onclick="showLaunchpad()">
-            <div class="logo-dot"></div>
-            Vennila AI Studio
+            <div class="logo-mark"></div>
+            Vennila AI
         </div>
         
         <div class="tabs-wrapper">
@@ -483,17 +458,17 @@
         </div>
 
         <div class="controls">
-            <button class="btn" onclick="openModal('manageModal')">⚙️ Manage Apps</button>
-            <button class="btn btn-primary" onclick="openModal('submitModal')">➕ Submit App</button>
+            <button class="hdr-btn" onclick="openModal('manageModal')">⚙️ Manage</button>
+            <button class="hdr-btn hdr-btn-primary" onclick="openModal('submitModal')">➕ Add Project</button>
         </div>
     </header>
 
     <!-- 1. LAUNCHPAD PORTAL (FOLDER VIEW) -->
-    <div class="launchpad launchpad-active" id="launchpadView">
-        <header class="launchpad-head">
-            <h1>Vennila AI Launcher</h1>
-            <p>Access and run all your digital projects directly inside a single webpage.</p>
-        </header>
+    <div class="launchpad" id="launchpadView">
+        <div class="launchpad-head">
+            <h1>📂 My Projects</h1>
+            <p>Click a folder to view and launch your projects.</p>
+        </div>
 
         <main class="folders-grid" id="folderGrid">
             <!-- Folders rendered dynamically -->
@@ -503,8 +478,8 @@
     <!-- 2. WORKSPACE PLAYER VIEW -->
     <div class="workspace" id="workspaceView">
         <div class="loader" id="loader">
-            <div class="spinner"></div>
-            <p style="font-size: 13px; color: #9ca3af; letter-spacing: 0.05em;">LOADING APP...</p>
+            <div class="load-spinner"></div>
+            <p style="font-size: 0.82rem; color: var(--muted); letter-spacing: 0.02em;">Loading project...</p>
         </div>
         <div id="iframeContainer">
             <!-- Dynamically generated iframes -->
@@ -514,7 +489,7 @@
     <!-- FOLDER POPUP DIALOG -->
     <div class="folder-overlay" id="folderOverlay" onclick="closeFolderOverlay(event)">
         <div class="folder-expanded-card">
-            <h2 id="folderTitle">AI Assistants</h2>
+            <h2 id="folderTitle">Projects</h2>
             <div class="app-icons-grid" id="appGrid">
                 <!-- App icons show here -->
             </div>
@@ -525,7 +500,7 @@
     <div class="modal-overlay" id="submitModal">
         <div class="modal-card">
             <div class="modal-head">
-                <h3>Submit Project Link</h3>
+                <h3>Add a Project</h3>
                 <button class="modal-close" onclick="closeModal('submitModal')">×</button>
             </div>
             <form id="submitForm" onsubmit="submitNewApp(event)">
@@ -534,8 +509,8 @@
                     <input type="text" id="appName" required placeholder="e.g. WhatsApp Auto-Agent">
                 </div>
                 <div class="form-group">
-                    <label>Render / Deployment URL</label>
-                    <input type="url" id="appUrl" required placeholder="https://whatsapp-agent.onrender.com">
+                    <label>Deployment URL</label>
+                    <input type="url" id="appUrl" required placeholder="https://your-project.onrender.com">
                 </div>
                 <div class="form-group">
                     <label>Emoji Icon</label>
@@ -549,11 +524,9 @@
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="appDesc" placeholder="Brief summary of the application..." rows="3"></textarea>
+                    <textarea id="appDesc" placeholder="Brief summary of the project..." rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; margin-top:10px;">
-                    Submit Project
-                </button>
+                <button type="submit" class="submit-btn">Submit Project</button>
             </form>
         </div>
     </div>
@@ -562,10 +535,10 @@
     <div class="modal-overlay" id="manageModal">
         <div class="modal-card">
             <div class="modal-head">
-                <h3>Manage Apps</h3>
+                <h3>Manage Projects</h3>
                 <button class="modal-close" onclick="closeModal('manageModal')">×</button>
             </div>
-            <div id="manageAppList" style="max-height:300px; overflow-y:auto; padding-right:6px;">
+            <div id="manageAppList" style="max-height:300px; overflow-y:auto;">
                 <!-- List of deletion hooks -->
             </div>
         </div>
@@ -586,6 +559,8 @@
                 populateCategoryDropdown();
             } catch (err) {
                 console.error("Error fetching workspace portal data:", err);
+                // Show empty state
+                renderFolders();
             }
         }
 
@@ -594,12 +569,23 @@
             const grid = document.getElementById('folderGrid');
             grid.innerHTML = '';
 
+            if (!workspaceData || workspaceData.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📂</div>
+                        <h3>No projects yet</h3>
+                        <p>Click "Add Project" to link your first deployment.</p>
+                    </div>
+                `;
+                return;
+            }
+
             workspaceData.forEach(folder => {
                 const card = document.createElement('div');
                 card.className = 'folder-card';
                 card.onclick = () => openFolder(folder.id);
 
-                // Build iPad-style folder icons preview
+                // Build mini icon preview grid
                 let previewHTML = '<div class="folder-preview-grid">';
                 for (let i = 0; i < 9; i++) {
                     const app = folder.apps[i];
@@ -608,12 +594,10 @@
                 previewHTML += '</div>';
 
                 card.innerHTML = `
-                    <div>
-                        ${previewHTML}
-                        <div class="folder-info">
-                            <h3>${folder.icon} ${folder.name}</h3>
-                            <p>${folder.apps.length} project${folder.apps.length === 1 ? '' : 's'} linked</p>
-                        </div>
+                    ${previewHTML}
+                    <div class="folder-info">
+                        <h3>${folder.icon} ${folder.name}</h3>
+                        <p>${folder.apps.length} project${folder.apps.length === 1 ? '' : 's'}</p>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -630,7 +614,7 @@
             grid.innerHTML = '';
 
             if (folder.apps.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; color:var(--text-muted); padding:30px 0;">No apps in this folder yet.</div>';
+                grid.innerHTML = '<div style="grid-column:1/-1; color:var(--muted); padding:2rem 0;">No projects in this folder yet.</div>';
             } else {
                 folder.apps.forEach(app => {
                     const item = document.createElement('div');
@@ -693,6 +677,10 @@
             }
         }
 
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
         // Render header tab list
         function renderTabs() {
             const list = document.getElementById('tabList');
@@ -704,7 +692,7 @@
                 btn.onclick = () => selectTab(tab.id);
                 btn.innerHTML = `
                     <span>${tab.icon_emoji} ${tab.title}</span>
-                    <span style="font-size:12px; font-weight:700; margin-left:6px;" onclick="closeTab(event, '${tab.id}')">×</span>
+                    <span style="font-size:12px; font-weight:700; margin-left:4px;" onclick="closeTab(event, '${tab.id}')">×</span>
                 `;
                 list.appendChild(btn);
             });
@@ -765,7 +753,7 @@
                 const response = await fetch('/api/portal/apps', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: json = JSON.stringify({ title, url, icon_emoji, folder_id, description })
+                    body: JSON.stringify({ title, url, icon_emoji, folder_id, description })
                 });
                 
                 if (response.ok) {
@@ -805,7 +793,7 @@
                     const row = document.createElement('div');
                     row.className = 'manage-row';
                     row.innerHTML = `
-                        <span>${app.icon_emoji} <b>${app.title}</b> <span style="font-size:11px; color:var(--text-muted)">(${folder.name})</span></span>
+                        <span>${app.icon_emoji} <b>${app.title}</b> <span style="font-size:0.72rem; color:var(--muted)">(${folder.name})</span></span>
                         <button class="btn-danger" onclick="deleteApp(${app.id})">Delete</button>
                     `;
                     list.appendChild(row);
@@ -813,12 +801,12 @@
             });
 
             if (count === 0) {
-                list.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;">No applications found.</p>';
+                list.innerHTML = '<p style="color:var(--muted); text-align:center; padding:1.5rem;">No projects found.</p>';
             }
         }
 
         async function deleteApp(appId) {
-            if (!confirm("Are you sure you want to delete this app entry?")) return;
+            if (!confirm("Are you sure you want to delete this project?")) return;
             try {
                 const response = await fetch(`/api/portal/apps/${appId}`, { method: 'DELETE' });
                 if (response.ok) {
