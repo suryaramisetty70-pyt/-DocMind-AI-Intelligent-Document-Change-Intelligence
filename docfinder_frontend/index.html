@@ -9,8 +9,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #030712;
-            --blue-glow: rgba(59, 130, 246, 0.45);
-            --pink-glow: rgba(236, 72, 153, 0.45);
             --text-light: #f3f4f6;
             --text-muted: #9ca3af;
         }
@@ -23,8 +21,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
             position: relative;
+            padding: 60px 20px;
         }
 
         /* Animated grid background */
@@ -45,33 +44,19 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(120px);
-            opacity: 0.25;
+            opacity: 0.2;
             z-index: 1;
             pointer-events: none;
-            transition: all 0.8s ease;
         }
-        .glow-left {
-            width: 450px;
-            height: 450px;
-            background: #3b82f6;
-            top: 10%;
-            left: 5%;
-        }
-        .glow-right {
-            width: 450px;
-            height: 450px;
-            background: #ec4899;
-            bottom: 10%;
-            right: 5%;
-        }
+        .glow-1 { width: 500px; height: 500px; background: #3b82f6; top: -10%; left: -10%; }
+        .glow-2 { width: 500px; height: 500px; background: #ec4899; bottom: -10%; right: -10%; }
 
         /* Portal Content wrapper */
         .portal-wrapper {
             position: relative;
             z-index: 10;
             width: 100%;
-            max-width: 1100px;
-            padding: 40px 20px;
+            max-width: 1200px;
             text-align: center;
         }
 
@@ -95,18 +80,19 @@
             margin: 0 auto;
         }
 
-        /* Cards Layout */
+        /* Responsive Auto-Grid Layout for Projects */
         .cards-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
             margin-top: 30px;
+            width: 100%;
         }
 
         .portal-card {
             position: relative;
-            padding: 45px 35px;
-            border-radius: 28px;
+            padding: 36px 28px;
+            border-radius: 24px;
             background: rgba(17, 24, 39, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(16px);
@@ -118,7 +104,7 @@
             justify-content: space-between;
             align-items: flex-start;
             text-align: left;
-            min-height: 380px;
+            min-height: 340px;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
@@ -128,7 +114,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.06), transparent 50%);
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.05), transparent 50%);
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -136,54 +122,47 @@
             opacity: 1;
         }
 
-        /* Custom Hover Border Glows */
-        .card-left:hover {
+        .portal-card:hover {
             transform: translateY(-8px);
-            border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: 0 30px 60px -15px var(--blue-glow);
         }
-        .card-right:hover {
-            transform: translateY(-8px);
-            border-color: rgba(236, 72, 153, 0.4);
-            box-shadow: 0 30px 60px -15px var(--pink-glow);
-        }
+
+        /* Unique Glow Themes */
+        .glow-blue:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 20px 50px -10px rgba(59, 130, 246, 0.35); }
+        .glow-pink:hover { border-color: rgba(236, 72, 153, 0.4); box-shadow: 0 20px 50px -10px rgba(236, 72, 153, 0.35); }
+        .glow-purple:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 20px 50px -10px rgba(139, 92, 246, 0.35); }
+        .glow-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 20px 50px -10px rgba(6, 182, 212, 0.35); }
 
         /* Card Content details */
         .card-badge {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.15em;
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 99px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: var(--text-muted);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+            display: inline-block;
         }
-        .card-left:hover .card-badge {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-        }
-        .card-right:hover .card-badge {
-            background: rgba(236, 72, 153, 0.15);
-            border-color: rgba(236, 72, 153, 0.3);
-            color: #f472b6;
-        }
+        .glow-blue:hover .card-badge { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #60a5fa; }
+        .glow-pink:hover .card-badge { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.3); color: #f472b6; }
+        .glow-purple:hover .card-badge { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.3); color: #c084fc; }
+        .glow-cyan:hover .card-badge { background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3); color: #22d3ee; }
 
         .portal-card h2 {
-            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-size: 1.8rem;
             font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             color: #fff;
         }
         .portal-card p {
             color: var(--text-muted);
-            font-size: 14.5px;
+            font-size: 13.5px;
             line-height: 1.6;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .action-arrow {
@@ -191,28 +170,29 @@
             align-items: center;
             gap: 10px;
             font-weight: 600;
-            font-size: 13.5px;
+            font-size: 12px;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             color: #fff;
             transition: all 0.3s;
         }
         .portal-card:hover .action-arrow {
-            gap: 15px;
+            gap: 14px;
         }
-        .card-left:hover .action-arrow { color: #60a5fa; }
-        .card-right:hover .action-arrow { color: #f472b6; }
+        .glow-blue:hover .action-arrow { color: #60a5fa; }
+        .glow-pink:hover .action-arrow { color: #f472b6; }
+        .glow-purple:hover .action-arrow { color: #c084fc; }
+        .glow-cyan:hover .action-arrow { color: #22d3ee; }
 
         footer {
-            margin-top: 60px;
+            margin-top: 80px;
             font-size: 12px;
             color: var(--text-muted);
             letter-spacing: 0.05em;
         }
 
-        @media(max-width: 768px) {
+        @media(max-width: 600px) {
             .cards-container { grid-template-columns: 1fr; }
-            .portal-card { min-height: 320px; }
             body { padding: 40px 10px; }
         }
     </style>
@@ -220,8 +200,8 @@
 <body>
 
     <div class="grid-bg"></div>
-    <div class="glow glow-left" id="glowLeft"></div>
-    <div class="glow glow-right" id="glowRight"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
 
     <div class="portal-wrapper">
         <header class="portal-header">
@@ -229,30 +209,57 @@
             <p>Select a platform workspace below to get started.</p>
         </header>
 
+        <!-- Dynamic Grid Workspace -->
         <main class="cards-container">
-            <!-- Left Card: DocMind AI -->
-            <a href="/difflab.html" class="portal-card card-left">
+            
+            <!-- Project 1: DocMind AI -->
+            <a href="/difflab.html" class="portal-card glow-blue">
                 <div>
-                    <span class="card-badge">Document Change Intelligence</span>
+                    <span class="card-badge">Change Intelligence</span>
                     <h2>DocMind AI</h2>
-                    <p>AI-powered document semantic difference engine. Audits, highlights, and compares PDFs, spreadsheets, and CSV folders in real time.</p>
+                    <p>AI-powered document semantic difference engine. Compare PDFs, spreadsheets, and CSV folders in real time.</p>
                 </div>
                 <div class="action-arrow">
-                    Open Workspace <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Open Workspace <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
             </a>
 
-            <!-- Right Card: Other Project -->
-            <a href="https://other-project.onrender.com" class="portal-card card-right">
+            <!-- Project 2: Call Campaign Manager -->
+            <a href="https://other-project.onrender.com" class="portal-card glow-pink">
                 <div>
-                    <span class="card-badge">Custom Services</span>
-                    <h2>Vennila Project</h2>
-                    <p>Interactive campaign workspace, active nodes tracker, and custom tool suites designed to elevate operations.</p>
+                    <span class="card-badge">Telephony API</span>
+                    <h2>Call Dialer</h2>
+                    <p>Integrated dialer campaigns, automated phone queue dashboards, and visual call routing analytics nodes.</p>
                 </div>
                 <div class="action-arrow">
-                    Open Platform <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Open Dialer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
             </a>
+
+            <!-- Project 3: Database Hub (Placeholder) -->
+            <a href="#" class="portal-card glow-purple" onclick="alert('Database workspace setup is currently in draft mode.'); return false;">
+                <div>
+                    <span class="card-badge">Storage Audit</span>
+                    <h2>Data Studio</h2>
+                    <p>Visual database schema manager and query logs inspector. Map SQL instances directly to live visual tables.</p>
+                </div>
+                <div class="action-arrow">
+                    Configure Storage <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </a>
+
+            <!-- Project 4: Custom Workspace (Placeholder) -->
+            <a href="#" class="portal-card glow-cyan" onclick="alert('Custom workspace configuration is under development.'); return false;">
+                <div>
+                    <span class="card-badge">Add Workspace</span>
+                    <h2>Workspace 4</h2>
+                    <p>Click here to link and add new project directories, webhooks, or custom dashboard configurations.</p>
+                </div>
+                <div class="action-arrow">
+                    Edit Portal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </a>
+
         </main>
 
         <footer>
