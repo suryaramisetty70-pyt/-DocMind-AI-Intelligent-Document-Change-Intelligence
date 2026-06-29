@@ -3,281 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vennila AI Portal</title>
+    <title>Vennila AI Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #030712;
-            --text-light: #f3f4f6;
-            --text-muted: #9ca3af;
-        }
         body {
-            background: var(--bg);
-            color: var(--text-light);
+            background: #030712;
+            color: #f3f4f6;
             font-family: 'Space Grotesk', sans-serif;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-            position: relative;
-            padding: 60px 20px;
-        }
-
-        /* Animated grid background */
-        .grid-bg {
-            position: absolute;
-            inset: -20%;
-            background: 
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/60px 60px,
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/60px 60px;
-            transform: perspective(1000px) rotateX(60deg) translateZ(-100px);
-            mask-image: radial-gradient(ellipse at 50% 50%, #000 40%, transparent 80%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* Ambient glows */
-        .glow {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.2;
-            z-index: 1;
-            pointer-events: none;
-        }
-        .glow-1 { width: 500px; height: 500px; background: #3b82f6; top: -10%; left: -10%; }
-        .glow-2 { width: 500px; height: 500px; background: #ec4899; bottom: -10%; right: -10%; }
-
-        /* Portal Content wrapper */
-        .portal-wrapper {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 1200px;
-            text-align: center;
-        }
-
-        .portal-header {
-            margin-bottom: 50px;
-        }
-        .portal-header h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
-            background: linear-gradient(135deg, #fff, #9ca3af);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .portal-header p {
-            font-size: clamp(1rem, 2vw, 1.25rem);
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* Responsive Auto-Grid Layout for Projects */
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-top: 30px;
-            width: 100%;
-        }
-
-        .portal-card {
-            position: relative;
-            padding: 36px 28px;
-            border-radius: 24px;
-            background: rgba(17, 24, 39, 0.45);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: flex-start;
-            text-align: left;
-            min-height: 340px;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* Inner light shine */
-        .portal-card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.05), transparent 50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .portal-card:hover::before {
-            opacity: 1;
-        }
-
-        .portal-card:hover {
-            transform: translateY(-8px);
+        /* Top Header Control Bar */
+        header {
+            height: 70px;
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            backdrop-filter: blur(12px);
         }
 
-        /* Unique Glow Themes */
-        .glow-blue:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 20px 50px -10px rgba(59, 130, 246, 0.35); }
-        .glow-pink:hover { border-color: rgba(236, 72, 153, 0.4); box-shadow: 0 20px 50px -10px rgba(236, 72, 153, 0.35); }
-        .glow-purple:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 20px 50px -10px rgba(139, 92, 246, 0.35); }
-        .glow-cyan:hover { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 20px 50px -10px rgba(6, 182, 212, 0.35); }
-
-        /* Card Content details */
-        .card-badge {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            padding: 6px 12px;
-            border-radius: 99px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            display: inline-block;
-        }
-        .glow-blue:hover .card-badge { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); color: #60a5fa; }
-        .glow-pink:hover .card-badge { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.3); color: #f472b6; }
-        .glow-purple:hover .card-badge { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.3); color: #c084fc; }
-        .glow-cyan:hover .card-badge { background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3); color: #22d3ee; }
-
-        .portal-card h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        .portal-card p {
-            color: var(--text-muted);
-            font-size: 13.5px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .action-arrow {
-            display: inline-flex;
+        .logo {
+            display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+        .logo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3b82f6;
+            box-shadow: 0 0 12px #3b82f6;
+        }
+
+        /* Mode Switcher Tabs */
+        .tabs {
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .tab-btn {
+            padding: 8px 20px;
+            border-radius: 99px;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+            color: #9ca3af;
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover {
             color: #fff;
-            transition: all 0.3s;
         }
-        .portal-card:hover .action-arrow {
-            gap: 14px;
-        }
-        .glow-blue:hover .action-arrow { color: #60a5fa; }
-        .glow-pink:hover .action-arrow { color: #f472b6; }
-        .glow-purple:hover .action-arrow { color: #c084fc; }
-        .glow-cyan:hover .action-arrow { color: #22d3ee; }
-
-        footer {
-            margin-top: 80px;
-            font-size: 12px;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
+        .tab-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 15px -4px rgba(59, 130, 246, 0.5);
         }
 
-        @media(max-width: 600px) {
-            .cards-container { grid-template-columns: 1fr; }
-            body { padding: 40px 10px; }
+        .status-badge {
+            font-size: 11px;
+            font-family: monospace;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(25, 195, 154, 0.1);
+            border: 1px solid rgba(25, 195, 154, 0.2);
+            color: #19c39a;
         }
+
+        /* Fullscreen Frame Container */
+        .workspace {
+            flex: 1;
+            position: relative;
+            background: #030712;
+        }
+        iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+        iframe.active {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        /* Loading Overlay between switches */
+        .loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #030712;
+            z-index: 5;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="grid-bg"></div>
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
+    <header>
+        <div class="logo">
+            <div class="logo-dot"></div>
+            Vennila AI Studio
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchApp('docmind', '/difflab.html')">
+                📄 DocMind AI
+            </button>
+            <button class="tab-btn" onclick="switchApp('dialer', 'https://other-project.onrender.com')">
+                📞 Call Dialer
+            </button>
+        </div>
 
-    <div class="portal-wrapper">
-        <header class="portal-header">
-            <h1>Vennila AI Portal</h1>
-            <p>Select a platform workspace below to get started.</p>
-        </header>
+        <div class="status-badge">WORKSPACE ONLINE</div>
+    </header>
 
-        <!-- Dynamic Grid Workspace -->
-        <main class="cards-container">
-            
-            <!-- Project 1: DocMind AI -->
-            <a href="/difflab.html" class="portal-card glow-blue">
-                <div>
-                    <span class="card-badge">Change Intelligence</span>
-                    <h2>DocMind AI</h2>
-                    <p>AI-powered document semantic difference engine. Compare PDFs, spreadsheets, and CSV folders in real time.</p>
-                </div>
-                <div class="action-arrow">
-                    Open Workspace <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-            </a>
+    <div class="workspace">
+        <!-- Spinner background -->
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p style="font-size: 13px; color: #9ca3af; letter-spacing: 0.05em;">LOADING WORKSPACE...</p>
+        </div>
 
-            <!-- Project 2: Call Campaign Manager -->
-            <a href="https://other-project.onrender.com" class="portal-card glow-pink">
-                <div>
-                    <span class="card-badge">Telephony API</span>
-                    <h2>Call Dialer</h2>
-                    <p>Integrated dialer campaigns, automated phone queue dashboards, and visual call routing analytics nodes.</p>
-                </div>
-                <div class="action-arrow">
-                    Open Dialer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-            </a>
-
-            <!-- Project 3: Database Hub (Placeholder) -->
-            <a href="#" class="portal-card glow-purple" onclick="alert('Database workspace setup is currently in draft mode.'); return false;">
-                <div>
-                    <span class="card-badge">Storage Audit</span>
-                    <h2>Data Studio</h2>
-                    <p>Visual database schema manager and query logs inspector. Map SQL instances directly to live visual tables.</p>
-                </div>
-                <div class="action-arrow">
-                    Configure Storage <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-            </a>
-
-            <!-- Project 4: Custom Workspace (Placeholder) -->
-            <a href="#" class="portal-card glow-cyan" onclick="alert('Custom workspace configuration is under development.'); return false;">
-                <div>
-                    <span class="card-badge">Add Workspace</span>
-                    <h2>Workspace 4</h2>
-                    <p>Click here to link and add new project directories, webhooks, or custom dashboard configurations.</p>
-                </div>
-                <div class="action-arrow">
-                    Edit Portal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </div>
-            </a>
-
-        </main>
-
-        <footer>
-            Vennila AI © 2026. All rights reserved.
-        </footer>
+        <!-- App frames -->
+        <iframe id="frame-docmind" class="active" src="/difflab.html" onload="hideLoader()"></iframe>
+        <iframe id="frame-dialer" src="" onload="hideLoader()"></iframe>
     </div>
 
     <script>
-        // Interactive mouse shine effect on cards
-        document.querySelectorAll('.portal-card').forEach(card => {
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                card.style.setProperty('--x', `${x}px`);
-                card.style.setProperty('--y', `${y}px`);
+        const loader = document.getElementById('loader');
+
+        function switchApp(appId, url) {
+            // Update active tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // Show loader
+            loader.style.display = 'flex';
+
+            // Deactivate all frames
+            document.querySelectorAll('iframe').forEach(frame => {
+                frame.classList.remove('active');
             });
-        });
+
+            // Get target frame
+            const targetFrame = document.getElementById(`frame-${appId}`);
+            
+            // Set src if not loaded yet
+            if (!targetFrame.src || targetFrame.src === window.location.href) {
+                targetFrame.src = url;
+            }
+
+            targetFrame.classList.add('active');
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
     </script>
 </body>
 </html>
