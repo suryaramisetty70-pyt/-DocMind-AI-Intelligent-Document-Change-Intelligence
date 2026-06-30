@@ -190,7 +190,11 @@
 
             <div class="type-tabs">
                 <button class="type-tab active" data-type="text" onclick="switchTab('text')">📝 Text</button>
-                <button class="type-tab" data-type="file" onclick="switchTab('file')">📁 File Upload</button>
+                <button class="type-tab" data-type="pdf" onclick="switchTab('pdf')">📄 PDF</button>
+                <button class="type-tab" data-type="word" onclick="switchTab('word')">📁 Word / PPTX</button>
+                <button class="type-tab" data-type="excel" onclick="switchTab('excel')">📊 Excel</button>
+                <button class="type-tab" data-type="csv" onclick="switchTab('csv')">📈 CSV</button>
+                <button class="type-tab" data-type="image" onclick="switchTab('image')">🖼️ Image</button>
             </div>
             
             <!-- TEXT MODE -->
@@ -231,7 +235,7 @@
                         <div class="file-upload-overlay" id="fileOverlay1" onclick="document.getElementById('file1').click()">
                             <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
                             <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
-                            <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
+                            <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem" id="fileDesc1">Supports PDF files</p>
                         </div>
                         <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
                         <div id="file1Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
@@ -247,7 +251,7 @@
                         <div class="file-upload-overlay" id="fileOverlay2" onclick="document.getElementById('file2').click()">
                             <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
                             <span style="font-weight:600;color:var(--text)">Click to upload Source B</span>
-                            <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem">Supports PDF, Word, Excel, CSV, Images</span>
+                            <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF files</span>
                         </div>
                         <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
                         <div id="file2Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
@@ -302,7 +306,37 @@
             document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.type-tab[data-type="${tab}"]`).classList.add('active');
             document.getElementById('textModePanel').style.display = tab === 'text' ? 'block' : 'none';
-            document.getElementById('fileModePanel').style.display = tab === 'file' ? 'block' : 'none';
+            document.getElementById('fileModePanel').style.display = tab === 'text' ? 'none' : 'block';
+            
+            if (tab !== 'text') {
+                let accepts = "";
+                let desc = "";
+                if (tab === 'pdf') {
+                    accepts = ".pdf";
+                    desc = "Supports PDF files";
+                } else if (tab === 'word') {
+                    accepts = ".docx,.pptx";
+                    desc = "Supports Word & PPTX files";
+                } else if (tab === 'excel') {
+                    accepts = ".xlsx,.xls";
+                    desc = "Supports Excel spreadsheets";
+                } else if (tab === 'csv') {
+                    accepts = ".csv";
+                    desc = "Supports CSV tables";
+                } else if (tab === 'image') {
+                    accepts = "image/*";
+                    desc = "Supports PNG, JPG, WEBP images";
+                }
+                
+                document.getElementById('file1').accept = accepts;
+                document.getElementById('file2').accept = accepts;
+                document.getElementById('fileDesc1').textContent = desc;
+                document.getElementById('fileDesc2').textContent = desc;
+                
+                // Clear any selected files when switching tabs to avoid wrong format compares
+                clearFile(1);
+                clearFile(2);
+            }
         }
 
         function handleFile(input, n) {

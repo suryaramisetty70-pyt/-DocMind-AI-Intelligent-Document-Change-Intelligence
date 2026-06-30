@@ -545,6 +545,7 @@
     </div>
 
     <script>
+        const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
         let workspaceData = [];
         let openTabs = [];
         let activeTabId = null;
@@ -552,7 +553,7 @@
         // Fetch workspaces/folders from PostgreSQL backend
         async function fetchWorkspaces() {
             try {
-                const response = await fetch('/api/portal/workspaces');
+                const response = await fetch(`${API_URL}/api/portal/workspaces`);
                 workspaceData = await response.json();
                 
                 renderFolders();
@@ -750,7 +751,7 @@
             const description = document.getElementById('appDesc').value;
 
             try {
-                const response = await fetch('/api/portal/apps', {
+                const response = await fetch(`${API_URL}/api/portal/apps`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title, url, icon_emoji, folder_id, description })
@@ -808,7 +809,7 @@
         async function deleteApp(appId) {
             if (!confirm("Are you sure you want to delete this project?")) return;
             try {
-                const response = await fetch(`/api/portal/apps/${appId}`, { method: 'DELETE' });
+                const response = await fetch(`${API_URL}/api/portal/apps/${appId}`, { method: 'DELETE' });
                 if (response.ok) {
                     await fetchWorkspaces();
                     renderManageAppList();

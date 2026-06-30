@@ -119,13 +119,40 @@ async def lifespan(app: FastAPI):
             await session.commit()
             
             # Add default apps for these folders
+            # Seed Docsy into AI Agents folder automatically
             res_ai = await session.execute(select(Folder).where(Folder.name == "AI Agents"))
             f_ai = res_ai.scalar_one()
-            res_web = await session.execute(select(Folder).where(Folder.name == "Web Services"))
-            f_web = res_web.scalar_one()
             
-            # No default apps seeded automatically - user will add them manually
-            pass
+            default_apps = [
+                AppEntry(
+                    title="Docsy",
+                    url="/difflab.html",
+                    icon_emoji="📄",
+                    description="AI document semantic difference engine.",
+                    folder_id=f_ai.id
+                )
+            ]
+            session.add_all(default_apps)
+            await session.commit()
+            print("Database seeded: Docsy app initialized in AI Agents.")
+        else:
+            # Self-healing check: Ensure Docsy exists in AI Agents even if DB was already initialized
+            res_folder = await session.execute(select(Folder).where(Folder.name == "AI Agents"))
+            f_ai = res_folder.scalar_one_or_none()
+            if f_ai:
+                res_docsy = await session.execute(select(AppEntry).where(AppEntry.title == "Docsy"))
+                has_docsy = res_docsy.scalar_one_or_none()
+                if not has_docsy:
+                    docsy_app = AppEntry(
+                        title="Docsy",
+                        url="/difflab.html",
+                        icon_emoji="📄",
+                        description="AI document semantic difference engine.",
+                        folder_id=f_ai.id
+                    )
+                    session.add(docsy_app)
+                    await session.commit()
+                    print("Database self-healed: Docsy app restored in AI Agents.")
     
     yield
 
