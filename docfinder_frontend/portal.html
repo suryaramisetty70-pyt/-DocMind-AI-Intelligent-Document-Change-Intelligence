@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vennila AI — Projects</title>
+    <title>Menmozhi Project Folder</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
@@ -465,7 +465,7 @@
     <!-- 1. LAUNCHPAD PORTAL (FOLDER VIEW) -->
     <div class="launchpad" id="launchpadView">
         <div class="launchpad-head">
-            <h1>📂 My Projects</h1>
+            <h1>📂 Menmozhi Project Folder</h1>
             <p>Click a folder to view and launch your projects.</p>
         </div>
 
@@ -559,7 +559,7 @@
                 populateCategoryDropdown();
             } catch (err) {
                 console.error("Error fetching workspace portal data:", err);
-                // Show empty state
+                alert("Connection failed while fetching workspaces: " + err.message);
                 renderFolders();
             }
         }
@@ -766,6 +766,7 @@
                 }
             } catch (err) {
                 console.error("Submission failed:", err);
+                alert("Connection failed while adding project: " + err.message);
             }
         }
 

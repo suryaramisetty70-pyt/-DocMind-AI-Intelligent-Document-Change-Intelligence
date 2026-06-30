@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from database.config import get_db, init_db, async_session_maker
 from models.models import User, Comparison, Report, LoginActivity, UploadedFile, Folder, AppEntry
@@ -112,8 +112,7 @@ async def lifespan(app: FastAPI):
         if not has_folders:
             folders = [
                 Folder(name="AI Agents", icon="🤖"),
-                Folder(name="Web Services", icon="🌐"),
-                Folder(name="Utility Tools", icon="🛠️")
+                Folder(name="Web Services", icon="🌐")
             ]
             session.add_all(folders)
             await session.commit()
@@ -153,6 +152,15 @@ async def lifespan(app: FastAPI):
                     session.add(docsy_app)
                     await session.commit()
                     print("Database self-healed: Docsy app restored in AI Agents.")
+            
+            # Delete Utility Tools folder and its apps if present
+            res_del = await session.execute(select(Folder).where(Folder.name == "Utility Tools"))
+            f_del = res_del.scalar_one_or_none()
+            if f_del:
+                await session.execute(delete(AppEntry).where(AppEntry.folder_id == f_del.id))
+                await session.execute(delete(Folder).where(Folder.id == f_del.id))
+                await session.commit()
+                print("Database self-healed: Utility Tools folder deleted.")
     
     yield
 
