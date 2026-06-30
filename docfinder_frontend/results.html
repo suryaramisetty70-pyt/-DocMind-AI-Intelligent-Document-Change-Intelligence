@@ -649,6 +649,25 @@ async function downloadReport(type) {
   if (actualResult.type === "image" || resultObj.fileType === "image") {
     renderImageDiff(actualResult);
     if (actualResult.ai_analysis) renderAI(actualResult.ai_analysis);
+    
+    // Auto-select Image Diff tab and hide text-only tabs
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    
+    // Hide text-specific tabs
+    const sbsTab = document.querySelector('button[onclick*="sideBySide"]');
+    const granTab = document.querySelector('button[onclick*="granular"]');
+    if (sbsTab) sbsTab.style.display = "none";
+    if (granTab) granTab.style.display = "none";
+    
+    // Activate image diff tab & panel
+    const imgTab = document.getElementById("imageTab");
+    if (imgTab) {
+      imgTab.classList.add("active");
+      imgTab.style.display = "inline-block";
+    }
+    const imgPanel = document.getElementById("imagePanel");
+    if (imgPanel) imgPanel.classList.add("active");
     return;
   }
 

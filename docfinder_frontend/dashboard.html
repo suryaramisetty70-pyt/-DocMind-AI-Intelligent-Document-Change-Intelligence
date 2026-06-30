@@ -238,10 +238,6 @@
                             <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem" id="fileDesc1">Supports PDF files</p>
                         </div>
                         <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
-                        <div id="file1Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                            <p id="file1Name" style="font-weight:600;margin-bottom:0.5rem"></p>
-                            <button onclick="clearFile(1)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
-                        </div>
                     </div>
                     <div class="card animate-in delay-1">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
@@ -254,10 +250,6 @@
                             <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF files</span>
                         </div>
                         <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
-                        <div id="file2Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                            <p id="file2Name" style="font-weight:600;margin-bottom:0.5rem"></p>
-                            <button onclick="clearFile(2)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
-                        </div>
                     </div>
                 </div>
                 <div class="action-bar animate-in delay-2">
@@ -334,8 +326,49 @@
                 document.getElementById('fileDesc2').textContent = desc;
                 
                 // Clear any selected files when switching tabs to avoid wrong format compares
-                clearFile(1);
-                clearFile(2);
+                clearFile(null, 1);
+                clearFile(null, 2);
+            }
+        }
+
+        function getFormatDesc() {
+            if (currentTab === 'pdf') return "Supports PDF files";
+            if (currentTab === 'word') return "Supports Word & PPTX files";
+            if (currentTab === 'excel') return "Supports Excel spreadsheets";
+            if (currentTab === 'csv') return "Supports CSV tables";
+            if (currentTab === 'image') return "Supports PNG, JPG, WEBP images";
+            return "Supports PDF, Word, Excel, CSV, Images";
+        }
+
+        function updateOverlayUI(n, filename) {
+            const overlay = document.getElementById(`fileOverlay${n}`);
+            if (filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                let icon = "📄";
+                if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) icon = "🖼️";
+                else if (['xlsx', 'xls'].includes(ext)) icon = "📊";
+                else if (ext === 'csv') icon = "📈";
+                else if (ext === 'pdf') icon = "📄";
+                else if (['docx', 'doc', 'pptx', 'ppt'].includes(ext)) icon = "📁";
+                
+                overlay.style.borderColor = "var(--accent)";
+                overlay.style.background = "rgba(59, 130, 246, 0.03)";
+                overlay.innerHTML = `
+                    <span style="font-size:2rem;margin-bottom:0.5rem">${icon}</span>
+                    <span style="font-weight:700;color:var(--text);word-break:break-all;padding:0 1rem;font-size:0.92rem;text-align:center">${filename}</span>
+                    <p style="font-size:.78rem;color:var(--success);margin-top:.4rem;font-weight:600">✓ Ready to compare</p>
+                    <button onclick="clearFile(event, ${n})" style="margin-top:0.85rem;color:var(--error);background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);padding:5px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer">Remove File</button>
+                `;
+            } else {
+                const isSrcA = n === 1;
+                const desc = getFormatDesc();
+                overlay.style.borderColor = "#cbd5e1";
+                overlay.style.background = "#f8fafc";
+                overlay.innerHTML = `
+                    <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
+                    <span style="font-weight:600;color:var(--text)">Click to upload Source ${isSrcA ? 'A' : 'B'}</span>
+                    <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem" id="fileDesc${n}">${desc}</p>
+                `;
             }
         }
 
@@ -344,19 +377,16 @@
                 const file = input.files[0];
                 if (n === 1) selectedFile1 = file;
                 if (n === 2) selectedFile2 = file;
-                
-                document.getElementById(`fileOverlay${n}`).classList.add('hidden');
-                document.getElementById(`file${n}Preview`).style.display = 'block';
-                document.getElementById(`file${n}Name`).textContent = file.name;
+                updateOverlayUI(n, file.name);
             }
         }
 
-        function clearFile(n) {
+        function clearFile(event, n) {
+            if (event) event.stopPropagation();
             document.getElementById(`file${n}`).value = '';
-            document.getElementById(`file${n}Preview`).style.display = 'none';
-            document.getElementById(`fileOverlay${n}`).classList.remove('hidden');
             if (n === 1) { selectedFile1 = null; }
             if (n === 2) { selectedFile2 = null; }
+            updateOverlayUI(n, null);
         }
 
         async function compareText() {
