@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · Docsy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .main { padding: 2.5rem 3rem; background: var(--bg); }
+        .page-head { margin-bottom: 2rem; }
+        .page-head h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; color: #0f172a; }
+        .page-head p { color: var(--muted); margin-top: 0.25rem; font-size: 0.95rem; }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 2rem;
+        }
+
+        /* Settings nav */
+        .settings-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .settings-nav-item {
+            padding: 0.65rem 1rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            background: none;
+            text-align: left;
+        }
+        .settings-nav-item:hover { background: #f1f5f9; color: var(--text); }
+        .settings-nav-item.active { background: #f1f5f9; color: var(--text); }
+
+        /* Settings panels */
+        .settings-panel {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+        .settings-panel.hidden { display: none; }
+        .settings-panel h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        .settings-panel .desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .setting-row:last-child { border-bottom: none; }
+        .setting-label h4 {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        .setting-label p {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #e2e8f0;
+            border-radius: 99px;
+            transition: 0.25s;
+        }
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.25s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .toggle input:checked + .toggle-slider { background: var(--accent); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* Form inputs */
+        .s-input {
+            padding: 0.6rem 0.85rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.88rem;
+            color: var(--text);
+            width: 100%;
+            max-width: 320px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .s-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+        }
+
+        .s-select {
+            padding: 0.6rem 0.85rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.88rem;
+            color: var(--text);
+            background: #fff;
+            outline: none;
+            min-width: 180px;
+        }
+
+        .save-bar {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        .save-btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .save-btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+        }
+        .save-btn-primary:hover { opacity: 0.9; }
+        .save-btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1.5px solid var(--border);
+        }
+        .save-btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+        .danger-zone {
+            margin-top: 2rem;
+            padding: 1.25rem;
+            background: rgba(239, 68, 68, 0.04);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 12px;
+        }
+        .danger-zone h4 { color: var(--error); font-size: 0.92rem; margin-bottom: 0.5rem; }
+        .danger-zone p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+        .danger-btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .danger-btn:hover { background: rgba(239, 68, 68, 0.15); }
+
+        @media (max-width: 768px) {
+            .settings-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">D</div>
+                Docsy
+            </div>
+            
+            <div class="s-section">Workspace</div>
+            <a href="dashboard.html" class="s-link">⚡ New Comparison</a>
+            <a href="history.html" class="s-link">🕓 History</a>
+            <a href="collab.html" class="s-link">👥 Live Collab</a>
+            <a href="translate.html" class="s-link">🔄 Translation</a>
+            
+            <div id="adminMenu" style="display:none">
+                <div class="s-section">Admin Control</div>
+                <a href="admin.html" class="s-link">🛡️ Admin Panel</a>
+            </div>
+            
+            <div class="s-section">Resources</div>
+            <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
+            <a href="index.html#enterprise" class="s-link">🏢 Enterprise Solutions</a>
+            <a href="index.html#desktop" class="s-link">💻 Desktop App</a>
+            <a href="index.html#legal" class="s-link">⚖️ Legal & Compliance</a>
+            
+            <div class="s-section">Account</div>
+            <a href="settings.html" class="s-link active">⚙️ Settings</a>
+            
+            <div class="s-user">
+                <div class="avatar" id="userAvatar">A</div>
+                <div>
+                    <div style="font-weight:600;font-size:.95rem" id="userName">User</div>
+                    <div style="font-size:.8rem;opacity:.7" id="userPlan">Free plan</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main">
+            <div class="page-head">
+                <h1>Settings</h1>
+                <p>Manage your account, preferences, and application settings.</p>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Settings Nav -->
+                <div class="settings-nav">
+                    <button class="settings-nav-item active" onclick="showPanel('profile')">👤 Profile</button>
+                    <button class="settings-nav-item" onclick="showPanel('preferences')">🎨 Preferences</button>
+                    <button class="settings-nav-item" onclick="showPanel('notifications')">🔔 Notifications</button>
+                    <button class="settings-nav-item" onclick="showPanel('security')">🔒 Security</button>
+                </div>
+
+                <!-- Profile Panel -->
+                <div class="settings-panel" id="panel-profile">
+                    <h2>Profile</h2>
+                    <p class="desc">Update your display name and account details.</p>
+
+                    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:0.75rem">
+                        <div class="setting-label">
+                            <h4>Display Name</h4>
+                            <p>This is shown in comparisons and collaboration sessions.</p>
+                        </div>
+                        <input type="text" class="s-input" id="settingName" placeholder="Your name">
+                    </div>
+
+                    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:0.75rem">
+                        <div class="setting-label">
+                            <h4>Email Address</h4>
+                            <p>Used for notifications and account recovery.</p>
+                        </div>
+                        <input type="email" class="s-input" id="settingEmail" placeholder="you@example.com">
+                    </div>
+
+                    <div class="save-bar">
+                        <button class="save-btn save-btn-ghost" onclick="loadSettings()">Cancel</button>
+                        <button class="save-btn save-btn-primary" onclick="saveSettings()">Save changes</button>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h4>⚠️ Danger Zone</h4>
+                        <p>Logging out will clear your session data. You can sign back in anytime.</p>
+                        <button class="danger-btn" onclick="logout()">Sign out</button>
+                    </div>
+                </div>
+
+                <!-- Preferences Panel -->
+                <div class="settings-panel hidden" id="panel-preferences">
+                    <h2>Preferences</h2>
+                    <p class="desc">Customize how Docsy works for you.</p>
+
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <h4>Default comparison mode</h4>
+                            <p>Choose the default mode when opening a new comparison.</p>
+                        </div>
+                        <select class="s-select" id="settingDefaultMode">
+                            <option value="normal">Normal Mode</option>
+                            <option value="ai">AI Mode</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <h4>Auto-save comparisons</h4>
+                            <p>Automatically save every comparison to history.</p>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingAutoSave" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <h4>Default language</h4>
+                            <p>Preferred language for translation workspace.</p>
+                        </div>
+                        <select class="s-select" id="settingLang">
+                            <option value="english">English</option>
+                            <option value="telugu">Telugu</option>
+                            <option value="hindi">Hindi</option>
+                            <option value="tamil">Tamil</option>
+                        </select>
+                    </div>
+
+                    <div class="save-bar">
+                        <button class="save-btn save-btn-ghost" onclick="loadSettings()">Cancel</button>
+                        <button class="save-btn save-btn-primary" onclick="saveSettings()">Save changes</button>
+                    </div>
+                </div>
+
+                <!-- Notifications Panel -->
+                <div class="settings-panel hidden" id="panel-notifications">
+                    <h2>Notifications</h2>
+                    <p class="desc">Control how and when you receive alerts.</p>
+
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <h4>Email notifications</h4>
+                            <p>Get email alerts for comparison results and reports.</p>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingEmailNotif">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-label">
+                            <h4>Collaboration alerts</h4>
+                            <p>Notify when someone joins your live collaboration session.</p>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="settingCollabNotif" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="save-bar">
+                        <button class="save-btn save-btn-ghost" onclick="loadSettings()">Cancel</button>
+                        <button class="save-btn save-btn-primary" onclick="saveSettings()">Save changes</button>
+                    </div>
+                </div>
+
+                <!-- Security Panel -->
+                <div class="settings-panel hidden" id="panel-security">
+                    <h2>Security</h2>
+                    <p class="desc">Manage your password and account security.</p>
+
+                    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:0.75rem">
+                        <div class="setting-label">
+                            <h4>Change Password</h4>
+                            <p>Enter your current password and a new one below.</p>
+                        </div>
+                        <input type="password" class="s-input" id="currentPassword" placeholder="Current password" style="margin-bottom:0.5rem">
+                        <input type="password" class="s-input" id="newPassword" placeholder="New password" style="margin-bottom:0.5rem">
+                        <input type="password" class="s-input" id="confirmPassword" placeholder="Confirm new password">
+                    </div>
+
+                    <div class="save-bar">
+                        <button class="save-btn save-btn-primary" onclick="changePassword()">Update Password</button>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h4>⚠️ Delete Account</h4>
+                        <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                        <button class="danger-btn" onclick="if(confirm('Are you sure? This cannot be undone.')) alert('Account deletion is handled by your administrator.')">Delete my account</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        
+        document.getElementById('userName').textContent = user || 'Guest';
+        document.getElementById('userAvatar').textContent = (user || 'Guest')[0].toUpperCase();
+        document.getElementById('userPlan').textContent = token ? 'Premium Plan' : 'Free Guest Mode';
+        
+        if (localStorage.getItem('isAdmin') === 'true') {
+            const adminMenu = document.getElementById('adminMenu');
+            if (adminMenu) adminMenu.style.display = 'block';
+        }
+
+        function showPanel(name) {
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`panel-${name}`).classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('docsySettings') || '{}');
+            document.getElementById('settingName').value = settings.name || user || '';
+            document.getElementById('settingEmail').value = settings.email || '';
+            document.getElementById('settingDefaultMode').value = settings.defaultMode || 'normal';
+            document.getElementById('settingAutoSave').checked = settings.autoSave !== false;
+            document.getElementById('settingLang').value = settings.lang || 'english';
+            document.getElementById('settingEmailNotif').checked = settings.emailNotif || false;
+            document.getElementById('settingCollabNotif').checked = settings.collabNotif !== false;
+        }
+
+        function saveSettings() {
+            const settings = {
+                name: document.getElementById('settingName').value,
+                email: document.getElementById('settingEmail').value,
+                defaultMode: document.getElementById('settingDefaultMode').value,
+                autoSave: document.getElementById('settingAutoSave').checked,
+                lang: document.getElementById('settingLang').value,
+                emailNotif: document.getElementById('settingEmailNotif').checked,
+                collabNotif: document.getElementById('settingCollabNotif').checked,
+            };
+            localStorage.setItem('docsySettings', JSON.stringify(settings));
+            
+            // Update display name in localStorage
+            if (settings.name) {
+                localStorage.setItem('user', settings.name);
+                document.getElementById('userName').textContent = settings.name;
+                document.getElementById('userAvatar').textContent = settings.name[0].toUpperCase();
+            }
+            
+            showToast('Settings saved successfully!', 'success');
+        }
+
+        function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPw = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            if (!current || !newPw || !confirm) return showToast('Please fill all password fields', 'error');
+            if (newPw !== confirm) return showToast('New passwords do not match', 'error');
+            if (newPw.length < 6) return showToast('Password must be at least 6 characters', 'error');
+            
+            // TODO: Send to backend API when endpoint is ready
+            showToast('Password updated successfully!', 'success');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAdmin');
+            window.location.href = 'login.html';
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+
+        // Load on page init
+        loadSettings();
+    </script>
+</body>
+</html>

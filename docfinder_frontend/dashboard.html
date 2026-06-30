@@ -163,7 +163,7 @@
             <a href="index.html#legal" class="s-link">⚖️ Legal & Compliance</a>
             
             <div class="s-section">Account</div>
-            <a href="#" class="s-link">⚙️ Settings</a>
+            <a href="settings.html" class="s-link">⚙️ Settings</a>
             
             <div class="s-user">
                 <div class="avatar" id="userAvatar">A</div>
@@ -178,7 +178,7 @@
             <div class="page-head">
                 <div>
                     <h1>New comparison</h1>
-                    <p>Upload your documents to compare them side-by-side.</p>
+                    <p>Upload your documents or paste text to compare side-by-side.</p>
                 </div>
             </div>
 
@@ -186,52 +186,80 @@
                 <button class="mode-btn active" id="normalModeBtn" onclick="setMode('normal')">⚡ Normal Mode</button>
                 <button class="mode-btn" id="aiModeBtn" onclick="setMode('ai')">✨ AI Mode</button>
             </div>
-            
-            <div class="compare-grid">
-                <!-- Source A -->
-                <div class="card animate-in">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-                        <h3 style="font-weight:700">Source A</h3>
-                        <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.7rem;font-weight:700">ORIGINAL</span>
-                    </div>
-                    
-                    <div class="file-upload-overlay" id="fileOverlay1" onclick="document.getElementById('file1').click()">
-                        <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
-                        <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
-                        <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
-                    </div>
-                    <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
-                    
-                    <div id="file1Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                        <p id="file1Name" style="font-weight:600;margin-bottom:0.5rem"></p>
-                        <button onclick="clearFile(1)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
-                    </div>
-                </div>
-                
-                <!-- Source B -->
-                <div class="card animate-in delay-1">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-                        <h3 style="font-weight:700">Source B</h3>
-                        <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(236,72,153,.1);color:#ec4899;font-size:.7rem;font-weight:700">MODIFIED</span>
-                    </div>
-                    
-                    <div class="file-upload-overlay" id="fileOverlay2" onclick="document.getElementById('file2').click()">
-                        <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
-                        <span style="font-weight:600;color:var(--text)">Click to upload Source B</span>
-                        <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem" id="fileDesc2">Supports PDF, Word, Excel, CSV, Images</span>
-                    </div>
-                    <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
-                    
-                    <div id="file2Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
-                        <p id="file2Name" style="font-weight:600;margin-bottom:0.5rem"></p>
-                        <button onclick="clearFile(2)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
-                    </div>
-                </div>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:-1rem;margin-bottom:1.5rem">Supports: PDF · DOCX · PPTX · XLSX · XLS · CSV · TXT · PNG · JPG · WEBP</p>
+
+            <div class="type-tabs">
+                <button class="type-tab active" data-type="text" onclick="switchTab('text')">📝 Text</button>
+                <button class="type-tab" data-type="file" onclick="switchTab('file')">📁 File Upload</button>
             </div>
             
-            <div class="action-bar animate-in delay-2">
-                <div></div>
-                <button class="btn btn-primary" onclick="compareFiles()">⚡ Compare now</button>
+            <!-- TEXT MODE -->
+            <div id="textModePanel">
+                <div class="compare-grid">
+                    <div class="card animate-in">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                            <h3 style="font-weight:700">Source A</h3>
+                            <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.7rem;font-weight:700">ORIGINAL</span>
+                        </div>
+                        <textarea class="drop" id="text1" placeholder="Paste your original text here..."></textarea>
+                    </div>
+                    <div class="card animate-in delay-1">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                            <h3 style="font-weight:700">Source B</h3>
+                            <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(236,72,153,.1);color:#ec4899;font-size:.7rem;font-weight:700">MODIFIED</span>
+                        </div>
+                        <textarea class="drop" id="text2" placeholder="Paste your modified text here..."></textarea>
+                    </div>
+                </div>
+                <div class="action-bar animate-in delay-2">
+                    <div class="opts" id="textOpts">
+                        <label><input type="checkbox" id="ignoreWs" checked> Ignore whitespace</label>
+                        <label><input type="checkbox" id="caseSens" checked> Case sensitive</label>
+                    </div>
+                    <button class="btn btn-primary" onclick="compareText()">⚡ Compare now</button>
+                </div>
+            </div>
+
+            <!-- FILE MODE -->
+            <div id="fileModePanel" style="display:none">
+                <div class="compare-grid">
+                    <div class="card animate-in">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                            <h3 style="font-weight:700">Source A</h3>
+                            <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(59,130,246,.1);color:var(--accent);font-size:.7rem;font-weight:700">ORIGINAL</span>
+                        </div>
+                        <div class="file-upload-overlay" id="fileOverlay1" onclick="document.getElementById('file1').click()">
+                            <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
+                            <span style="font-weight:600;color:var(--text)">Click to upload Source A</span>
+                            <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">Original / Base Version</p>
+                        </div>
+                        <input type="file" id="file1" style="display:none" onchange="handleFile(this, 1)">
+                        <div id="file1Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
+                            <p id="file1Name" style="font-weight:600;margin-bottom:0.5rem"></p>
+                            <button onclick="clearFile(1)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
+                        </div>
+                    </div>
+                    <div class="card animate-in delay-1">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                            <h3 style="font-weight:700">Source B</h3>
+                            <span class="tag" style="padding:.25rem .7rem;border-radius:99px;background:rgba(236,72,153,.1);color:#ec4899;font-size:.7rem;font-weight:700">MODIFIED</span>
+                        </div>
+                        <div class="file-upload-overlay" id="fileOverlay2" onclick="document.getElementById('file2').click()">
+                            <span style="font-size:2rem;margin-bottom:0.5rem">📁</span>
+                            <span style="font-weight:600;color:var(--text)">Click to upload Source B</span>
+                            <span style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem">Supports PDF, Word, Excel, CSV, Images</span>
+                        </div>
+                        <input type="file" id="file2" style="display:none" onchange="handleFile(this, 2)">
+                        <div id="file2Preview" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:12px;text-align:center">
+                            <p id="file2Name" style="font-weight:600;margin-bottom:0.5rem"></p>
+                            <button onclick="clearFile(2)" style="color:var(--error);background:none;border:none;cursor:pointer;font-size:.85rem">Remove File</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="action-bar animate-in delay-2">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="compareFiles()">⚡ Compare now</button>
+                </div>
             </div>
         </main>
     </div>
@@ -245,13 +273,12 @@
     
     <script>
         const API_URL = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? 'http://localhost:8000' : '';
-        let currentType = 'auto';
-        let currentMode = 'normal'; // 'normal' or 'ai'
+        let currentTab = 'text';
+        let currentMode = 'normal';
         
         let selectedFile1 = null;
         let selectedFile2 = null;
 
-        // Check auth (make optional)
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
         
@@ -268,6 +295,14 @@
             currentMode = mode;
             document.getElementById('normalModeBtn').className = `mode-btn ${mode === 'normal' ? 'active' : ''}`;
             document.getElementById('aiModeBtn').className = `mode-btn ${mode === 'ai' ? 'active' : ''}`;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.type-tab[data-type="${tab}"]`).classList.add('active');
+            document.getElementById('textModePanel').style.display = tab === 'text' ? 'block' : 'none';
+            document.getElementById('fileModePanel').style.display = tab === 'file' ? 'block' : 'none';
         }
 
         function handleFile(input, n) {
@@ -289,6 +324,23 @@
             if (n === 1) { selectedFile1 = null; }
             if (n === 2) { selectedFile2 = null; }
         }
+
+        async function compareText() {
+            const text1 = document.getElementById('text1').value;
+            const text2 = document.getElementById('text2').value;
+            if (!text1 || !text2) return showToast('Please enter both texts', 'error');
+            
+            const formData = new FormData();
+            formData.append('text1', text1);
+            formData.append('text2', text2);
+            formData.append('level', 'word');
+            formData.append('to_lowercase', String(!document.getElementById('caseSens').checked));
+            formData.append('sort_lines', 'false');
+            formData.append('remove_extra_spaces', String(document.getElementById('ignoreWs').checked));
+            formData.append('use_ai', String(currentMode === 'ai'));
+            
+            await doFetch(`${API_URL}/api/compare/text`, formData);
+        }
         
         async function compareFiles() {
             if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
@@ -298,7 +350,6 @@
             formData.append('file2', selectedFile2);
             formData.append('use_ai', String(currentMode === 'ai'));
             
-            // Check if both files are images to store in session preview
             const ext1 = selectedFile1.name.split('.').pop().toLowerCase();
             const ext2 = selectedFile2.name.split('.').pop().toLowerCase();
             const isImg = ['png', 'jpg', 'jpeg', 'webp'].includes(ext1) && ['png', 'jpg', 'jpeg', 'webp'].includes(ext2);
@@ -334,7 +385,7 @@
                 
                 if (res.ok) {
                     data.mode = currentMode;
-                    data.fileType = 'auto';
+                    data.fileType = currentTab === 'text' ? 'text' : 'auto';
                     
                     localStorage.setItem('lastResult', JSON.stringify(data));
                     sessionStorage.setItem('diffResult', JSON.stringify(data));
