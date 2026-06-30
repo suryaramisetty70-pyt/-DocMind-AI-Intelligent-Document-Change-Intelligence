@@ -509,11 +509,24 @@
                 </div>
                 <div class="form-group">
                     <label>Deployment URL</label>
-                    <input type="url" id="appUrl" required placeholder="https://your-project.onrender.com">
+                    <input type="text" id="appUrl" required placeholder="e.g. docsy.onrender.com or https://...">
                 </div>
                 <div class="form-group">
                     <label>Emoji Icon</label>
-                    <input type="text" id="appEmoji" placeholder="🤖" value="🤖" maxlength="2">
+                    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
+                        <input type="text" id="appEmoji" placeholder="🤖" value="🤖" maxlength="2" style="width: 60px; text-align: center;">
+                        <span style="font-size:0.72rem; color:var(--muted)">Or select preset:</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:0.5rem;">
+                        <button type="button" onclick="selectPresetEmoji('🤖')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">🤖</button>
+                        <button type="button" onclick="selectPresetEmoji('📄')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">📄</button>
+                        <button type="button" onclick="selectPresetEmoji('📞')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">📞</button>
+                        <button type="button" onclick="selectPresetEmoji('🌐')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">🌐</button>
+                        <button type="button" onclick="selectPresetEmoji('💬')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">💬</button>
+                        <button type="button" onclick="selectPresetEmoji('📊')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">📊</button>
+                        <button type="button" onclick="selectPresetEmoji('🛠️')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">🛠️</button>
+                        <button type="button" onclick="selectPresetEmoji('⚙️')" style="font-size:1.25rem; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer; transition:all 0.15s;">⚙️</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Folder / Category</label>
@@ -740,14 +753,23 @@
             document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
         }
 
+        function selectPresetEmoji(emoji) {
+            document.getElementById('appEmoji').value = emoji;
+        }
+
         // Submit New App to PostgreSQL
         async function submitNewApp(e) {
             e.preventDefault();
             const title = document.getElementById('appName').value;
-            const url = document.getElementById('appUrl').value;
+            let url = document.getElementById('appUrl').value.trim();
             const icon_emoji = document.getElementById('appEmoji').value || '🤖';
             const folder_id = parseInt(document.getElementById('appFolder').value);
             const description = document.getElementById('appDesc').value;
+
+            // Auto-prepend protocol if user typed raw domain/hostname
+            if (url && !/^https?:\/\//i.test(url)) {
+                url = "https://" + url;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/api/portal/apps`, {
@@ -758,6 +780,8 @@
                 
                 if (response.ok) {
                     document.getElementById('submitForm').reset();
+                    // Reset preset value back to robot emoji
+                    document.getElementById('appEmoji').value = '🤖';
                     closeModal('submitModal');
                     await fetchWorkspaces();
                 } else {
@@ -788,14 +812,16 @@
             list.innerHTML = '';
             
             let count = 0;
-            workspaceData.forEach(folder => {
-                folder.apps.forEach(app => {
+            const folders = workspaceData || [];
+            folders.forEach(folder => {
+                const apps = folder.apps || [];
+                apps.forEach(app => {
                     count++;
                     const row = document.createElement('div');
                     row.className = 'manage-row';
                     row.innerHTML = `
                         <span>${app.icon_emoji} <b>${app.title}</b> <span style="font-size:0.72rem; color:var(--muted)">(${folder.name})</span></span>
-                        <button class="btn-danger" onclick="deleteApp(${app.id})">Delete</button>
+                        <button class="btn-danger" onclick="deleteApp(${app.id})">Delete Project</button>
                     `;
                     list.appendChild(row);
                 });
