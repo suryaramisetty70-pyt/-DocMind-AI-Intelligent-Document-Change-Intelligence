@@ -17,10 +17,10 @@
         .row-date{font-size:.85rem;color:var(--muted)}
         .row-arrow{color:var(--muted);font-size:1.2rem}
 
-        /* Simplified layout without sidebar */
-        .sidebar { display: none !important; }
-        .app { display: block !important; }
-        .main { padding: 2rem 1.5rem !important; width: 100% !important; max-width: 1200px; margin: 0 auto; }
+        /* Simplified layout without sidebar (only in guest mode) */
+        body.guest-mode .sidebar { display: none !important; }
+        body.guest-mode .app { display: block !important; }
+        body.guest-mode .main { padding: 2rem 1.5rem !important; width: 100% !important; max-width: 1200px; margin: 0 auto; }
     </style>
 </head>
 <body>
@@ -103,12 +103,7 @@
         }
 
         if (!token) {
-            // Hide sidebar premium links
-            const linksToHide = ['collab.html', 'translate.html', 'settings.html'];
-            linksToHide.forEach(href => {
-                const link = document.querySelector(`.sidebar a[href="${href}"]`);
-                if (link) link.style.display = 'none';
-            });
+            window.location.href = 'dashboard.html';
         }
         
         let allHistoryItems = [];

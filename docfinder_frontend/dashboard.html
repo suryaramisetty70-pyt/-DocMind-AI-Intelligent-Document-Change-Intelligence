@@ -173,11 +173,11 @@
             transform: translateY(-1px) !important;
         }
 
-        /* Simplified layout without sidebar & tabs */
-        .sidebar { display: none !important; }
-        .app { display: block !important; }
-        .main { padding: 2rem 1.5rem !important; width: 100% !important; max-width: 1200px; margin: 0 auto; }
-        .type-tabs { display: none !important; }
+        /* Simplified layout without sidebar & tabs (only in guest mode) */
+        body.guest-mode .sidebar { display: none !important; }
+        body.guest-mode .app { display: block !important; }
+        body.guest-mode .main { padding: 2rem 1.5rem !important; width: 100% !important; max-width: 1200px; margin: 0 auto; }
+        body.guest-mode .type-tabs { display: none !important; }
     </style>
 </head>
 <body>
@@ -218,13 +218,10 @@
         </aside>
         
         <main class="main">
-            <div class="page-head" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="page-head">
                 <div>
                     <h1>New comparison</h1>
                     <p>Upload your documents or paste text to compare side-by-side.</p>
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <a href="history.html" class="btn btn-ghost" style="padding:0.5rem 1rem; border-radius:8px; font-size:0.88rem; display:flex; align-items:center; gap:6px;">🕓 View History</a>
                 </div>
             </div>
 
@@ -423,15 +420,7 @@
         }
 
         if (!token) {
-            // Hide other tabs in dashboard (only show text)
-            document.querySelectorAll('.type-tab:not([data-type="text"])').forEach(el => el.style.display = 'none');
-            
-            // Hide sidebar premium links
-            const linksToHide = ['collab.html', 'translate.html', 'settings.html'];
-            linksToHide.forEach(href => {
-                const link = document.querySelector(`.sidebar a[href="${href}"]`);
-                if (link) link.style.display = 'none';
-            });
+            document.body.classList.add('guest-mode');
         }
         
         function setMode(mode) {

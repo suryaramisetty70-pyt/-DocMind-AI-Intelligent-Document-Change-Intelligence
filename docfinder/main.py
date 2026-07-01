@@ -509,23 +509,25 @@ async def compare_text(
     if use_ai.lower() == "true":
         report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
 
-    # Save history
-    comparison = Comparison(
-        user_id=current_user.id if current_user else 0,
-        file1_name="Text Input 1",
-        file2_name="Text Input 2",
-        file1_type="text",
-        file2_type="text",
-        comparison_type="text",
-        similarity_score=report["stats"]["similarity_percent"],
-        status="completed",
-        results=report
-    )
-    db.add(comparison)
-    await db.commit()
-    await db.refresh(comparison)
-
-    report["comparison_id"] = comparison.id
+    # Save history only for signed in users
+    if current_user:
+        comparison = Comparison(
+            user_id=current_user.id,
+            file1_name="Text Input 1",
+            file2_name="Text Input 2",
+            file1_type="text",
+            file2_type="text",
+            comparison_type="text",
+            similarity_score=report["stats"]["similarity_percent"],
+            status="completed",
+            results=report
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+        report["comparison_id"] = comparison.id
+    else:
+        report["comparison_id"] = 0
     return report
 
 @app.post("/api/compare/pdf")
@@ -841,22 +843,24 @@ async def compare_auto(
         if use_ai.lower() == "true":
             report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
             
-        comparison = Comparison(
-            user_id=uid,
-            file1_name=filename1,
-            file2_name=filename2,
-            file1_type=display_type,
-            file2_type=display_type,
-            comparison_type="auto",
-            similarity_score=report["stats"]["similarity_percent"],
-            status="completed",
-            results=report
-        )
-        db.add(comparison)
-        await db.commit()
-        await db.refresh(comparison)
-        
-        report["comparison_id"] = comparison.id
+        if current_user:
+            comparison = Comparison(
+                user_id=current_user.id,
+                file1_name=filename1,
+                file2_name=filename2,
+                file1_type=display_type,
+                file2_type=display_type,
+                comparison_type="auto",
+                similarity_score=report["stats"]["similarity_percent"],
+                status="completed",
+                results=report
+            )
+            db.add(comparison)
+            await db.commit()
+            await db.refresh(comparison)
+            report["comparison_id"] = comparison.id
+        else:
+            report["comparison_id"] = 0
         return report
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
