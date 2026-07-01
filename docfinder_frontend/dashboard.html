@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compare · Docsy</title>
+    <title>Compare · doc-differ-ai</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">    <style>
         .main { padding: 2.5rem 3rem; background: var(--bg); }
@@ -135,14 +135,51 @@
         .opts { display: flex; gap: 1.5rem; align-items: center; font-size: 0.88rem; color: #475569; }
         .opts label { display: flex; gap: 0.5rem; align-items: center; cursor: pointer; font-weight: 500; }
         .opts input[type="checkbox"] { width: 16px; height: 16px; accent-color: #3b82f6; }
+
+        /* Inline Diff Styles */
+        .sbs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .sbs-header { background: #f1f5f9; padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .sbs-body { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
+        .sbs-line { display: flex; min-height: 24px; border-bottom: 1px solid rgba(48,54,61,0.1); }
+        .sbs-num { min-width: 45px; padding: 2px 8px; text-align: right; color: var(--muted); font-size: 11px; user-select: none; border-right: 1px solid var(--border); background: #f8fafc; flex-shrink: 0; }
+        .sbs-code { padding: 2px 12px; flex: 1; white-space: pre-wrap; word-break: break-all; }
+        .sbs-line.del { background: rgba(239,68,68,0.1); }
+        .sbs-line.del .sbs-code { color: var(--error); }
+        .sbs-line.ins { background: rgba(16,185,129,0.1); }
+        .sbs-line.ins .sbs-code { color: #10b981; }
+        .sbs-line.mod { background: rgba(245,158,11,0.08); }
+        .sbs-col { border-right: 1px solid var(--border); }
+        .inline-panel { display: none; }
+        .inline-panel.active { display: block; }
+        
+        /* Chat Box Messages */
+        .chat-msg { margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; max-width: 80%; line-height: 1.5; }
+        .chat-msg.user { background: #f1f5f9; color: var(--text); align-self: flex-end; border-bottom-right-radius: 2px; }
+        .chat-msg.ai { background: rgba(139, 92, 246, 0.08); color: var(--text); align-self: flex-start; border-bottom-left-radius: 2px; border-left: 3px solid #8b5cf6; }
+
+        /* Premium AI Mode Glow */
+        .compare-grid.ai-glow .card {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+            background: linear-gradient(180deg, #fff 0%, rgba(139, 92, 246, 0.01) 100%);
+        }
+        .btn-ai-glow {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+            box-shadow: 0 8px 20px -6px rgba(139, 92, 246, 0.4) !important;
+            border-color: #8b5cf6 !important;
+        }
+        .btn-ai-glow:hover {
+            box-shadow: 0 10px 25px -4px rgba(139, 92, 246, 0.5) !important;
+            transform: translateY(-1px) !important;
+        }
     </style>
 </head>
 <body>
     <div class="app">
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-mark">D</div>
-                Docsy
+                <div class="brand-mark">d</div>
+                doc-differ-ai
             </div>
             
             <div class="s-section">Workspace</div>
@@ -186,6 +223,9 @@
                 <button class="mode-btn active" id="normalModeBtn" onclick="setMode('normal')">⚡ Normal Mode</button>
                 <button class="mode-btn" id="aiModeBtn" onclick="setMode('ai')">✨ AI Mode</button>
             </div>
+            <div id="modeDescription" style="font-size:0.85rem; color:#475569; margin-top:-0.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:6px;">
+                <span>🔌 Fast, exact line-by-line comparison using standard character diffing.</span>
+            </div>
             <p style="font-size:0.78rem;color:var(--muted);margin-top:-1rem;margin-bottom:1.5rem">Supports: PDF · DOCX · PPTX · XLSX · XLS · CSV · TXT · PNG · JPG · WEBP</p>
 
             <div class="type-tabs">
@@ -221,6 +261,86 @@
                         <label><input type="checkbox" id="caseSens" checked> Case sensitive</label>
                     </div>
                     <button class="btn btn-primary" onclick="compareText()">⚡ Compare now</button>
+                </div>
+            </div>
+
+            <!-- INLINE TEXT RESULTS (Shown after compareText() completes) -->
+            <div id="inlineTextResults" style="display:none; margin-top:2rem;" class="card animate-in">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+                    <div>
+                        <h2 style="font-weight:800; font-size:1.4rem;">📊 Comparison Result</h2>
+                        <p style="color:var(--muted); font-size:0.85rem; margin-top:0.25rem;">Compare your edits in real-time below.</p>
+                    </div>
+                    <button class="btn" onclick="document.getElementById('inlineTextResults').style.display='none'" style="background:#f1f5f9; color:#475569; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">✕ Close Results</button>
+                </div>
+                
+                <!-- Stats Row -->
+                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:1rem; margin-bottom:1.5rem;">
+                    <div style="padding:1rem; border:1px solid var(--border); border-radius:12px; text-align:center;">
+                        <span style="font-size:1.2rem;">🟢</span>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:4px;" id="inlineAdded">—</div>
+                        <div style="font-size:0.72rem; color:var(--muted)">Additions</div>
+                    </div>
+                    <div style="padding:1rem; border:1px solid var(--border); border-radius:12px; text-align:center;">
+                        <span style="font-size:1.2rem;">🔴</span>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:4px;" id="inlineRemoved">—</div>
+                        <div style="font-size:0.72rem; color:var(--muted)">Deletions</div>
+                    </div>
+                    <div style="padding:1rem; border:1px solid var(--border); border-radius:12px; text-align:center;">
+                        <span style="font-size:1.2rem;">🟡</span>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:4px;" id="inlineChanged">—</div>
+                        <div style="font-size:0.72rem; color:var(--muted)">Modifications</div>
+                    </div>
+                    <div style="padding:1rem; border:1px solid var(--border); border-radius:12px; text-align:center; background:rgba(59,130,246,0.04);">
+                        <span style="font-size:1.2rem;">💯</span>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:4px;" id="inlineSimilarity">—</div>
+                        <div style="font-size:0.72rem; color:var(--muted)">Similarity Score</div>
+                    </div>
+                    <div style="padding:1rem; border:1px solid var(--border); border-radius:12px; text-align:center; background:rgba(239,68,68,0.04);">
+                        <span style="font-size:1.2rem;">⚡</span>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:4px;" id="inlineDiff">—</div>
+                        <div style="font-size:0.72rem; color:var(--muted)">Difference Ratio</div>
+                    </div>
+                </div>
+
+                <!-- Tabs for Diffs and AI -->
+                <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:99px; border:1px solid #e2e8f0; margin-bottom:1.5rem; width:fit-content;" id="inlineResultTabs">
+                    <button class="type-tab active" id="inlineSbsTabBtn" onclick="switchInlineTab('sideBySide')">📝 Side-by-Side Diff</button>
+                    <button class="type-tab" id="inlineGranularTabBtn" onclick="switchInlineTab('granular')">🔍 Granular Diff</button>
+                    <button class="type-tab" id="inlineAiTabBtn" onclick="switchInlineTab('aiPanel')" style="display:none; color:#8b5cf6;">🤖 AI Semantic Audit</button>
+                </div>
+
+                <!-- Panels -->
+                <div id="inline_sideBySide" class="inline-panel active" style="border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+                    <div id="inlineSbsContent"></div>
+                </div>
+                <div id="inline_granular" class="inline-panel" style="border:1px solid var(--border); border-radius:12px; padding:1.25rem; background:#fafafa; font-family:'JetBrains Mono',monospace; font-size:0.88rem; line-height:1.6; white-space:pre-wrap;">
+                    <div id="inlineGranularContent"></div>
+                </div>
+                
+                <!-- AI Panel (Only for AI Mode) -->
+                <div id="inline_aiPanel" class="inline-panel" style="display:none;">
+                    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                        <!-- AI Semantic Audit -->
+                        <div style="border:1px solid var(--border); border-radius:14px; padding:1.5rem; background:linear-gradient(135deg,rgba(139,92,246,0.02),rgba(99,102,241,0.02));">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#8b5cf6; font-size:1.1rem; margin-bottom:1rem;">
+                                <span>🧠</span> AI Semantic Audit & Tone Analysis
+                            </div>
+                            <div id="inlineAiAuditText" style="line-height:1.6; color:#334155; white-space:pre-wrap;">Analyzing text changes...</div>
+                        </div>
+                        
+                        <!-- AI Chat Box -->
+                        <div style="border:1px solid var(--border); border-radius:14px; overflow:hidden; background:#fff; display:flex; flex-direction:column; height:350px;">
+                            <div style="padding:1rem; border-bottom:1px solid var(--border); font-weight:700; background:#f8fafc; display:flex; align-items:center; gap:6px;">
+                                <span>💬</span> Ask doc-differ-ai Chat Assistant
+                            </div>
+                            <div id="inlineChatMessages" style="flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:10px; font-size:0.88rem;"></div>
+                            <div style="display:flex; border-top:1px solid var(--border); padding:0.5rem; background:#f8fafc; gap:8px;">
+                                <input type="text" id="inlineChatInput" placeholder="Ask about specific differences..." style="flex:1; padding:0.6rem 1rem; border:1px solid var(--border); border-radius:8px; outline:none;" onkeydown="if(event.key==='Enter')sendInlineChat()">
+                                <button class="btn btn-primary" id="inlineChatSendBtn" onclick="sendInlineChat()" style="background:#8b5cf6; border-color:#8b5cf6;">Send</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -291,6 +411,22 @@
             currentMode = mode;
             document.getElementById('normalModeBtn').className = `mode-btn ${mode === 'normal' ? 'active' : ''}`;
             document.getElementById('aiModeBtn').className = `mode-btn ${mode === 'ai' ? 'active' : ''}`;
+            
+            const modeDesc = document.getElementById('modeDescription');
+            const compareBtn = document.querySelector('.btn-primary');
+            const grid = document.querySelector('.compare-grid');
+            
+            if (mode === 'ai') {
+                modeDesc.innerHTML = '<span>🧠 Deep semantic analysis powered by doc-differ-ai. Understands tone shifts, liability risks, and semantic intent.</span>';
+                compareBtn.classList.add('btn-ai-glow');
+                compareBtn.innerHTML = '✨ Compare with AI';
+                grid.classList.add('ai-glow');
+            } else {
+                modeDesc.innerHTML = '<span>🔌 Fast, exact line-by-line comparison using standard character diffing.</span>';
+                compareBtn.classList.remove('btn-ai-glow');
+                compareBtn.innerHTML = '⚡ Compare now';
+                grid.classList.remove('ai-glow');
+            }
         }
 
         function switchTab(tab) {
@@ -394,6 +530,13 @@
             const text2 = document.getElementById('text2').value;
             if (!text1 || !text2) return showToast('Please enter both texts', 'error');
             
+            // Guest limits check
+            if (!token) {
+                if (text1.length > 500 || text2.length > 500) {
+                    return showToast('Guest mode is limited to 500 characters. Please Sign in / Register for unlimited comparisons.', 'error');
+                }
+            }
+            
             const formData = new FormData();
             formData.append('text1', text1);
             formData.append('text2', text2);
@@ -408,6 +551,13 @@
         
         async function compareFiles() {
             if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
+            
+            // Guest limits check
+            if (!token) {
+                if (selectedFile1.size > 500 * 1024 || selectedFile2.size > 500 * 1024) {
+                    return showToast('Guest mode is limited to 500 KB file size. Please Sign in / Register for unlimited comparisons.', 'error');
+                }
+            }
             
             const formData = new FormData();
             formData.append('file1', selectedFile1);
@@ -453,15 +603,209 @@
                     
                     localStorage.setItem('lastResult', JSON.stringify(data));
                     sessionStorage.setItem('diffResult', JSON.stringify(data));
-                    window.location.href = 'results.html?v=' + new Date().getTime();
+                    
+                    if (currentTab === 'text') {
+                        loading.style.display = 'none';
+                        showInlineResults(data);
+                    } else {
+                        window.location.href = 'results.html?v=' + new Date().getTime();
+                    }
                 } else {
                     showToast(data.detail || 'Comparison failed', 'error');
                 }
             } catch (err) {
                 showToast('Connection error. Is the server running?', 'error');
             } finally {
-                loading.style.display = 'none';
+                if (currentTab !== 'text') {
+                    loading.style.display = 'none';
+                }
             }
+        }
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+
+        function switchInlineTab(panelId) {
+            document.querySelectorAll("#inlineTextResults .type-tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll("#inlineTextResults .inline-panel").forEach(p => p.style.display = "none");
+            
+            if (panelId === 'sideBySide') {
+                document.getElementById('inlineSbsTabBtn').classList.add('active');
+                document.getElementById('inline_sideBySide').style.display = 'block';
+            } else if (panelId === 'granular') {
+                document.getElementById('inlineGranularTabBtn').classList.add('active');
+                document.getElementById('inline_granular').style.display = 'block';
+            } else if (panelId === 'aiPanel') {
+                document.getElementById('inlineAiTabBtn').classList.add('active');
+                document.getElementById('inline_aiPanel').style.display = 'block';
+            }
+        }
+
+        let inlineChatContext = "";
+
+        function showInlineResults(data) {
+            const resultsDiv = document.getElementById('inlineTextResults');
+            resultsDiv.style.display = 'block';
+            
+            const stats = data.stats || {};
+            document.getElementById('inlineAdded').textContent = stats.added ?? 0;
+            document.getElementById('inlineRemoved').textContent = stats.removed ?? 0;
+            document.getElementById('inlineChanged').textContent = stats.changed ?? 0;
+            document.getElementById('inlineSimilarity').textContent = (stats.similarity_percent ?? 0) + '%';
+            document.getElementById('inlineDiff').textContent = (stats.difference_percent ?? 0) + '%';
+            
+            renderInlineSideBySide(data.full_text1 || "", data.full_text2 || "", data.differences || []);
+            renderInlineGranular(data.differences || []);
+            
+            const aiTab = document.getElementById('inlineAiTabBtn');
+            if (data.mode === 'ai') {
+                aiTab.style.display = 'block';
+                document.getElementById('inlineAiAuditText').innerHTML = formatMarkdown(data.ai_analysis || "No AI analysis available.");
+                inlineChatContext = `Document A: ${data.full_text1}\n\nDocument B: ${data.full_text2}\n\nDifferences: ${JSON.stringify(data.differences)}`;
+                document.getElementById('inlineChatMessages').innerHTML = `
+                    <div class="chat-msg ai">Hello! I am doc-differ-ai. I have analyzed the text differences. Ask me anything about this comparison!</div>
+                `;
+            } else {
+                aiTab.style.display = 'none';
+            }
+            
+            switchInlineTab('sideBySide');
+            setTimeout(() => {
+                resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function renderInlineSideBySide(text1, text2, differences) {
+            const container = document.getElementById("inlineSbsContent");
+            const lines1 = (text1 || "").split("\n");
+            const lines2 = (text2 || "").split("\n");
+
+            const changedLines1 = {};
+            const changedLines2 = {};
+            (differences || []).forEach(d => {
+                if (d.type === "changed") { changedLines1[d.line_num1] = d; changedLines2[d.line_num2] = d; }
+                else if (d.type === "removed") { changedLines1[d.line_num1] = d; }
+                else if (d.type === "added") { changedLines2[d.line_num2] = d; }
+            });
+
+            let rows = [];
+            let i1 = 0, i2 = 0;
+
+            while (i1 < lines1.length || i2 < lines2.length) {
+                const ln1 = i1 + 1;
+                const ln2 = i2 + 1;
+                const d1 = changedLines1[ln1];
+                const d2 = changedLines2[ln2];
+
+                if (d1 && d1.type === "changed" && d2 && d2.type === "changed") {
+                    rows.push({ type: "mod", ln1, ln2, t1: lines1[i1], t2: lines2[i2], diff: d1 });
+                    i1++; i2++;
+                } else if (d1 && d1.type === "removed") {
+                    rows.push({ type: "del", ln1, ln2: null, t1: lines1[i1], t2: null });
+                    i1++;
+                } else if (d2 && d2.type === "added") {
+                    rows.push({ type: "ins", ln1: null, ln2, t1: null, t2: lines2[i2] });
+                    i2++;
+                } else {
+                    rows.push({ type: "eq", ln1: i1 < lines1.length ? ln1 : null, ln2: i2 < lines2.length ? ln2 : null, t1: lines1[i1] || "", t2: lines2[i2] || "" });
+                    if (i1 < lines1.length) i1++;
+                    if (i2 < lines2.length) i2++;
+                }
+            }
+
+            container.innerHTML = `
+                <div class="s-body">
+                    <div class="sbs-container">
+                        <div class="sbs-col" style="border-right:1px solid var(--border)">
+                            <div class="sbs-header">Original (Source A)</div>
+                            ${rows.map(r => {
+                                if (r.type === 'ins') return '<div class="sbs-line" style="background:#f8fafc;"><div class="sbs-num"></div><div class="sbs-code" style="color:transparent;user-select:none;">&nbsp;</div></div>';
+                                const c = r.type === 'del' ? 'del' : r.type === 'mod' ? 'mod' : 'eq';
+                                return `<div class="sbs-line ${c}"><div class="sbs-num">${r.ln1}</div><div class="sbs-code">${escHtml(r.t1)}</div></div>`;
+                            }).join('')}
+                        </div>
+                        <div class="sbs-col">
+                            <div class="sbs-header">Modified (Source B)</div>
+                            ${rows.map(r => {
+                                if (r.type === 'del') return '<div class="sbs-line" style="background:#f8fafc;"><div class="sbs-num"></div><div class="sbs-code" style="color:transparent;user-select:none;">&nbsp;</div></div>';
+                                const c = r.type === 'ins' ? 'ins' : r.type === 'mod' ? 'mod' : 'eq';
+                                return `<div class="sbs-line ${c}"><div class="sbs-num">${r.ln2}</div><div class="sbs-code">${escHtml(r.t2)}</div></div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderInlineGranular(differences) {
+            const container = document.getElementById("inlineGranularContent");
+            if (!differences || differences.length === 0) {
+                container.innerHTML = '<p style="color:var(--muted); text-align:center;">No differences found. The texts are identical.</p>';
+                return;
+            }
+            container.innerHTML = differences.map(d => {
+                let badgeColor = d.type === 'added' ? '#10b981' : d.type === 'removed' ? '#ef4444' : '#f59e0b';
+                let label = d.type.toUpperCase();
+                return `
+                    <div style="margin-bottom:1rem; border-bottom:1px solid #e2e8f0; padding-bottom:0.75rem;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.4rem;">
+                            <span style="background:${badgeColor}; color:#fff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:99px;">${label}</span>
+                            <span style="font-size:0.78rem; color:var(--muted)">Line ${d.line_num1 || d.line_num2}</span>
+                        </div>
+                        <div style="font-size:0.85rem; color:#1e293b;">
+                            ${d.type === 'removed' || d.type === 'changed' ? `<div style="text-decoration:line-through; color:#ef4444; margin-bottom:2px;">- ${escHtml(d.text1)}</div>` : ''}
+                            ${d.type === 'added' || d.type === 'changed' ? `<div style="color:#10b981;">+ ${escHtml(d.text2)}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function sendInlineChat() {
+            const input = document.getElementById('inlineChatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            const messages = document.getElementById('inlineChatMessages');
+            messages.innerHTML += `<div class="chat-msg user">${escHtml(msg)}</div>`;
+            input.value = "";
+            messages.scrollTop = messages.scrollHeight;
+            
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = "chat-msg ai";
+            thinkingDiv.textContent = "Thinking...";
+            messages.appendChild(thinkingDiv);
+            messages.scrollTop = messages.scrollHeight;
+            
+            try {
+                const form = new FormData();
+                form.append("message", msg);
+                form.append("context", inlineChatContext);
+                
+                const headers = {};
+                if (token) {
+                    headers["Authorization"] = "Bearer " + token;
+                }
+                const res = await fetch(`${API_URL}/api/ai/chat`, {
+                    method: "POST",
+                    headers: headers,
+                    body: form
+                });
+                const data = await res.json();
+                thinkingDiv.innerHTML = formatMarkdown(data.reply || data.detail || "No response received.");
+            } catch (e) {
+                thinkingDiv.textContent = "Connection error: " + e.message;
+            }
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function formatMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
         }
         
         function showToast(msg, type) {

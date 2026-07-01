@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Docsy — Diff Results</title>
+<title>doc-differ-ai — Diff Results</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -173,7 +173,7 @@
 <body>
 
 <header class="header">
-  <div class="logo">Docsy</div>
+  <div class="logo">doc-differ-ai</div>
   <div style="display:flex; gap:10px;">
     <button class="back-btn" id="downloadPdfBtn" onclick="downloadReport('pdf')" style="background:var(--accent); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export PDF Report</button>
     <button class="back-btn" id="downloadExcelBtn" onclick="downloadReport('excel')" style="background:var(--green); color:white; display:inline-flex; align-items:center; gap:6px;">📥 Export Excel Report</button>
@@ -542,7 +542,19 @@ function closeFileDiffModal() {
 
 // ═══ AI ═══
 function renderAI(analysis) {
-  document.getElementById("aiText").textContent = analysis || "No AI analysis available. Enable AI Node on dashboard.";
+  if (!analysis) {
+    document.getElementById("aiText").textContent = "No AI analysis available. Enable AI Node on dashboard.";
+    return;
+  }
+  document.getElementById("aiText").innerHTML = formatMarkdown(analysis);
+}
+
+function formatMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
 }
 
 let chatContext = "";

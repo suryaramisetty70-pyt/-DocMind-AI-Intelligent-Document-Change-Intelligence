@@ -236,6 +236,30 @@ async def get_current_user(
     return result.scalar_one_or_none()
 
 
+# Helper to check limits for guest users
+async def check_guest_limits(file1: Optional[UploadFile] = None, file2: Optional[UploadFile] = None, text1: Optional[str] = None, text2: Optional[str] = None):
+    # Enforce text character limit of 500
+    if text1 is not None and len(text1) > 500:
+        raise HTTPException(status_code=400, detail="Guest mode is limited to 500 characters of text. Please register or log in for unlimited access.")
+    if text2 is not None and len(text2) > 500:
+        raise HTTPException(status_code=400, detail="Guest mode is limited to 500 characters of text. Please register or log in for unlimited access.")
+    
+    # Enforce file size limit of 500 KB
+    if file1 is not None:
+        await file1.seek(0, 2)
+        size1 = await file1.tell()
+        await file1.seek(0)
+        if size1 > 500 * 1024:
+            raise HTTPException(status_code=400, detail=f"Guest mode is limited to 500 KB file size. '{file1.filename}' exceeds this limit.")
+            
+    if file2 is not None:
+        await file2.seek(0, 2)
+        size2 = await file2.tell()
+        await file2.seek(0)
+        if size2 > 500 * 1024:
+            raise HTTPException(status_code=400, detail=f"Guest mode is limited to 500 KB file size. '{file2.filename}' exceeds this limit.")
+
+
 # Pydantic models
 class UserCreate(BaseModel):
     username: str
@@ -472,9 +496,12 @@ async def compare_text(
     remove_extra_spaces: str = Form("false"),
     sort_lines: str = Form("false"),
     use_ai: str = Form("false"),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    if not current_user:
+        await check_guest_limits(text1=text1, text2=text2)
+        
     report = compute_diff_report(text1, text2)
     report["file_type"] = "text"
     report["type"] = "text"
@@ -771,9 +798,12 @@ async def compare_auto(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
     use_ai: str = Form("false"),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    if not current_user:
+        await check_guest_limits(file1=file1, file2=file2)
+        
     uid = current_user.id if current_user else 0
     filename1 = file1.filename or "SourceA"
     filename2 = file2.filename or "SourceB"
@@ -795,6 +825,13 @@ async def compare_auto(
         text1 = await extract_file_text(file1)
         text2 = await extract_file_text(file2)
         
+        if not current_user:
+            if len(text1) > 500 or len(text2) > 500:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Guest mode is limited to 500 characters of extracted document text. Please register or log in for unlimited access."
+                )
+                
         report = compute_diff_report(text1, text2)
         
         display_type = ext1.replace(".", "").upper() if ext1 else "TXT"
@@ -1091,13 +1128,14 @@ async def generate_excel_report(
 # History endpoints
 @app.get("/api/history")
 async def get_history(
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get user's comparison history."""
-    query = select(Comparison).order_by(Comparison.created_at.desc()).limit(50)
     if current_user:
         query = select(Comparison).where(Comparison.user_id == current_user.id).order_by(Comparison.created_at.desc()).limit(50)
+    else:
+        query = select(Comparison).where(Comparison.user_id == 0).order_by(Comparison.created_at.desc()).limit(50)
     
     result = await db.execute(query)
     comparisons = result.scalars().all()
@@ -1118,7 +1156,7 @@ async def get_history(
 @app.get("/api/comparison/{comparison_id}")
 async def get_comparison(
     comparison_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific comparison by ID."""
@@ -1128,8 +1166,11 @@ async def get_comparison(
     if not comparison:
         raise HTTPException(status_code=404, detail="Comparison not found")
         
-    if current_user and comparison.user_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to view this comparison")
+    if comparison.user_id != 0:
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Please log in to view private comparisons")
+        if comparison.user_id != current_user.id and not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to view this comparison")
         
     return {
         "id": comparison.id,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>History · Docsy</title>
+    <title>History · doc-differ-ai</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
@@ -22,8 +22,8 @@
     <div class="app">
         <aside class="sidebar">
             <div class="brand">
-                <div class="brand-mark">D</div>
-                Docsy
+                <div class="brand-mark">d</div>
+                doc-differ-ai
             </div>
             
             <div class="s-section">Workspace</div>
@@ -62,10 +62,12 @@
                 <a href="dashboard.html"><button class="btn btn-primary">+ New comparison</button></a>
             </div>
             
-            <div class="empty-search" style="max-width:600px; display:flex;">
-                <span>🧠</span>
-                <input type="text" placeholder="Semantic AI Search (e.g., 'find the contract update')" id="searchInput" onkeypress="if(event.key === 'Enter') performSemanticSearch()">
-                <button class="btn btn-primary" onclick="performSemanticSearch()" style="padding:0.5rem 1rem;">Semantic Search</button>
+            <div style="display:flex; gap:12px; margin-bottom:1.5rem; max-width:600px;">
+                <div class="empty-search" style="flex:1; display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; margin-bottom:0; background:#fff; border:1px solid var(--border); border-radius:12px; max-width:none;">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Search history by file name..." id="historySearchInput" style="border:none; outline:none; flex:1; font:inherit;" oninput="filterHistoryLocal()">
+                </div>
+                <button class="btn btn-primary" onclick="filterHistoryLocal()" style="padding:0.5rem 1.25rem;">Search</button>
             </div>
             
             <div class="filters" id="filters">
@@ -95,6 +97,8 @@
             if (adminMenu) adminMenu.style.display = 'block';
         }
         
+        let allHistoryItems = [];
+
         // Load history
         loadHistory();
         
@@ -109,14 +113,77 @@
                 });
                 
                 if (res.ok) {
-                    const data = await res.json();
-                    renderHistory(data);
+                    allHistoryItems = await res.json();
+                    renderHistory(allHistoryItems);
                 } else {
                     renderEmpty();
                 }
             } catch (err) {
                 // Show demo data if API not available
-                renderDemoHistory();
+                allHistoryItems = getDemoHistoryItems();
+                renderHistory(allHistoryItems);
+            }
+        }
+
+        function getDemoHistoryItems() {
+            return [
+                {
+                    id: 1,
+                    comparison_type: 'text',
+                    file1_name: 'contract-v2.txt',
+                    file2_name: 'contract-v3.txt',
+                    similarity_score: 0.8,
+                    created_at: new Date(Date.now() - 120000).toISOString()
+                },
+                {
+                    id: 2,
+                    comparison_type: 'pdf',
+                    file1_name: 'report-2023.pdf',
+                    file2_name: 'report-2024.pdf',
+                    similarity_score: 0.64,
+                    created_at: new Date(Date.now() - 3600000).toISOString()
+                },
+                {
+                    id: 3,
+                    comparison_type: 'excel',
+                    file1_name: 'budget-Q3.xlsx',
+                    file2_name: 'budget-Q4.xlsx',
+                    similarity_score: 0.92,
+                    created_at: new Date(Date.now() - 86400000).toISOString()
+                },
+                {
+                    id: 4,
+                    comparison_type: 'csv',
+                    file1_name: 'customers-old.csv',
+                    file2_name: 'customers-new.csv',
+                    similarity_score: 0.38,
+                    created_at: new Date(Date.now() - 259200000).toISOString()
+                }
+            ];
+        }
+
+        function filterHistoryLocal() {
+            const query = document.getElementById('historySearchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderHistory(allHistoryItems);
+                return;
+            }
+            const filtered = allHistoryItems.filter(item => {
+                const f1 = (item.file1_name || '').toLowerCase();
+                const f2 = (item.file2_name || '').toLowerCase();
+                const type = (item.comparison_type || '').toLowerCase();
+                return f1.includes(query) || f2.includes(query) || type.includes(query);
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById('historyList').innerHTML = `
+                    <div style="padding:3rem;text-align:center;color:var(--muted)">
+                        <p style="font-size:2rem;margin-bottom:0.5rem">🔍</p>
+                        <p>No matching history items found.</p>
+                    </div>
+                `;
+            } else {
+                renderHistory(filtered);
             }
         }
         

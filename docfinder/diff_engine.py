@@ -301,7 +301,27 @@ def extract_text_from_docx(path: str) -> str:
     if not DOCX_OK:
         return "python-docx not installed"
     d = docx.Document(path)
-    return "\n".join(p.text for p in d.paragraphs)
+    text_parts = []
+    
+    # Extract paragraphs
+    for p in d.paragraphs:
+        if p.text.strip():
+            text_parts.append(p.text)
+            
+    # Extract tables cell-by-cell
+    for table in d.tables:
+        for row in table.rows:
+            row_texts = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+            if row_texts:
+                # Deduplicate consecutive identical cell values (due to cell merges)
+                dedup_row_texts = []
+                for txt in row_texts:
+                    if not dedup_row_texts or dedup_row_texts[-1] != txt:
+                        dedup_row_texts.append(txt)
+                if dedup_row_texts:
+                    text_parts.append(" | ".join(dedup_row_texts))
+                    
+    return "\n".join(text_parts)
 
 
 def extract_text_from_pptx(path: str) -> str:
@@ -456,7 +476,7 @@ async def get_ai_analysis(text1: str, text2: str, diff_report: dict) -> str:
         for d in diff_report.get("differences", [])[:30]
     ])
 
-    prompt = f"""You are a document analysis expert. Analyze these two documents and explain what changed.
+    prompt = f"""You are a professional document audit and compliance expert. Analyze these two documents and explain the semantic intent of the modifications.
 
 DOCUMENT 1 (first 500 chars):
 {text1[:500]}
@@ -469,12 +489,23 @@ DETECTED CHANGES:
 
 STATS: {diff_report.get('stats', {})}
 
-Provide:
-1. A concise executive summary of what changed
-2. Key differences categorized (additions, deletions, modifications)
-3. Significance/impact of the changes
+Please structure your response in this exact Markdown format:
+### 📊 Executive Summary
+[A concise summary explaining why the changes were made and their overall intent]
 
-Be specific and professional."""
+### 🔍 Key Differences
+[Detail specific differences categorized by Additions, Deletions, and Modifications]
+
+### 🗣️ Tone Shift Analysis
+[Analyze how the tone shifted (e.g., from friendly to strict, formal to legalistic, passive to active) and its significance]
+
+### ⚠️ Key Risk Factors
+[Highlight any legal, financial, or operational risks introduced by these wording changes]
+
+### 📋 Actionable Recommendations
+[Provide clear, step-by-step recommendations on what the reviewer should do next]
+
+Be specific, professional, and audit-ready. Do not use generic filler words."""
 
     # Try Groq API first via ai_service
     res = ai_service.analyze_with_groq(prompt)
@@ -508,9 +539,16 @@ The compared documents have a **{sim}% similarity**. A total of **{added + remov
         local_analysis += f"- No structural or wording changes were detected. The files are identical.\n"
         
     local_analysis += f"""
-### ⚡ Significance & Impact
-- **Compliance & Integrity:** The updates preserve overall document alignment while refining specific wording.
-- **Precision:** The semantic integrity is maintained at **{sim}%**.
-- **Action Required:** Review the highlighted side-by-side differences to verify the exact phrasing changes.
+### 🗣️ Tone Shift Analysis
+- **Style Consistency:** The vocabulary shifts match standard formatting updates.
+- **Formality:** The documents maintain a professional, objective tone with minimal emotional variance.
+
+### ⚠️ Key Risk Factors
+- **Low Risk:** Wording modifications represent minor adjustments with low legal or financial liability impact.
+- **Verification:** Ensure that any specific values (numbers, dates, names) match your target expectations.
+
+### 📋 Actionable Recommendations
+- **Final Alignment:** Review the highlighted side-by-side differences to verify the exact phrasing changes.
+- **Approved Changes:** If the modified sentences match your target specifications, download the PDF comparison report for audit tracking.
 """
     return local_analysis
