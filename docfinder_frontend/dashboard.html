@@ -406,6 +406,18 @@
             const adminMenu = document.getElementById('adminMenu');
             if (adminMenu) adminMenu.style.display = 'block';
         }
+
+        if (!token) {
+            // Hide other tabs in dashboard (only show text)
+            document.querySelectorAll('.type-tab:not([data-type="text"])').forEach(el => el.style.display = 'none');
+            
+            // Hide sidebar premium links
+            const linksToHide = ['collab.html', 'translate.html', 'settings.html'];
+            linksToHide.forEach(href => {
+                const link = document.querySelector(`.sidebar a[href="${href}"]`);
+                if (link) link.style.display = 'none';
+            });
+        }
         
         function setMode(mode) {
             currentMode = mode;
