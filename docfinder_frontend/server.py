@@ -107,11 +107,9 @@ class DocFinderHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.startswith('/api/'):
             return self.proxy_request('GET')
-        # Serve index.html for root
-        if self.path == '/':
-            self.path = '/index.html'
-        elif self.path == '/portal':
-            self.path = '/portal.html'
+        # Serve difflab.html for root or index.html
+        if self.path == '/' or self.path == '/index.html':
+            self.path = '/difflab.html'
             
         # Call super, but we need to inject cache headers
         super().do_GET()

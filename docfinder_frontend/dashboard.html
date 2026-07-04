@@ -419,8 +419,15 @@
             if (adminMenu) adminMenu.style.display = 'block';
         }
 
-        if (!token) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isGuestParam = urlParams.get('guest') === '1';
+        if (!token || isGuestParam) {
             document.body.classList.add('guest-mode');
+            if (isGuestParam) {
+                document.getElementById('userName').textContent = 'Guest';
+                document.getElementById('userAvatar').textContent = 'G';
+                document.getElementById('userPlan').textContent = 'Free Guest Mode';
+            }
         }
         
         function setMode(mode) {
