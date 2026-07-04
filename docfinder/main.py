@@ -801,7 +801,7 @@ async def compare_url(
     url1: str = Form(...),
     url2: str = Form(...),
     use_ai: bool = Form(False),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: Optional[User] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     await check_guest_limits(text1=url1, text2=url2)
