@@ -147,10 +147,10 @@
             </div>
             
             <div class="s-section">Resources</div>
-            <a href="index.html#pricing" class="s-link">💳 Pricing Plans</a>
-            <a href="index.html#enterprise" class="s-link">🏢 Enterprise Solutions</a>
-            <a href="index.html#desktop" class="s-link">💻 Desktop App</a>
-            <a href="index.html#legal" class="s-link">⚖️ Legal & Compliance</a>
+            <a href="#" onclick="showPricingModal(); return false;" class="s-link">💳 Pricing Plans</a>
+            <a href="#" onclick="showPricingModal(); return false;" class="s-link">🏢 Enterprise Solutions</a>
+            <a href="#" onclick="showPricingModal(); return false;" class="s-link">💻 Desktop App</a>
+            <a href="#" onclick="showPricingModal(); return false;" class="s-link">⚖️ Legal & Compliance</a>
             
             <div class="s-section">Account</div>
             <a href="settings.html" class="s-link">⚙️ Settings</a>
@@ -287,5 +287,65 @@
             setTimeout(() => toast.className = 'toast', 3000);
         }
     </script>
+
+    <!-- Pricing Modal -->
+    <div id="pricingModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div class="modal-content" style="background:var(--bg, #0f172a); border:1px solid var(--border, #1e293b); border-radius:16px; padding:2rem; max-width:800px; width:90%; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+            <span class="close-btn" onclick="document.getElementById('pricingModal').style.display='none'" style="position:absolute; top:20px; right:20px; font-size:1.5rem; cursor:pointer; color:var(--muted);">&times;</span>
+            <h2 style="text-align:center; font-size:2rem; margin-bottom:0.5rem;">Upgrade to Premium</h2>
+            <p style="text-align:center; color:var(--muted, #94a3b8); margin-bottom:2rem;">Unlock unlimited comparisons and AI features.</p>
+            
+            <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+                <!-- Free -->
+                <div style="border: 1px solid var(--border, #1e293b); padding: 1.5rem; border-radius: 12px; flex: 1; min-width:220px; text-align: left; background:rgba(255,255,255,0.02);">
+                    <h3 style="font-size:1.2rem;">Free Tier</h3>
+                    <div style="font-size: 2.2rem; font-weight: 800; margin: 1rem 0;">₹0 <span style="font-size: 1rem; color: var(--muted); font-weight: normal;">/ forever</span></div>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light, #e2e8f0); line-height: 2.2; font-size:0.95rem;">
+                        <li>✓ 5 comparisons daily</li>
+                        <li>✓ Standard Text Compare</li>
+                        <li>✓ 500 characters limit</li>
+                        <li>✓ 500 KB file limit</li>
+                    </ul>
+                </div>
+                
+                <!-- Monthly -->
+                <div style="border: 2px solid var(--accent, #3b82f6); padding: 1.5rem; border-radius: 12px; flex: 1; min-width:220px; text-align: left; position: relative; background: rgba(59, 130, 246, 0.05); box-shadow:0 0 20px rgba(59, 130, 246, 0.1);">
+                    <div style="position: absolute; top: -12px; right: 20px; background: var(--accent, #3b82f6); color: white; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform:uppercase; letter-spacing:0.05em;">Most Popular</div>
+                    <h3 style="font-size:1.2rem;">Monthly Premium</h3>
+                    <div style="font-size: 2.2rem; font-weight: 800; margin: 1rem 0;">₹80 <span style="font-size: 1rem; color: var(--muted); font-weight: normal;">/ month</span></div>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light); line-height: 2.2; font-size:0.95rem;">
+                        <li>✓ <b>Unlimited</b> comparisons</li>
+                        <li>✓ Code, PDF, CSV, Excel, Image</li>
+                        <li>✓ Deep AI semantic analysis</li>
+                        <li>✓ Quantum Coherence Simulator</li>
+                    </ul>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding:0.75rem; font-weight:bold; border-radius:8px;">Subscribe Monthly</button>
+                </div>
+
+                <!-- Yearly -->
+                <div style="border: 1px solid var(--border); padding: 1.5rem; border-radius: 12px; flex: 1; min-width:220px; text-align: left; background:rgba(255,255,255,0.02);">
+                    <h3 style="font-size:1.2rem;">Yearly Premium</h3>
+                    <div style="font-size: 2.2rem; font-weight: 800; margin: 1rem 0;">₹800 <span style="font-size: 1rem; color: var(--muted); font-weight: normal;">/ year</span></div>
+                    <p style="color: #34d399; font-size: 0.85rem; margin-top: -10px; margin-bottom: 10px; font-weight:bold;">Save ₹160 annually</p>
+                    <ul style="list-style: none; padding: 0; color: var(--text-light); line-height: 2.2; font-size:0.95rem;">
+                        <li>✓ Everything in Monthly</li>
+                        <li>✓ Priority VIP Support</li>
+                        <li>✓ Export PDF Reports</li>
+                    </ul>
+                    <button class="btn" style="width: 100%; margin-top: 1.5rem; border: 1px solid var(--border); background: transparent; color: inherit; padding:0.75rem; font-weight:bold; border-radius:8px; cursor:pointer;">Subscribe Yearly</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPricingModal() {
+            const modal = document.getElementById('pricingModal');
+            if(modal) {
+                modal.style.display = 'flex';
+            }
+        }
+    </script>
+
 </body>
 </html>

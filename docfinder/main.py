@@ -795,6 +795,38 @@ async def compare_image(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/api/compare/url")
+async def compare_url(
+    url1: str = Form(...),
+    url2: str = Form(...),
+    use_ai: bool = Form(False),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db)
+):
+    await check_guest_limits(text1=url1, text2=url2)
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            resp1 = await client.get(url1, timeout=10.0)
+            text1 = BeautifulSoup(resp1.text, 'html.parser').get_text(separator='\n', strip=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch {url1}: {str(e)}")
+            
+        try:
+            resp2 = await client.get(url2, timeout=10.0)
+            text2 = BeautifulSoup(resp2.text, 'html.parser').get_text(separator='\n', strip=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch {url2}: {str(e)}")
+
+    if use_ai and current_user:
+        result = await diff_engine.compare_with_ai(text1, text2, "web_url")
+    else:
+        result = diff_engine.compare_text(text1, text2)
+
+    await db.commit()
+    return result
+
 @app.post("/api/compare/auto")
 async def compare_auto(
     file1: UploadFile = File(...),
