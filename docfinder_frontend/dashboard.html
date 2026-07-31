@@ -348,6 +348,7 @@
                             </div>
                         </div>
                     </div>
+                    <button class="btn btn-primary" onclick="compareUrl()" style="margin-top:2rem;">⚡ Compare now</button>
                 </div>
 
                 <!-- Quantum Panel (Only for AI Mode) -->
@@ -592,6 +593,25 @@
             await doFetch(`${API_URL}/api/compare/text`, formData);
         }
         
+        
+        async function compareUrl() {
+            const u1 = document.getElementById('url1').value;
+            const u2 = document.getElementById('url2').value;
+            if (!u1 || !u2) return showToast('Please enter both URLs', 'error');
+            
+            // Guest limits check
+            if (!token) {
+                // Not strictly checking length for URLs since they are small, but they will be rate limited
+            }
+            
+            const formData = new FormData();
+            formData.append('url1', u1);
+            formData.append('url2', u2);
+            formData.append('use_ai', String(currentMode === 'ai'));
+            
+            await doFetch(`${API_URL}/api/compare/url`, formData);
+        }
+
         async function compareFiles() {
             if (!selectedFile1 || !selectedFile2) return showToast('Please upload both files', 'error');
             
@@ -784,6 +804,7 @@
                             }).join('')}
                         </div>
                     </div>
+                    <button class="btn btn-primary" onclick="compareUrl()" style="margin-top:2rem;">⚡ Compare now</button>
                 </div>
             `;
         }
@@ -982,7 +1003,15 @@
                 modal.style.display = 'flex';
             }
         }
-    </script>
+    
+        window.onclick = function(event) {
+            const modal = document.getElementById('pricingModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+</script>
 
 </body>
 </html>

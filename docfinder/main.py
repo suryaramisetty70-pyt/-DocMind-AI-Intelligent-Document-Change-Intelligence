@@ -819,13 +819,32 @@ async def compare_url(
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to fetch {url2}: {str(e)}")
 
+    report = compute_diff_report(text1, text2)
+    report["file_type"] = "url"
+    report["type"] = "url"
+    
     if use_ai and current_user:
-        result = await diff_engine.compare_with_ai(text1, text2, "web_url")
-    else:
-        result = diff_engine.compare_text(text1, text2)
+        report["ai_analysis"] = await get_ai_analysis(text1, text2, report)
 
-    await db.commit()
-    return result
+    # Save history only for signed in users
+    if current_user:
+        comparison = Comparison(
+            user_id=current_user.id,
+            file1_name=url1[:50],
+            file2_name=url2[:50],
+            file1_type="url",
+            file2_type="url",
+            comparison_type="url",
+            similarity_score=report["stats"]["similarity_percent"],
+            status="completed",
+            results=report
+        )
+        db.add(comparison)
+        await db.commit()
+        await db.refresh(comparison)
+        report["comparison_id"] = comparison.id
+
+    return report
 
 @app.post("/api/compare/auto")
 async def compare_auto(
