@@ -1,5 +1,7 @@
 """FastAPI Backend for DocFinder."""
 import io
+import httpx
+from bs4 import BeautifulSoup
 import os
 import re
 import shutil
