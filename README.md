@@ -1,18 +1,20 @@
-# DocFinder - Intelligent Document Comparison Platform
+# ScholarSync - AI-Powered Multi-Agent Platform
 
-**A professional document comparison tool with AI-powered analysis**
+**A professional learning, career guidance, and document intelligence tool with 7 specialized AI agents.**
 
-## 🌟 Features
+## 🚀 Features
 
-- 📝 **Text Comparison** - Compare text documents with detailed diff view
-- 📕 **PDF Comparison** - Extract and compare PDF content
-- 📊 **Excel Comparison** - Compare spreadsheets cell-by-cell
-- 📋 **CSV Comparison** - Compare CSV files instantly
-- 🤖 **AI Analysis** - Powered by Groq (Llama) and Gemini
-- 🔐 **Secure Authentication** - Email OTP verification
-- 📊 **History Tracking** - Save and review past comparisons
+- 📚 **Teaching Agent** - Personalized AI tutor for learning and practice.
+- 💼 **Career & Job Training Agent** - Resume building and interview prep.
+- 🏥 **Medical Knowledge Agent** - Health and wellness information.
+- 🌱 **Plant Intelligence Agent** - Visual disease detection for plants.
+- 📈 **Trading & Finance Agent** - Economic guidance and markets.
+- ⚖️ **Law & Police Agent** - Legal procedures and knowledge.
+- 📄 **Document Intelligence Agent** - Compare text, PDF, Excel, and CSV with semantic diffs.
+- 👁️ **Gemini Vision Integration** - Upload images directly to specific agents for multimodal analysis.
+- 🔒 **Secure Authentication** - Email OTP verification and JWT sessions.
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
 ### Local Development
 
@@ -29,9 +31,6 @@ cp .env.example .env
 
 # Start backend
 uvicorn docfinder.main:app --host 0.0.0.0 --port 8000
-
-# Start frontend (new terminal)
-streamlit run docfinder/frontend/app.py --server.port 12000
 ```
 
 ### Environment Variables
@@ -53,106 +52,39 @@ SMTP_PASSWORD=your-app-password
 SMTP_FROM=your-email@gmail.com
 SMTP_USE_TLS=true
 
-# AI APIs (for semantic analysis)
+# AI APIs
 GROQ_API_KEY=your-groq-api-key
 GEMINI_API_KEY=your-gemini-api-key
 ```
 
-## 🌐 Deployment
+## 🧠 AI Integration
 
-### Render (Recommended)
+ScholarSync uses advanced AI providers for conversational intelligence and semantic analysis:
 
-1. Fork this repository
-2. Create a new Web Service on [Render](https://render.com)
-3. Connect your GitHub repository
-4. Set environment variables:
-   - `DATABASE_URL`
-   - `SECRET_KEY`
-   - `SMTP_*` variables
-   - `GROQ_API_KEY`
-   - `GEMINI_API_KEY`
-5. Set build command: `pip install -r requirements.txt`
-6. Set start command: `uvicorn docfinder.main:app --host 0.0.0.0 --port $PORT`
+### Groq (Primary Text Engine)
+- Uses Llama 3.1 8B Instant model
+- Fast reasoning for core text-based agents
+
+### Google Gemini (Vision Engine)
+- Gemini 1.5 Pro is used for `/api/agents/chat_multimodal`
+- Processes image uploads (e.g. sick plants, medical scans)
 
 ## 📁 Project Structure
-
 ```
 docfinder/
-├── main.py                 # FastAPI backend
-├── auth/
-│   └── utils.py            # JWT & password hashing
+├── main.py                 # FastAPI backend & Agent router
 ├── models/
-│   └── models.py           # Database models
+│   └── models.py           # Database models (User, AgentConversation, Message, etc.)
 ├── services/
-│   ├── text_comparison.py  # Text diff engine
-│   ├── pdf_comparison.py   # PDF comparison
-│   ├── excel_comparison.py # Excel comparison
-│   ├── csv_comparison.py   # CSV comparison
-│   ├── ai_engine.py        # AI integration
+│   ├── multi_agent.py      # Multi-Agent logic & hidden rules
 │   ├── ai_integration.py   # Groq & Gemini APIs
-│   ├── email_service.py    # SMTP email service
-│   └── report_generator.py # Report generation
-├── frontend/
-│   └── app.py              # Streamlit frontend
-├── database/
-│   └── config.py          # Database configuration
-├── test_documents/         # Sample test files
-├── requirements.txt        # Python dependencies
-└── .env                   # Environment variables
+│   └── ...                 # Document diff engines
+├── docfinder_frontend/
+│   ├── dashboard.html      # The ScholarSync Hub
+│   ├── agent_chat.html     # Universal Multi-Modal Chat UI
+│   └── ...
+└── requirements.txt        # Python dependencies
 ```
 
-## 🔐 Authentication
-
-DocFinder uses a secure authentication system:
-
-1. **Registration** - Email OTP verification
-2. **Login** - JWT token-based authentication
-3. **Guest Mode** - Limited access without account
-4. **Demo Mode** - Try all features with demo account
-
-## 🤖 AI Integration
-
-DocFinder uses two AI providers for semantic analysis:
-
-### Groq (Primary - Free & Fast)
-- Uses Llama 3.1 8B Instant model
-- Free tier: 30 requests/minute
-- Best for: Fast semantic analysis
-
-### Gemini (Fallback)
-- Google's AI model
-- Best for: Complex analysis
-- Rate limits apply
-
-## 📊 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/send-otp` | POST | Send OTP to email |
-| `/api/auth/verify-otp` | POST | Verify OTP & register |
-| `/api/register` | POST | Direct registration |
-| `/api/login` | POST | User login |
-| `/api/me` | GET | Get current user |
-| `/api/compare/text` | POST | Compare texts |
-| `/api/compare/pdf` | POST | Compare PDFs |
-| `/api/compare/excel` | POST | Compare Excel files |
-| `/api/compare/csv` | POST | Compare CSV files |
-| `/api/history` | GET | Get comparison history |
-| `/api/health` | GET | Health check |
-
-## 🧪 Testing
-
-Test documents are available in `test_documents/`:
-
-- **TXT** - 12 text files
-- **Excel** - 6 spreadsheet files
-- **PDF** - 6 PDF documents
-- **CSV** - 4 CSV files
-
-## 📝 License
-
+## 📄 License
 MIT License - See LICENSE file for details.
-
-## 👨‍💻 Author
-
-DocFinder - Built with ❤️ using FastAPI, Streamlit, and AI

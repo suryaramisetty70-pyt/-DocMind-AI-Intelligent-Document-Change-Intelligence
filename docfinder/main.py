@@ -1116,7 +1116,7 @@ async def ai_chat(
     current_user: User = Depends(get_current_user)
 ):
     from services.ai_integration import ai_service
-from services.multi_agent import multi_agent_system
+    from services.multi_agent import multi_agent_system
 
     
     # Construct a proper system prompt using the context
