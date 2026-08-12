@@ -1485,3 +1485,77 @@ async def agent_chat(
     await db.commit()
     
     return {"reply": response}
+
+
+class ChatMultimodalRequest(BaseModel):
+    agent_type: str
+    message: str
+    image_base64: str
+
+@app.post("/api/agents/chat_multimodal")
+async def agent_chat_multimodal(
+    req: ChatMultimodalRequest,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    # Get or create conversation
+    result = await db.execute(select(AgentConversation).where(
+        AgentConversation.user_id == current_user.id,
+        AgentConversation.agent_type == req.agent_type
+    ).order_by(AgentConversation.created_at.desc()))
+    conv = result.scalars().first()
+    
+    if not conv:
+        conv = AgentConversation(user_id=current_user.id, agent_type=req.agent_type, title=f"Chat with {req.agent_type} Agent")
+        db.add(conv)
+        await db.commit()
+        await db.refresh(conv)
+        
+    # Save user message
+    user_msg_content = req.message + " [Image Attached]"
+    user_msg = Message(conversation_id=conv.id, role="user", content=user_msg_content)
+    db.add(user_msg)
+    await db.commit()
+    
+    # Process image with Gemini
+    try:
+        import base64
+        import google.generativeai as genai
+        
+        # Strip header
+        b64_data = req.image_base64
+        if ',' in b64_data:
+            b64_data = b64_data.split(',')[1]
+            
+        img_bytes = base64.b64decode(b64_data)
+        
+        tmp_path = f"tmp_img_{current_user.id}.jpg"
+        with open(tmp_path, "wb") as f:
+            f.write(img_bytes)
+            
+        import PIL.Image
+        img = PIL.Image.open(tmp_path)
+        
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        prompt = f"Analyze this image. The user asks: {req.message}. Respond as a {req.agent_type} expert."
+        
+        ai_resp = model.generate_content([prompt, img])
+        response = ai_resp.text
+        
+        import os
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+            
+    except Exception as e:
+        response = f"I encountered an error processing the image: {str(e)}"
+        
+    # Save AI message
+    ai_msg = Message(conversation_id=conv.id, role="assistant", content=response)
+    db.add(ai_msg)
+    await db.commit()
+    
+    return {"reply": response}
