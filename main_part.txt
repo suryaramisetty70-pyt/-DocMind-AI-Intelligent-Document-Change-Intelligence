@@ -1,0 +1,23 @@
+<main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>New comparison</h1>
+                    <p>Upload your documents or paste text to compare side-by-side.</p>
+                </div>
+            </div>
+
+            <div class="mode-toggles">
+                <button class="mode-btn active" id="normalModeBtn" onclick="setMode('normal')">⚡ Normal Mode</button>
+                <button class="mode-btn" id="aiModeBtn" onclick="setMode('ai')">✨ AI Mode</button>
+            </div>
+            <div id="modeDescription" style="font-size:0.85rem; color:#475569; margin-top:-0.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:6px;">
+                <span>🔌 Fast, exact line-by-line comparison using standard character diffing.</span>
+            </div>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:-1rem;margin-bottom:1.5rem">Supports: PDF · DOCX · PPTX · XLSX · XLS · CSV · TXT · PNG · JPG · WEBP</p>
+
+            <div class="type-tabs">
+                <button class="type-tab active" data-type="text" onclick="switchTab('text')">📝 Text</button>
+                <button class="type-tab" data-type="pdf" onclick="switchTab('pdf')">📄 PDF</button>
+                <button class="type-tab" data-type="word" onclick="switchTab('word')">📁 Word / PPTX</button>
+                <button class="type-tab" data-type="excel" onclick="switchTab('excel')">📊 Excel</button>
+                <button class="type-tab" data-type="c

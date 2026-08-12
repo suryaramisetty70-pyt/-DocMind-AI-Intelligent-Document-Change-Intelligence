@@ -1,5 +1,6 @@
 """Database models."""
 from datetime import datetime
+from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, Text, JSON, ForeignKey
 from database.config import Base
 
@@ -95,4 +96,24 @@ class AppEntry(Base):
     icon_emoji = Column(String(10), default="🤖")
     description = Column(String(500), nullable=True)
     folder_id = Column(Integer, ForeignKey("portal_folders.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class AgentConversation(Base):
+    """Conversations with AI Agents."""
+    __tablename__ = "agent_conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    agent_type = Column(String(50))  # e.g., teaching, medical, legal
+    title = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Message(Base):
+    """Messages in an Agent Conversation."""
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("agent_conversations.id"), index=True)
+    role = Column(String(20))  # user, assistant
+    content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)

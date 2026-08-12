@@ -34,6 +34,8 @@ from services.ai_engine import AIEngine
 from services.report_generator import ReportGenerator
 from services.email_service import email_service
 from services.ai_integration import ai_service
+from services.multi_agent import multi_agent_system
+
 from services.vector_db import vector_db
 
 # Create uploads directory
@@ -1114,6 +1116,8 @@ async def ai_chat(
     current_user: User = Depends(get_current_user)
 ):
     from services.ai_integration import ai_service
+from services.multi_agent import multi_agent_system
+
     
     # Construct a proper system prompt using the context
     system_prompt = (
@@ -1433,3 +1437,51 @@ async def translate_document_text(req: TranslationRequest):
         raise HTTPException(status_code=500, detail="Translation failed")
         
     return {"translated_text": translated}
+
+class ChatRequest(BaseModel):
+    agent_type: str
+    message: str
+
+@app.post("/api/agents/chat")
+async def agent_chat(
+    req: ChatRequest,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    # Get or create conversation
+    result = await db.execute(select(AgentConversation).where(
+        AgentConversation.user_id == current_user.id,
+        AgentConversation.agent_type == req.agent_type
+    ).order_by(AgentConversation.created_at.desc()))
+    conv = result.scalars().first()
+    
+    if not conv:
+        conv = AgentConversation(user_id=current_user.id, agent_type=req.agent_type, title=f"Chat with {req.agent_type} Agent")
+        db.add(conv)
+        await db.commit()
+        await db.refresh(conv)
+        
+    # Get history
+    history_result = await db.execute(select(Message).where(Message.conversation_id == conv.id).order_by(Message.created_at.asc()))
+    history = history_result.scalars().all()
+    
+    # Save user message
+    user_msg = Message(conversation_id=conv.id, role="user", content=req.message)
+    db.add(user_msg)
+    await db.commit()
+    
+    # Get AI response
+    try:
+        response = multi_agent_system.chat(req.agent_type, req.message, history)
+    except Exception as e:
+        response = f"I encountered an error while processing your request: {str(e)}"
+        
+    # Save AI message
+    ai_msg = Message(conversation_id=conv.id, role="assistant", content=response)
+    db.add(ai_msg)
+    await db.commit()
+    
+    return {"reply": response}

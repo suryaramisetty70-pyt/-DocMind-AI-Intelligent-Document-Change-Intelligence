@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compare · doc-differ-ai</title>
+    <title>Compare · ScholarSync</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">    <style>
         .main { padding: 2.5rem 3rem; background: var(--bg); }
@@ -185,7 +185,7 @@
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-mark">d</div>
-                doc-differ-ai
+                ScholarSync
             </div>
             
             <div class="s-section">Workspace</div>
@@ -218,6 +218,70 @@
         </aside>
         
         <main class="main">
+
+        <div id="scholarSyncHub">
+            <div class="page-head">
+                <div>
+                    <h1>ScholarSync Hub</h1>
+                    <p>Select an AI Expert Agent to begin your session.</p>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <!-- Teaching Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('teaching')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">📚</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Teaching Agent</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Personalized AI tutor for programming and academic subjects.</p>
+                </div>
+
+                <!-- Career Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('career')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">💼</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Career & Job Training</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Career guidance, resume building, and interview preparation.</p>
+                </div>
+                
+                <!-- Medical Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('medical')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">🏥</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Medical Knowledge</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Educational information about symptoms, health, and wellness.</p>
+                </div>
+                
+                <!-- Plant Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('plant')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">🌱</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Plant Intelligence</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Analyze plant images to detect diseases and care methods.</p>
+                </div>
+
+                <!-- Trading Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('trading')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">📈</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Trading & Finance</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Financial education, trading concepts, and economic guidance.</p>
+                </div>
+
+                <!-- Law Agent -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAgentChat('law')">
+                    <div style="font-size:2rem; margin-bottom:1rem;">⚖️</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Law & Police</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Legal knowledge, rights, procedures, and basic law concepts.</p>
+                </div>
+
+                <!-- Document Agent (Legacy) -->
+                <div class="card" style="cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openDocumentIntelligence()">
+                    <div style="font-size:2rem; margin-bottom:1rem;">📄</div>
+                    <h3 style="margin-bottom:0.5rem; color:#0f172a;">Document Intelligence</h3>
+                    <p style="color:var(--muted); font-size:0.85rem; line-height:1.5;">Advanced comparison and semantic analysis for documents.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legacy Document Comparison Wrapper -->
+        <div id="legacyDocumentIntelligence" style="display: none;">
+
             <div class="page-head">
                 <div>
                     <h1>New comparison</h1>
@@ -339,7 +403,7 @@
                         <!-- AI Chat Box -->
                         <div style="border:1px solid var(--border); border-radius:14px; overflow:hidden; background:#fff; display:flex; flex-direction:column; height:350px;">
                             <div style="padding:1rem; border-bottom:1px solid var(--border); font-weight:700; background:#f8fafc; display:flex; align-items:center; gap:6px;">
-                                <span>💬</span> Ask doc-differ-ai Chat Assistant
+                                <span>💬</span> Ask ScholarSync Chat Assistant
                             </div>
                             <div id="inlineChatMessages" style="flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:10px; font-size:0.88rem;"></div>
                             <div style="display:flex; border-top:1px solid var(--border); padding:0.5rem; background:#f8fafc; gap:8px;">
@@ -390,7 +454,8 @@
                     <button class="btn btn-primary" onclick="compareFiles()">⚡ Compare now</button>
                 </div>
             </div>
-        </main>
+        </div>
+</main>
     </div>
     
     <div id="loading" class="loading" style="display:none">
@@ -441,7 +506,7 @@
             const grid = document.querySelector('.compare-grid');
             
             if (mode === 'ai') {
-                modeDesc.innerHTML = '<span>🧠 Deep semantic analysis powered by doc-differ-ai. Understands tone shifts, liability risks, and semantic intent.</span>';
+                modeDesc.innerHTML = '<span>🧠 Deep semantic analysis powered by ScholarSync. Understands tone shifts, liability risks, and semantic intent.</span>';
                 compareBtn.classList.add('btn-ai-glow');
                 compareBtn.innerHTML = '✨ Compare with AI';
                 grid.classList.add('ai-glow');
@@ -732,7 +797,7 @@
                 document.getElementById('inlineAiAuditText').innerHTML = formatMarkdown(data.ai_analysis || "No AI analysis available.");
                 inlineChatContext = `Document A: ${data.full_text1}\n\nDocument B: ${data.full_text2}\n\nDifferences: ${JSON.stringify(data.differences)}`;
                 document.getElementById('inlineChatMessages').innerHTML = `
-                    <div class="chat-msg ai">Hello! I am doc-differ-ai. I have analyzed the text differences. Ask me anything about this comparison!</div>
+                    <div class="chat-msg ai">Hello! I am ScholarSync. I have analyzed the text differences. Ask me anything about this comparison!</div>
                 `;
                 renderInlineQuantum(data.stats || {});
             } else {
@@ -932,7 +997,7 @@
                     </div>
                     
                     <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #1e293b; font-size:0.85rem; color:#94a3b8; line-height:1.5;">
-                        <strong style="color:#f8fafc;">⚛️ Quantum Superposition Analysis:</strong> The doc-differ-ai quantum simulator analyzed parallel comparison state pathways. The document state vectors collapsed into the current coherence map with an entanglement factor of ${entanglement} kG. Noise decoherence was filtered successfully.
+                        <strong style="color:#f8fafc;">⚛️ Quantum Superposition Analysis:</strong> The ScholarSync quantum simulator analyzed parallel comparison state pathways. The document state vectors collapsed into the current coherence map with an entanglement factor of ${entanglement} kG. Noise decoherence was filtered successfully.
                     </div>
                 </div>
             `;
@@ -1012,6 +1077,19 @@
         }
         
 </script>
+
+
+        <script>
+            function openDocumentIntelligence() {
+                document.getElementById('scholarSyncHub').style.display = 'none';
+                document.getElementById('legacyDocumentIntelligence').style.display = 'block';
+            }
+            
+            function openAgentChat(agentType) {
+                // In Phase 2, this will route to the agent_chat.html with the agent type
+                window.location.href = `agent_chat.html?agent=${agentType}`;
+            }
+        </script>
 
 </body>
 </html>
